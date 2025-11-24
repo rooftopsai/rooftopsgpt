@@ -1,6 +1,8 @@
+// components > chat > chat-ui.tsx (with message padding)
+
 import Loading from "@/app/[locale]/loading"
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
 import { getChatFilesByChatId } from "@/db/chat-files"
 import { getChatById } from "@/db/chats"
@@ -18,6 +20,8 @@ import { ChatInput } from "./chat-input"
 import { ChatMessages } from "./chat-messages"
 import { ChatScrollButtons } from "./chat-scroll-buttons"
 import { ChatSecondaryButtons } from "./chat-secondary-buttons"
+import { useDocumentStore } from "@/lib/stores/document-store"
+import { VoiceMode } from "@/components/voice-mode/VoiceMode"
 
 interface ChatUIProps {}
 
@@ -25,6 +29,7 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   useHotkey("o", () => handleNewChat())
 
   const params = useParams()
+  const { isDocMode } = useDocumentStore();
 
   const {
     setChatMessages,
@@ -39,7 +44,7 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     setShowFilesDisplay,
     setUseRetrieval,
     setSelectedTools
-  } = useContext(ChatbotUIContext)
+  } = useChatbotUI()
 
   const { handleNewChat, handleFocusChatInput } = useChatHandler()
 
@@ -56,6 +61,20 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   } = useScroll()
 
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false)
+
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -185,6 +204,25 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     return <Loading />
   }
 
+  // Get appropriate chat input width based on document panel and screen size
+  const getChatInputClasses = () => {
+    // Base classes 
+    let classes = "relative items-end px-2 pb-3 pt-0";
+    
+    // Mobile view
+    if (isMobile) {
+      return `${classes} w-full`;
+    }
+    
+    // When document panel is open, use responsive width
+    if (isDocMode) {
+      return `${classes} w-full max-w-full sm:max-w-[90%] sm:pb-8 sm:pt-5 md:max-w-[90%] lg:max-w-[90%] xl:max-w-[90%]`;
+    }
+    
+    // Default view (no document panel)
+    return `${classes} w-full min-w-[300px] sm:w-[600px] sm:pb-8 sm:pt-5 md:w-[700px] lg:w-[700px] xl:w-[800px]`;
+  };
+
   return (
     <div className="relative flex h-full flex-col items-center">
       <div className="absolute left-4 top-2.5 flex justify-center">
@@ -201,14 +239,18 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         <ChatSecondaryButtons />
       </div>
 
-      <div className="bg-secondary flex max-h-[50px] min-h-[50px] w-full items-center justify-center border-b-2 font-bold">
-        <div className="max-w-[200px] truncate sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px]">
-          {selectedChat?.name || "Chat"}
+      {/* Subtle chat title - only show if chat has a name */}
+      {selectedChat?.name && (
+        <div className="flex w-full items-center justify-center pt-3 pb-1">
+          <div className="text-sm text-muted-foreground max-w-[200px] truncate sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px]">
+            {selectedChat.name}
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* Add px-4 (or adjust px-6 etc. as needed) for horizontal padding */}
       <div
-        className="flex size-full flex-col overflow-auto border-b"
+        className="flex size-full flex-col overflow-auto border-b px-4"
         onScroll={handleScroll}
       >
         <div ref={messagesStartRef} />
@@ -218,13 +260,24 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="relative w-full min-w-[300px] items-end px-2 pb-3 pt-0 sm:w-[600px] sm:pb-8 sm:pt-5 md:w-[700px] lg:w-[700px] xl:w-[800px]">
-        <ChatInput />
+      {/* Chat input with responsive width */}
+      <div className={getChatInputClasses()}>
+        <ChatInput onVoiceModeClick={() => setIsVoiceModeOpen(true)} />
+        <p className="p-1 text-center text-sm text-gray-500 dark:text-gray-400">
+          Rooftops AI can make mistakes. Check important information.
+        </p>
       </div>
 
       <div className="absolute bottom-2 right-2 hidden md:block lg:bottom-4 lg:right-4">
         <ChatHelp />
       </div>
+
+      {/* Voice Mode Modal - Fullscreen */}
+      {isVoiceModeOpen && (
+        <div className="fixed inset-0 z-[9999]">
+          <VoiceMode onClose={() => setIsVoiceModeOpen(false)} />
+        </div>
+      )}
     </div>
   )
 }

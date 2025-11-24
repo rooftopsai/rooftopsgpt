@@ -1,12 +1,14 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import {
+  IconArrowUp,
   IconBolt,
   IconCirclePlus,
   IconPlayerStopFilled,
-  IconSend
+  IconSend,
+  IconWaveSine
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, useContext, useEffect, useRef, useState } from "react"
@@ -20,11 +22,24 @@ import { useChatHandler } from "./chat-hooks/use-chat-handler"
 import { useChatHistoryHandler } from "./chat-hooks/use-chat-history"
 import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
 import { useSelectFileHandler } from "./chat-hooks/use-select-file-handler"
+// Add import for property message handler
+import { PropertyMessageHandler } from "@/lib/property/property-message-handler"
+import { nanoid } from "nanoid"
+// Import the ReportLoading component
+import { ReportLoading } from "@/components/property/report-loading"
 
-interface ChatInputProps {}
+interface ChatInputProps {
+  onVoiceModeClick?: () => void
+}
 
-export const ChatInput: FC<ChatInputProps> = ({}) => {
+export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
   const { t } = useTranslation()
+
+  // Create property message handler
+  const propertyHandler = new PropertyMessageHandler()
+  
+  // Add state for property report loading animation
+  const [isGeneratingPropertyReport, setIsGeneratingPropertyReport] = useState(false)
 
   useHotkey("l", () => {
     handleFocusChatInput()
@@ -54,15 +69,124 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     chatSettings,
     selectedTools,
     setSelectedTools,
-    assistantImages
-  } = useContext(ChatbotUIContext)
+    assistantImages,
+    setChatMessages,
+    setIsGenerating
+  } = useChatbotUI()
 
   const {
     chatInputRef,
-    handleSendMessage,
+    handleSendMessage: originalHandleSendMessage,
     handleStopMessage,
     handleFocusChatInput
   } = useChatHandler()
+
+  // Function to check if text likely contains an address
+  const containsAddress = (text: string): boolean => {
+    // Check for common address patterns
+    const addressPatterns = [
+      /\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Way|Place|Pl|Court|Ct)\b/i,
+      /\d+\s+[A-Za-z\s]+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\b/,
+      /property\s+at\s+.+/i,
+      /address\s+.+/i
+    ];
+    
+    return addressPatterns.some(pattern => pattern.test(text));
+  };
+
+  // Override handleSendMessage to include property detection
+  const handleSendMessage = async (
+    content: string,
+    messages: any[],
+    isRegeneration: boolean
+  ) => {
+    // Only check for property if this is a new message (not regeneration)
+    if (!isRegeneration && content.trim()) {
+      try {
+        // Show typing indicator
+        setIsGenerating(true)
+        
+        // Check if the content likely contains an address and show the property report loading animation
+        if (containsAddress(content)) {
+          setIsGeneratingPropertyReport(true)
+        }
+        
+        // Check if message contains property address
+        const propertyResult = await propertyHandler.handleMessage(content)
+        
+        // Hide the property report loading animation
+        setIsGeneratingPropertyReport(false)
+        
+        if (propertyResult) {
+          // Get chat details from existing messages
+          const chatId = messages.length > 0 ? messages[0].message.chat_id : ""
+          const userId = messages.length > 0 ? messages[0].message.user_id : ""
+          
+          // Get next sequence number
+          const lastSequenceNumber = messages.length > 0 
+            ? messages[messages.length - 1].message.sequence_number 
+            : -1
+          
+          // Create a user message to show what was asked
+          const userMessage = {
+            id: nanoid(),
+            chat_id: chatId,
+            role: "user",
+            content,
+            model: chatSettings?.model || "gpt-4",
+            image_paths: [],
+            sequence_number: lastSequenceNumber + 1,
+            user_id: userId,
+            assistant_id: selectedAssistant?.id || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+          
+          // Create an assistant message with the property report
+          const assistantMessage = {
+            id: nanoid(),
+            chat_id: chatId,
+            role: "assistant",
+            content: propertyResult.content,
+            model: chatSettings?.model || "gpt-4",
+            image_paths: [],
+            sequence_number: lastSequenceNumber + 2,
+            user_id: userId,
+            assistant_id: selectedAssistant?.id || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            reportData: propertyResult.reportData
+          }
+          
+          // Add these messages to the chat
+          setChatMessages((prevMessages) => [
+            ...prevMessages,
+            { message: userMessage, fileItems: [] },
+            { message: assistantMessage, fileItems: [] }
+          ])
+          
+          // Reset input field
+          handleInputChange("")
+          
+          // Reset generating state
+          setIsGenerating(false)
+          
+          return // Skip normal message handling
+        }
+        
+        // No property detected, reset generating state
+        setIsGenerating(false)
+      } catch (error) {
+        console.error("Error detecting property:", error)
+        setIsGeneratingPropertyReport(false)
+        setIsGenerating(false)
+      }
+    }
+    
+    // If no property detected or there was an error, 
+    // proceed with original message handling
+    originalHandleSendMessage(content, messages, isRegeneration)
+  }
 
   const { handleInputChange } = usePromptAndCommand()
 
@@ -119,17 +243,6 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
       setNewMessageContentToNextUserMessage()
     }
 
-    //use shift+ctrl+up and shift+ctrl+down to navigate through chat history
-    if (event.key === "ArrowUp" && event.shiftKey && event.ctrlKey) {
-      event.preventDefault()
-      setNewMessageContentToPreviousUserMessage()
-    }
-
-    if (event.key === "ArrowDown" && event.shiftKey && event.ctrlKey) {
-      event.preventDefault()
-      setNewMessageContentToNextUserMessage()
-    }
-
     if (
       isAssistantPickerOpen &&
       (event.key === "Tab" ||
@@ -164,8 +277,12 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
   return (
     <>
+      
       <div className="flex flex-col flex-wrap justify-center gap-2">
         <ChatFilesDisplay />
+
+        {/* Show the loading animation when generating a property report */}
+        {isGeneratingPropertyReport && <ReportLoading />}
 
         {selectedTools &&
           selectedTools.map((tool, index) => (
@@ -211,14 +328,14 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
         )}
       </div>
 
-      <div className="border-input relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
-        <div className="absolute bottom-[76px] left-0 max-h-[300px] w-full overflow-auto rounded-xl dark:border-none">
+      <div className="relative mt-3 w-full">
+        <div className="absolute bottom-[76px] left-0 max-h-[300px] w-full overflow-auto rounded-xl">
           <ChatCommandInput />
         </div>
 
         <>
           <IconCirclePlus
-            className="absolute bottom-[12px] left-3 cursor-pointer p-1 hover:opacity-50"
+            className="absolute bottom-[12px] left-3 cursor-pointer p-1 hover:opacity-50 z-10"
             size={32}
             onClick={() => fileInputRef.current?.click()}
           />
@@ -238,11 +355,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
         <TextareaAutosize
           textareaRef={chatInputRef}
-          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder={t(
-            // `Ask anything. Type "@" for assistants, "/" for prompts, "#" for files, and "!" for tools.`
-            `Ask anything. Type @  /  #  !`
-          )}
+          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-xl border-none bg-background px-14 py-4 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_0_20px_rgba(59,130,246,0.15),0_0_40px_rgba(139,92,246,0.1)]"
+          placeholder={t(`Ask me anything...`)}
           onValueChange={handleInputChange}
           value={userInput}
           minRows={1}
@@ -253,17 +367,25 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
           onCompositionEnd={() => setIsTyping(false)}
         />
 
-        <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50">
+        <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50 z-10">
           {isGenerating ? (
             <IconPlayerStopFilled
               className="hover:bg-background animate-pulse rounded bg-transparent p-1"
               onClick={handleStopMessage}
               size={30}
             />
+          ) : !userInput && onVoiceModeClick ? (
+            <button
+              onClick={onVoiceModeClick}
+              className="flex items-center gap-2 bg-black text-white rounded-full px-3 py-1.5 hover:bg-gray-800 transition-colors"
+            >
+              <IconWaveSine size={20} />
+              <span className="text-sm font-medium">Voice</span>
+            </button>
           ) : (
-            <IconSend
+            <IconArrowUp
               className={cn(
-                "bg-primary text-secondary rounded p-1",
+                "bg-black text-white rounded-full p-1",
                 !userInput && "cursor-not-allowed opacity-50"
               )}
               onClick={() => {
@@ -275,6 +397,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
             />
           )}
         </div>
+
       </div>
     </>
   )
