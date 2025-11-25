@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getCollectionById = async (collectionId: string) => {
   const { data: collection, error } = await supabase
     .from("collections")
@@ -18,6 +21,16 @@ export const getCollectionById = async (collectionId: string) => {
 export const getCollectionWorkspacesByWorkspaceId = async (
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return a mock workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      collections: []
+    };
+  }
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
@@ -63,6 +76,11 @@ export const createCollection = async (
   collection: TablesInsert<"collections">,
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create collection for special routes")
+  }
+
   const { data: createdCollection, error } = await supabase
     .from("collections")
     .insert([collection])
@@ -86,6 +104,11 @@ export const createCollections = async (
   collections: TablesInsert<"collections">[],
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create collections for special routes")
+  }
+
   const { data: createdCollections, error } = await supabase
     .from("collections")
     .insert(collections)
@@ -111,6 +134,11 @@ export const createCollectionWorkspace = async (item: {
   collection_id: string
   workspace_id: string
 }) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(item.workspace_id)) {
+    throw new Error("Cannot create collection workspace for special routes")
+  }
+
   const { data: createdCollectionWorkspace, error } = await supabase
     .from("collection_workspaces")
     .insert([item])
@@ -127,6 +155,11 @@ export const createCollectionWorkspace = async (item: {
 export const createCollectionWorkspaces = async (
   items: { user_id: string; collection_id: string; workspace_id: string }[]
 ) => {
+  // Check if any workspace_id is a special route
+  if (items.some(item => SPECIAL_ROUTES.includes(item.workspace_id))) {
+    throw new Error("Cannot create collection workspaces for special routes")
+  }
+
   const { data: createdCollectionWorkspaces, error } = await supabase
     .from("collection_workspaces")
     .insert(items)
@@ -172,6 +205,11 @@ export const deleteCollectionWorkspace = async (
   collectionId: string,
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete collection workspace for special routes")
+  }
+
   const { error } = await supabase
     .from("collection_workspaces")
     .delete()

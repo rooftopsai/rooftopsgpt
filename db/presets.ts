@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getPresetById = async (presetId: string) => {
   const { data: preset, error } = await supabase
     .from("presets")
@@ -16,6 +19,16 @@ export const getPresetById = async (presetId: string) => {
 }
 
 export const getPresetWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return a mock workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      presets: []
+    };
+  }
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
@@ -59,6 +72,11 @@ export const createPreset = async (
   preset: TablesInsert<"presets">,
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create preset for special routes")
+  }
+
   const { data: createdPreset, error } = await supabase
     .from("presets")
     .insert([preset])
@@ -82,6 +100,11 @@ export const createPresets = async (
   presets: TablesInsert<"presets">[],
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create presets for special routes")
+  }
+
   const { data: createdPresets, error } = await supabase
     .from("presets")
     .insert(presets)
@@ -107,6 +130,11 @@ export const createPresetWorkspace = async (item: {
   preset_id: string
   workspace_id: string
 }) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(item.workspace_id)) {
+    throw new Error("Cannot create preset workspace for special routes")
+  }
+
   const { data: createdPresetWorkspace, error } = await supabase
     .from("preset_workspaces")
     .insert([item])
@@ -123,6 +151,11 @@ export const createPresetWorkspace = async (item: {
 export const createPresetWorkspaces = async (
   items: { user_id: string; preset_id: string; workspace_id: string }[]
 ) => {
+  // Check if any workspace_id is a special route
+  if (items.some(item => SPECIAL_ROUTES.includes(item.workspace_id))) {
+    throw new Error("Cannot create preset workspaces for special routes")
+  }
+
   const { data: createdPresetWorkspaces, error } = await supabase
     .from("preset_workspaces")
     .insert(items)
@@ -165,6 +198,11 @@ export const deletePresetWorkspace = async (
   presetId: string,
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete preset workspace for special routes")
+  }
+
   const { error } = await supabase
     .from("preset_workspaces")
     .delete()

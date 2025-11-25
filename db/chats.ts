@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getChatById = async (chatId: string) => {
   const { data: chat } = await supabase
     .from("chats")
@@ -12,6 +15,12 @@ export const getChatById = async (chatId: string) => {
 }
 
 export const getChatsByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return empty array for special routes
+    return []
+  }
+
   const { data: chats, error } = await supabase
     .from("chats")
     .select("*")
@@ -26,6 +35,11 @@ export const getChatsByWorkspaceId = async (workspaceId: string) => {
 }
 
 export const createChat = async (chat: TablesInsert<"chats">) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(chat.workspace_id)) {
+    throw new Error("Cannot create chat for special routes")
+  }
+
   const { data: createdChat, error } = await supabase
     .from("chats")
     .insert([chat])
@@ -40,6 +54,11 @@ export const createChat = async (chat: TablesInsert<"chats">) => {
 }
 
 export const createChats = async (chats: TablesInsert<"chats">[]) => {
+  // Check if any workspace_id is a special route
+  if (chats.some(chat => SPECIAL_ROUTES.includes(chat.workspace_id))) {
+    throw new Error("Cannot create chats for special routes")
+  }
+
   const { data: createdChats, error } = await supabase
     .from("chats")
     .insert(chats)

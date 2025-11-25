@@ -1,14 +1,19 @@
+// components > messages > message.tsx
+
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { LLM, LLMID, MessageImage, ModelProvider } from "@/types"
+import CombinedReport from '@/components/property/combined-report'
+
 import {
   IconBolt,
   IconCaretDownFilled,
   IconCaretRightFilled,
   IconCircleFilled,
+  IconCloudRain,
   IconFileText,
   IconMoodSmile,
   IconPencil
@@ -23,8 +28,53 @@ import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
+import { ChatWeatherLookup } from '@/components/weather/ChatWeatherLookup'
+import { SourceCards } from "../chat/source-cards"
+import { RooftopsSVG } from "../icons/rooftops-svg"
 
 const ICON_SIZE = 32
+
+// Loading status messages that rotate
+const loadingMessages = [
+  "thinking",
+  "searching the Rooftops",
+  "analyzing",
+  "gathering information",
+  "consulting the docs",
+  "finding the best answer",
+  "processing",
+  "crunching the numbers"
+]
+
+const LoadingIndicator: FC = () => {
+  const [messageIndex, setMessageIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true)
+
+      setTimeout(() => {
+        setMessageIndex((prev) => (prev + 1) % loadingMessages.length)
+        setIsTransitioning(false)
+      }, 300) // Wait for fade out before changing text
+    }, 2000) // Change message every 2 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="flex items-center gap-2">
+      <IconCircleFilled className="animate-pulse" size={20} />
+      <span
+        className="text-muted-foreground text-sm transition-opacity duration-300"
+        style={{ opacity: isTransitioning ? 0 : 1 }}
+      >
+        {loadingMessages[messageIndex]}
+      </span>
+    </div>
+  )
+}
 
 interface MessageProps {
   message: Tables<"messages">
@@ -60,7 +110,7 @@ export const Message: FC<MessageProps> = ({
     toolInUse,
     files,
     models
-  } = useContext(ChatbotUIContext)
+  } = useChatbotUI()
 
   const { handleSendMessage } = useChatHandler()
 
@@ -77,6 +127,10 @@ export const Message: FC<MessageProps> = ({
     useState<Tables<"file_items"> | null>(null)
 
   const [viewSources, setViewSources] = useState(false)
+  
+  // Weather widget states
+  const [isProcessingWeather, setIsProcessingWeather] = useState(false)
+  const [weatherError, setWeatherError] = useState<string | null>(null)
 
   const handleCopy = () => {
     if (navigator.clipboard) {
@@ -126,6 +180,7 @@ export const Message: FC<MessageProps> = ({
     }
   }, [isEditing])
 
+  // Model data and assistant information
   const MODEL_DATA = [
     ...models.map(model => ({
       modelId: model.model_id as LLMID,
@@ -150,6 +205,7 @@ export const Message: FC<MessageProps> = ({
 
   const modelDetails = LLM_LIST.find(model => model.modelId === message.model)
 
+  // File handling
   const fileAccumulator: Record<
     string,
     {
@@ -179,11 +235,294 @@ export const Message: FC<MessageProps> = ({
     return acc
   }, fileAccumulator)
 
+// Check if this is a property report message
+const isPropertyReport = message.role === "assistant" && 
+message.metadata && 
+typeof message.metadata === 'string' && 
+message.metadata.includes('"type":"property_report"');
+
+// Parse metadata to get report info (if it exists)
+const getReportData = () => {
+  if (!message.metadata) return null;
+
+  try {
+    // Add this debug log
+    console.log("Parsing metadata string:", message.metadata.substring(0, 200) + "...");
+    
+    const metadata = typeof message.metadata === 'string' 
+      ? JSON.parse(message.metadata) 
+      : message.metadata;
+    
+    console.log("Parsed metadata keys:", Object.keys(metadata));
+    
+    if (metadata.type === "property_report") {
+      return {
+        reportData: metadata.reportData || null,
+        analysisData: metadata.analysisData || null,
+        address: metadata.metadata?.address || null
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error parsing property report metadata:", error);
+    console.error("Metadata that caused error:", 
+      typeof message.metadata === 'string' 
+        ? message.metadata.substring(0, 100) 
+        : JSON.stringify(message.metadata).substring(0, 100));
+    return null;
+  }
+};
+
+const propertyReportData = getReportData();
+
+// Debug logging
+console.log("Message metadata:", message.metadata);
+console.log("Is property report?", isPropertyReport);
+console.log("Property report data:", propertyReportData);
+
+  // Strict location extraction - only from explicit markers
+  const extractLocationFromMessage = (content: string): string | null => {
+    try {
+      // ONLY check for explicit location markers to avoid false positives
+
+      // 1. Check explicit bracket notation markers
+      const triggerMatch = content.match(/\[TRIGGER_WEATHER_LOOKUP:([^\]]+)\]/i);
+      if (triggerMatch && triggerMatch[1]) {
+        return triggerMatch[1].trim();
+      }
+
+      const weatherLocMatch = content.match(/\[WEATHER_LOCATION:([^\]]+)\]/i);
+      if (weatherLocMatch && weatherLocMatch[1]) {
+        return weatherLocMatch[1].trim();
+      }
+
+      // 2. Check for HTML comment markers
+      const htmlCommentMatch = content.match(/<!--\s*WEATHER_WIDGET_LOCATION:([^>]+)\s*-->/i);
+      if (htmlCommentMatch && htmlCommentMatch[1]) {
+        return htmlCommentMatch[1].trim();
+      }
+
+      // 3. Only extract from very explicit "weather for [location]" phrases
+      const weatherForMatch = content.match(/weather\s+(?:forecast\s+)?(?:for|in)\s+([A-Z][^\.,:;\n?!]+?)(?:\s+(?:is|shows|indicates)|[\.,:;])/i);
+      if (weatherForMatch && weatherForMatch[1]) {
+        const location = weatherForMatch[1].trim();
+        // Validate it looks like a real location (not a common word)
+        if (location.length > 2 && location.length < 100) {
+          return location;
+        }
+      }
+
+      // 4. If we have a generic weather trigger marker, check user's message
+      if (content.includes("[WEATHER_LOOKUP]")) {
+        const userMessages = chatMessages
+          .filter(msg => msg.message.role === "user")
+          .map(msg => msg.message.content);
+
+        if (userMessages.length > 0) {
+          const lastUserMessage = userMessages[userMessages.length - 1];
+
+          // Only extract explicit weather location requests from user
+          const userWeatherMatch = lastUserMessage.match(/weather\s+(?:for|in|at)\s+([A-Z][^\.,:;\n?!]+)/i);
+          if (userWeatherMatch && userWeatherMatch[1]) {
+            return userWeatherMatch[1].trim();
+          }
+
+          // Try ZIP code extraction as fallback
+          const zipMatch = lastUserMessage.match(/\b(\d{5}(?:-\d{4})?)\b/);
+          if (zipMatch && zipMatch[1]) {
+            return zipMatch[1];
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error extracting location from message:", error);
+      return null;
+    }
+  };
+
+  // Enhanced weather widget detection - only trigger on explicit markers
+  const shouldShowWeatherWidget = (): boolean => {
+    // Only show for assistant messages, not user messages
+    if (message.role !== "assistant") return false;
+
+    const content = message.content;
+
+    try {
+      // Skip if the message explicitly states inability to provide weather
+      if ((/(?:unable|can't|cannot)\s+(?:to\s+)?provide.+weather/i).test(content) ||
+          (/(?:don't|do not)\s+have\s+(?:access|the ability).+weather/i).test(content)) {
+        return false;
+      }
+
+      // ONLY check for explicit weather widget triggers/markers
+      // This prevents false positives from general roofing discussions
+      if ((/\[(?:TRIGGER_WEATHER_LOOKUP|WEATHER_LOCATION):[^\]]+\]/i).test(content) ||
+          content.includes("[WEATHER_LOOKUP]") ||
+          (/<!--\s*WEATHER_WIDGET_LOCATION:[^>]+\s*-->/).test(content)) {
+        return true;
+      }
+
+      // Check for very explicit "here's the weather" phrases only
+      if ((/here(?:'s| is) (?:the )?(?:current )?weather (?:information|data|forecast)/i).test(content)) {
+        return true;
+      }
+
+      // Default to false - don't trigger on general content
+      return false;
+    } catch (error) {
+      console.error("Error in shouldShowWeatherWidget:", error);
+      return false;
+    }
+  };
+  
+  // Get location to use for weather lookup
+  const weatherLocation = message.role === "assistant" ? extractLocationFromMessage(message.content) : null;
+  const showWeatherWidget = shouldShowWeatherWidget();
+  
+  // Enhanced message content rendering with proper weather widget handling
+  const renderMessageContent = () => {
+    try {
+      if (isEditing) {
+        return (
+          <TextareaAutosize
+            textareaRef={editInputRef}
+            className="text-md"
+            value={editedMessage}
+            onValueChange={setEditedMessage}
+            maxRows={20}
+          />
+        );
+      }
+      
+      if (!firstTokenReceived && isGenerating && isLast && message.role === "assistant") {
+        // Rendering loading state
+        switch (toolInUse) {
+          case "none":
+            return <LoadingIndicator />;
+          case "retrieval":
+            return (
+              <div className="flex animate-pulse items-center space-x-2">
+                <IconFileText size={20} />
+                <div>Searching files...</div>
+              </div>
+            );
+          default:
+            return (
+              <div className="flex animate-pulse items-center space-x-2">
+                <IconBolt size={20} />
+                <div>Using {toolInUse}...</div>
+              </div>
+            );
+        }
+      }
+      
+      if (isPropertyReport && propertyReportData) {
+        console.log("Rendering property report with data:", {
+          hasAnalysisData: !!propertyReportData.analysisData,
+          hasReportData: !!propertyReportData.reportData
+        });
+        
+        // If data is missing, create minimal data structure to avoid errors
+        const safeAnalysisData = propertyReportData.analysisData || {
+          rawAnalysis: "Report data unavailable",
+          structuredData: { userSummary: "Unable to display property report data" }
+        };
+        
+        const safeReportData = propertyReportData.reportData || {
+          jsonData: {
+            property: { address: "Report data unavailable" },
+            roof: { summary: {} },
+            metadata: { generated: new Date().toISOString() }
+          }
+        };
+        
+        return (
+          <div>
+            <p className="mb-4">{message.content}</p>
+            
+            <div className="overflow-hidden rounded-[5px] border border-gray-200 shadow-sm dark:border-gray-700">
+              <CombinedReport
+                analysisData={safeAnalysisData}
+                reportData={safeReportData}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      // Handling weather widget case
+      if (showWeatherWidget) {
+        // Create a version of the message content with weather markers removed for display
+        let cleanContent = message.content
+          .replace(/\[TRIGGER_WEATHER_LOOKUP:[^\]]+\]/gi, '')
+          .replace(/\[WEATHER_LOCATION:[^\]]+\]/gi, '')
+          .replace(/\[WEATHER_LOOKUP\]/gi, '')
+          .replace(/<!--\s*WEATHER_WIDGET_LOCATION:[^>]+\s*-->/g, '')
+          .trim();
+        
+        // Clean up any double line breaks that might be left
+        cleanContent = cleanContent.replace(/\n\n+/g, '\n\n');
+        
+        return (
+          <div>
+            {/* Only render the message content if it's not empty after cleaning */}
+            {cleanContent && <MessageMarkdown content={cleanContent} />}
+
+            {/* Show source cards at bottom for assistant messages with sources */}
+            {message.role === "assistant" && message.metadata && (
+              <SourceCards messageMetadata={message.metadata} />
+            )}
+
+            {/* Weather widget section */}
+            <div className="">
+              {/* Header showing location */}
+              <div className="mb-2 flex items-center font-medium text-blue-700">
+                <IconCloudRain className="mr-2" size={20} />
+                <span>Weather information for {weatherLocation || "your location"}</span>
+              </div>
+              
+              {/* The weather widget component */}
+              <ChatWeatherLookup 
+                messageId={message.id} 
+                messageContent={message.content}
+                initialLocation={weatherLocation || ""} 
+                autoSubmit={true}
+              />
+              
+              {/* Show error if any */}
+              {weatherError && (
+                <div className="mt-2 text-sm text-red-500">
+                  {weatherError}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      } else {
+        // Regular message rendering
+        return (
+          <div>
+            <MessageMarkdown content={message.content} />
+            {/* Show source cards at bottom for assistant messages with sources */}
+            {message.role === "assistant" && message.metadata && (
+              <SourceCards messageMetadata={message.metadata} />
+            )}
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error("Error rendering message content:", error);
+      return <MessageMarkdown content={message.content} />;
+    }
+  };
+
   return (
     <div
       className={cn(
         "flex w-full justify-center",
-        message.role === "user" ? "" : "bg-secondary"
+        message.role === "user" ? "bg-muted/30" : ""
       )}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -202,45 +541,24 @@ export const Message: FC<MessageProps> = ({
           />
         </div>
         <div className="space-y-3">
+          {/* Avatar and name section */}
           {message.role === "system" ? (
             <div className="flex items-center space-x-4">
               <IconPencil
                 className="border-primary bg-primary text-secondary rounded border-DEFAULT p-1"
                 size={ICON_SIZE}
               />
-
               <div className="text-lg font-semibold">Prompt</div>
             </div>
           ) : (
             <div className="flex items-center space-x-3">
               {message.role === "assistant" ? (
-                messageAssistantImage ? (
-                  <Image
-                    style={{
-                      width: `${ICON_SIZE}px`,
-                      height: `${ICON_SIZE}px`
-                    }}
-                    className="rounded"
-                    src={messageAssistantImage}
-                    alt="assistant image"
-                    height={ICON_SIZE}
-                    width={ICON_SIZE}
-                  />
-                ) : (
-                  <WithTooltip
-                    display={<div>{MODEL_DATA?.modelName}</div>}
-                    trigger={
-                      <ModelIcon
-                        provider={modelDetails?.provider || "custom"}
-                        height={ICON_SIZE}
-                        width={ICON_SIZE}
-                      />
-                    }
-                  />
-                )
+                <div className="flex items-center justify-center bg-transparent" style={{ width: `${ICON_SIZE}px`, height: `${ICON_SIZE}px` }}>
+                  <RooftopsSVG width={ICON_SIZE} height={ICON_SIZE} />
+                </div>
               ) : profile?.image_url ? (
                 <Image
-                  className={`size-[32px] rounded`}
+                  className="size-[32px] rounded-full"
                   src={profile?.image_url}
                   height={32}
                   width={32}
@@ -248,67 +566,25 @@ export const Message: FC<MessageProps> = ({
                 />
               ) : (
                 <IconMoodSmile
-                  className="bg-primary text-secondary border-primary rounded border-DEFAULT p-1"
+                  className="bg-primary text-secondary border-primary rounded-full border-DEFAULT p-1"
                   size={ICON_SIZE}
                 />
               )}
 
-              <div className="font-semibold">
-                {message.role === "assistant"
-                  ? message.assistant_id
-                    ? assistants.find(
-                        assistant => assistant.id === message.assistant_id
-                      )?.name
-                    : selectedAssistant
-                      ? selectedAssistant?.name
-                      : MODEL_DATA?.modelName
-                  : profile?.display_name ?? profile?.username}
-              </div>
+              {/* Only show name for user messages, not assistant messages */}
+              {message.role !== "assistant" && (
+                <div className="font-semibold">
+                  {profile?.display_name ?? profile?.username}
+                </div>
+              )}
             </div>
           )}
-          {!firstTokenReceived &&
-          isGenerating &&
-          isLast &&
-          message.role === "assistant" ? (
-            <>
-              {(() => {
-                switch (toolInUse) {
-                  case "none":
-                    return (
-                      <IconCircleFilled className="animate-pulse" size={20} />
-                    )
-                  case "retrieval":
-                    return (
-                      <div className="flex animate-pulse items-center space-x-2">
-                        <IconFileText size={20} />
-
-                        <div>Searching files...</div>
-                      </div>
-                    )
-                  default:
-                    return (
-                      <div className="flex animate-pulse items-center space-x-2">
-                        <IconBolt size={20} />
-
-                        <div>Using {toolInUse}...</div>
-                      </div>
-                    )
-                }
-              })()}
-            </>
-          ) : isEditing ? (
-            <TextareaAutosize
-              textareaRef={editInputRef}
-              className="text-md"
-              value={editedMessage}
-              onValueChange={setEditedMessage}
-              maxRows={20}
-            />
-          ) : (
-            <MessageMarkdown content={message.content} />
-          )}
+          
+          {/* Message content */}
+          {renderMessageContent()}
         </div>
 
+        {/* File sources section */}
         {fileItems.length > 0 && (
           <div className="border-primary mt-6 border-t pt-4 font-bold">
             {!viewSources ? (
@@ -376,6 +652,7 @@ export const Message: FC<MessageProps> = ({
           </div>
         )}
 
+        {/* Images section */}
         <div className="mt-3 flex flex-wrap gap-2">
           {message.image_paths.map((path, index) => {
             const item = chatImages.find(image => image.path === path)
@@ -404,6 +681,8 @@ export const Message: FC<MessageProps> = ({
             )
           })}
         </div>
+        
+        {/* Edit buttons section */}
         {isEditing && (
           <div className="mt-4 flex justify-center space-x-2">
             <Button size="sm" onClick={handleSendEdit}>
@@ -417,6 +696,7 @@ export const Message: FC<MessageProps> = ({
         )}
       </div>
 
+      {/* Preview modals section */}
       {showImagePreview && selectedImage && (
         <FilePreview
           type="image"

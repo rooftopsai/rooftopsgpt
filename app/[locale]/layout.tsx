@@ -1,3 +1,4 @@
+// app > locale > layout.tsx
 import { Toaster } from "@/components/ui/sonner"
 import { GlobalState } from "@/components/utility/global-state"
 import { Providers } from "@/components/utility/providers"
@@ -10,12 +11,15 @@ import { Inter } from "next/font/google"
 import { cookies } from "next/headers"
 import { ReactNode } from "react"
 import "./globals.css"
+import { DocumentPanel } from "@/components/ui/documentPanel"
+import { DocumentManager } from "@/components/ui/documentManager"
+
 
 const inter = Inter({ subsets: ["latin"] })
-const APP_NAME = "Chatbot UI"
-const APP_DEFAULT_TITLE = "Chatbot UI"
-const APP_TITLE_TEMPLATE = "%s - Chatbot UI"
-const APP_DESCRIPTION = "Chabot UI PWA!"
+const APP_NAME = "Rooftops AI"
+const APP_DEFAULT_TITLE = "Rooftops AI"
+const APP_TITLE_TEMPLATE = "%s - Rooftops AI"
+const APP_DESCRIPTION = "AI meets Roofing"
 
 interface RootLayoutProps {
   children: ReactNode
@@ -36,7 +40,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black",
     title: APP_DEFAULT_TITLE
-    // startUpImage: [],
   },
   formatDetection: {
     telephone: false
@@ -86,6 +89,8 @@ export default async function RootLayout({
 
   const { t, resources } = await initTranslations(locale, i18nNamespaces)
 
+  console.log("Layout rendering with session:", !!session);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -97,7 +102,15 @@ export default async function RootLayout({
           >
             <Toaster richColors position="top-center" duration={3000} />
             <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
-              {session ? <GlobalState>{children}</GlobalState> : children}
+              {session ? (
+                <GlobalState>
+                  {children}
+                  <DocumentPanel />
+                  <DocumentManager />
+                </GlobalState>
+              ) : (
+                children
+              )}
             </div>
           </TranslationsProvider>
         </Providers>

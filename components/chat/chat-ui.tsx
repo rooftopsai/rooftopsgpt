@@ -241,8 +241,8 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
 
       {/* Subtle chat title - only show if chat has a name */}
       {selectedChat?.name && (
-        <div className="flex w-full items-center justify-center pt-3 pb-1">
-          <div className="text-sm text-muted-foreground max-w-[200px] truncate sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px]">
+        <div className="flex w-full items-center justify-center pb-1 pt-3">
+          <div className="text-muted-foreground max-w-[200px] truncate text-sm sm:max-w-[400px] md:max-w-[500px] lg:max-w-[600px] xl:max-w-[700px]">
             {selectedChat.name}
           </div>
         </div>

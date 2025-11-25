@@ -7,3 +7,6 @@ export type ContentType =
   | "assistants"
   | "tools"
   | "models"
+  | "explore"
+  | "creator"
+

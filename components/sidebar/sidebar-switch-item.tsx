@@ -21,11 +21,13 @@ export const SidebarSwitchItem: FC<SidebarSwitchItemProps> = ({
       }
       trigger={
         <TabsTrigger
-          className="hover:opacity-50"
+          className="size-10 rounded-[5px] transition-all hover:bg-blue-500/5 data-[state=active]:border data-[state=active]:border-blue-500/20 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500/15 data-[state=active]:to-purple-500/15 data-[state=active]:backdrop-blur-md dark:hover:bg-blue-400/10 dark:data-[state=active]:border-blue-400/25 dark:data-[state=active]:from-blue-400/20 dark:data-[state=active]:to-purple-400/20"
           value={contentType}
           onClick={() => onContentTypeChange(contentType as ContentType)}
         >
-          {icon}
+          <div className="text-muted-foreground data-[state=active]:text-foreground">
+            {icon}
+          </div>
         </TabsTrigger>
       }
     />

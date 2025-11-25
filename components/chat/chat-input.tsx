@@ -335,7 +335,7 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
 
         <>
           <IconCirclePlus
-            className="absolute bottom-[12px] left-3 cursor-pointer p-1 hover:opacity-50 z-10"
+            className="absolute bottom-[12px] left-3 z-10 cursor-pointer p-1 hover:opacity-50"
             size={32}
             onClick={() => fileInputRef.current?.click()}
           />
@@ -355,7 +355,7 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
 
         <TextareaAutosize
           textareaRef={chatInputRef}
-          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-xl border-none bg-background px-14 py-4 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_0_20px_rgba(59,130,246,0.15),0_0_40px_rgba(139,92,246,0.1)]"
+          className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md bg-background flex w-full resize-none rounded-xl border-none px-14 py-4 shadow-[0_0_20px_rgba(59,130,246,0.15),0_0_40px_rgba(139,92,246,0.1)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={t(`Ask me anything...`)}
           onValueChange={handleInputChange}
           value={userInput}
@@ -367,7 +367,7 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
           onCompositionEnd={() => setIsTyping(false)}
         />
 
-        <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50 z-10">
+        <div className="absolute bottom-[14px] right-3 z-10 cursor-pointer hover:opacity-50">
           {isGenerating ? (
             <IconPlayerStopFilled
               className="hover:bg-background animate-pulse rounded bg-transparent p-1"
@@ -377,7 +377,7 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
           ) : !userInput && onVoiceModeClick ? (
             <button
               onClick={onVoiceModeClick}
-              className="flex items-center gap-2 bg-black text-white rounded-full px-3 py-1.5 hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 rounded-full bg-black px-3 py-1.5 text-white transition-colors hover:bg-gray-800"
             >
               <IconWaveSine size={20} />
               <span className="text-sm font-medium">Voice</span>
@@ -385,7 +385,7 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
           ) : (
             <IconArrowUp
               className={cn(
-                "bg-black text-white rounded-full p-1",
+                "rounded-full bg-black p-1 text-white",
                 !userInput && "cursor-not-allowed opacity-50"
               )}
               onClick={() => {

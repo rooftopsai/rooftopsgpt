@@ -1,6 +1,9 @@
-import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import { ROOFING_EXPERT_SYSTEM_PROMPT } from "@/lib/system-prompts"
+import { GLOBAL_API_KEYS } from "@/lib/api-keys"
+import { withSubscriptionCheck, trackChatUsage } from "@/lib/chat-with-subscription"
 
 export const runtime = "edge"
 
@@ -12,23 +15,48 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await getServerProfile()
+    // Check subscription
+    const subCheck = await withSubscriptionCheck()
+    if (!subCheck.allowed) return subCheck.response
+    const profile = subCheck.profile!
 
-    checkApiKey(profile.google_gemini_api_key, "Google")
+    if (!GLOBAL_API_KEYS.google_gemini) {
+      return new Response(
+        JSON.stringify({ error: "Google Gemini API key not configured" }),
+        { status: 500 }
+      )
+    }
 
-    const genAI = new GoogleGenerativeAI(profile.google_gemini_api_key || "")
+    const genAI = new GoogleGenerativeAI(GLOBAL_API_KEYS.google_gemini)
     const googleModel = genAI.getGenerativeModel({ model: chatSettings.model })
 
     const lastMessage = messages.pop()
 
+    // Prepend roofing expert prompt to first message
+    const modifiedMessages = [...messages]
+    if (modifiedMessages.length > 0 && modifiedMessages[0].parts) {
+      const firstPart = modifiedMessages[0].parts[0]
+      if (typeof firstPart === 'string') {
+        modifiedMessages[0].parts[0] = ROOFING_EXPERT_SYSTEM_PROMPT + "\n\n" + firstPart
+      } else if (firstPart.text) {
+        modifiedMessages[0].parts[0] = {
+          ...firstPart,
+          text: ROOFING_EXPERT_SYSTEM_PROMPT + "\n\n" + firstPart.text
+        }
+      }
+    }
+
     const chat = googleModel.startChat({
-      history: messages,
+      history: modifiedMessages,
       generationConfig: {
         temperature: chatSettings.temperature
       }
     })
 
     const response = await chat.sendMessageStream(lastMessage.parts)
+
+    // Track usage after successful API call (don't await to not block response)
+    trackChatUsage(profile.user_id)
 
     const encoder = new TextEncoder()
     const readableStream = new ReadableStream({

@@ -38,6 +38,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   // PROFILE STORE
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null)
 
+  // SUBSCRIPTION STORE
+  const [userSubscription, setUserSubscription] = useState<Tables<"subscriptions"> | null>(null)
+
   // ITEMS STORE
   const [assistants, setAssistants] = useState<Tables<"assistants">[]>([])
   const [collections, setCollections] = useState<Tables<"collections">[]>([])
@@ -203,6 +206,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // PROFILE STORE
         profile,
         setProfile,
+
+        // SUBSCRIPTION STORE
+        userSubscription,
+        setUserSubscription,
 
         // ITEMS STORE
         assistants,

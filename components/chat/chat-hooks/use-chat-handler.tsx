@@ -1,4 +1,6 @@
-import { ChatbotUIContext } from "@/context/context"
+// components > chat > chat-hooks > use-chat-handler.tsx
+
+import { useChatbotUI } from "@/context/context"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
@@ -11,6 +13,7 @@ import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
+import { PropertyMessageHandler } from "@/lib/property/property-message-handler";
 import {
   createTempMessages,
   handleCreateChat,
@@ -22,8 +25,113 @@ import {
   validateChatSettings
 } from "../chat-helpers"
 
+// Import the document store functions directly
+import { 
+  setDocumentMode, 
+  setDocumentContent, 
+  appendDocumentContent, 
+  setIsStreaming,
+  saveDocument
+} from "@/lib/stores/document-store";
+
+// Strict utility function to detect explicit weather-related queries only
+const isWeatherQuery = (input: string): boolean => {
+  const weatherPatterns = [
+    // Explicit weather requests
+    /(?:what'?s?|show|get|check|tell me|give me)\s+(?:the\s+)?weather\s+(?:in|at|for|of)/i,
+    /(?:what|how)(?:'s| is| are)\s+the\s+weather/i,
+    /(?:weather|forecast|conditions)\s+(?:in|at|for)\s+[A-Z]/i, // Must have location that starts with capital
+
+    // Explicit forecast requests
+    /(?:what'?s?|show|get|check)\s+(?:the\s+)?forecast/i,
+    /forecast\s+(?:in|at|for)\s+[A-Z]/i,
+
+    // Direct weather condition questions
+    /(?:will|is|does) it (?:rain|snow|sunny|windy|cold|hot)/i,
+    /(?:should|can) (?:I|we|they) (?:work|roof|install) (?:today|tomorrow|this week|outside)/i,
+
+    // Roofing weather safety questions (very specific)
+    /(?:safe|good|okay|ok) (?:to\s+)?(?:work|roof|install|repair).*(?:weather|today|conditions)/i,
+    /(?:weather|conditions).*(?:safe|good) (?:for|to) (?:work|roofing|installation)/i
+  ];
+
+  return weatherPatterns.some(pattern => pattern.test(input));
+};
+
+// Enhanced function to extract location from a weather query using improved patterns
+const extractLocationFromWeatherQuery = (input: string): string | null => {
+  // Common location extraction patterns
+  const patterns = [
+    // Direct "weather in X" patterns
+    /weather\s+(?:in|at|for|of)\s+([^\.,:;\n?]+)/i,
+    /(?:forecast|temperature|conditions)\s+(?:in|at|for)\s+([^\.,:;\n?]+)/i,
+    /(?:what|how)(?:'s| is| are) the weather (?:in|at|for)\s+([^\.,:;\n?]+)/i,
+    
+    // Roof-related weather patterns
+    /roof(?:ing)?\s+(?:conditions|weather)\s+(?:in|at|for)\s+([^\.,:;\n?]+)/i,
+    
+    // Project/property related patterns
+    /(?:project|property|job site|construction)\s+(?:in|at|for)\s+([^\.,:;\n?]+)/i,
+    /(?:working|installing|repairing)\s+(?:in|at|for)\s+([^\.,:;\n?]+)/i,
+    
+    // Location followed by weather
+    /(?:in|at|for)\s+([^\.,:;\n?]+)(?:\s+weather)/i,
+    
+    // Simple city name extraction (last resort)
+    /\b([A-Z][a-z]+(?: [A-Z][a-z]+)*(?:,\s*[A-Z]{2})?)\b/
+  ];
+  
+  // Try each pattern in order
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match && match[1]) {
+      // Clean up the location name
+      return match[1].trim()
+        .replace(/^(the|in|at|for|of)\s+/i, '') // Remove leading prepositions
+        .replace(/\s+(area|region|city|town|state|county)$/i, ''); // Remove trailing descriptors
+    }
+  }
+  
+  // If all patterns fail, try to find any capitalized words that might be place names
+  const capitalizedWords = input.match(/\b([A-Z][a-z]{2,})\b/g);
+  if (capitalizedWords && capitalizedWords.length > 0) {
+    return capitalizedWords[0];
+  }
+  
+  // Try for ZIP codes as a last resort
+  const zipMatch = input.match(/\b(\d{5}(?:-\d{4})?)\b/);
+  if (zipMatch && zipMatch[1]) {
+    return zipMatch[1];
+  }
+  
+  return null;
+};
+
+// New function to extract location using API
+const extractLocationAPI = async (query: string): Promise<string | null> => {
+  try {
+    const response = await fetch('app/api/chat/extract-location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input: query })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.location;
+    }
+    
+    console.warn("Location extraction API returned non-OK response:", response.status);
+    return null;
+  } catch (error) {
+    console.error("Error calling location extraction API:", error);
+    return null;
+  }
+};
+
 export const useChatHandler = () => {
   const router = useRouter()
+  const context = useChatbotUI()
 
   const {
     userInput,
@@ -66,8 +174,8 @@ export const useChatHandler = () => {
     models,
     isPromptPickerOpen,
     isFilePickerOpen,
-    isToolPickerOpen
-  } = useContext(ChatbotUIContext)
+    isToolPickerOpen,
+  } = context || {};
 
   const chatInputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -80,14 +188,13 @@ export const useChatHandler = () => {
   const handleNewChat = async () => {
     if (!selectedWorkspace) return
 
+    // reset state for new chat
     setUserInput("")
     setChatMessages([])
     setSelectedChat(null)
     setChatFileItems([])
-
     setIsGenerating(false)
     setFirstTokenReceived(false)
-
     setChatFiles([])
     setChatImages([])
     setNewMessageFiles([])
@@ -95,10 +202,13 @@ export const useChatHandler = () => {
     setShowFilesDisplay(false)
     setIsPromptPickerOpen(false)
     setIsFilePickerOpen(false)
-
     setSelectedTools([])
     setToolInUse("none")
+    
+    // Make sure document mode is reset for new chats
+    setDocumentMode(false)
 
+    // apply assistant or preset settings
     if (selectedAssistant) {
       setChatSettings({
         model: selectedAssistant.model as LLMID,
@@ -113,8 +223,7 @@ export const useChatHandler = () => {
           | "local"
       })
 
-      let allFiles = []
-
+      let allFiles: typeof chatFiles = []
       const assistantFiles = (
         await getAssistantFilesByAssistantId(selectedAssistant.id)
       ).files
@@ -122,11 +231,11 @@ export const useChatHandler = () => {
       const assistantCollections = (
         await getAssistantCollectionsByAssistantId(selectedAssistant.id)
       ).collections
-      for (const collection of assistantCollections) {
-        const collectionFiles = (
-          await getCollectionFilesByCollectionId(collection.id)
+      for (const col of assistantCollections) {
+        const collFiles = (
+          await getCollectionFilesByCollectionId(col.id)
         ).files
-        allFiles = [...allFiles, ...collectionFiles]
+        allFiles = [...allFiles, ...collFiles]
       }
       const assistantTools = (
         await getAssistantToolsByAssistantId(selectedAssistant.id)
@@ -134,12 +243,7 @@ export const useChatHandler = () => {
 
       setSelectedTools(assistantTools)
       setChatFiles(
-        allFiles.map(file => ({
-          id: file.id,
-          name: file.name,
-          type: file.type,
-          file: null
-        }))
+        allFiles.map(f => ({ id: f.id, name: f.name, type: f.type, file: null }))
       )
 
       if (allFiles.length > 0) setShowFilesDisplay(true)
@@ -156,26 +260,9 @@ export const useChatHandler = () => {
           | "openai"
           | "local"
       })
-    } else if (selectedWorkspace) {
-      // setChatSettings({
-      //   model: (selectedWorkspace.default_model ||
-      //     "gpt-4-1106-preview") as LLMID,
-      //   prompt:
-      //     selectedWorkspace.default_prompt ||
-      //     "You are a friendly, helpful AI assistant.",
-      //   temperature: selectedWorkspace.default_temperature || 0.5,
-      //   contextLength: selectedWorkspace.default_context_length || 4096,
-      //   includeProfileContext:
-      //     selectedWorkspace.include_profile_context || true,
-      //   includeWorkspaceInstructions:
-      //     selectedWorkspace.include_workspace_instructions || true,
-      //   embeddingsProvider:
-      //     (selectedWorkspace.embeddings_provider as "openai" | "local") ||
-      //     "openai"
-      // })
     }
 
-    return router.push(`/${selectedWorkspace.id}/chat`)
+    router.push(`/${selectedWorkspace.id}/chat`)
   }
 
   const handleFocusChatInput = () => {
@@ -183,9 +270,7 @@ export const useChatHandler = () => {
   }
 
   const handleStopMessage = () => {
-    if (abortController) {
-      abortController.abort()
-    }
+    abortController?.abort()
   }
 
   const handleSendMessage = async (
@@ -193,24 +278,135 @@ export const useChatHandler = () => {
     chatMessages: ChatMessage[],
     isRegeneration: boolean
   ) => {
-    const startingInput = messageContent
+    // Check if this is a weather-related query
+    const isWeatherRequest = isWeatherQuery(messageContent);
+    
+    // Document detection with comprehensive regex
+    const isDocumentRequest = /^\s*(write|draft|create|generate|make|prepare|compose)\s+(a|an|the|some|me a)?\s*(document|template|policy|letter|email|report|plan|proposal|agreement|contract|website|webpage|web page)/i.test(messageContent);
+    
+    // Check if this message contains a property address
+    const propertyMessageHandler = new PropertyMessageHandler();
+    const propertyResult = await propertyMessageHandler.handleMessage(messageContent);
 
+    // Store the original message to restore on error
+    const startingInput = messageContent;
+    
+    // Set document mode accordingly - ONLY AT THE BEGINNING
+    if (isDocumentRequest) {
+      console.log("Setting document mode to TRUE");
+      setDocumentMode(true);
+      setDocumentContent(""); // Clear content at the beginning
+      setIsStreaming(true);
+    } else if (!isRegeneration) {
+      console.log("This is not a document request");
+      // Don't turn off document mode here
+    }
+
+    // Handle property report if detected
+    if (propertyResult) {
+      console.log("Property address detected, handling property report");
+      console.log("Property result:", propertyResult);
+      
+      try {
+        // Clear the user input immediately
+        setUserInput("");
+        setIsGenerating(true);
+        
+        // Create or update the chat
+        let currentChat = selectedChat ? { ...selectedChat } : null;
+        if (!currentChat) {
+          currentChat = await handleCreateChat(
+            chatSettings!,
+            profile!,
+            selectedWorkspace!,
+            messageContent,
+            selectedAssistant!,
+            newMessageFiles,
+            setSelectedChat,
+            setChats,
+            setChatFiles
+          );
+        } else {
+          const updated = await updateChat(currentChat.id, {
+            updated_at: new Date().toISOString()
+          });
+          setChats(prev => prev.map(c => (c.id === updated.id ? updated : c)));
+        }
+        
+        // Create temp messages for display
+        const { tempUserChatMessage } = createTempMessages(
+          messageContent,
+          chatMessages,
+          chatSettings!,
+          [],
+          false,
+          setChatMessages,
+          selectedAssistant
+        );
+        
+        // Store metadata with the property report data
+        const metadata = JSON.stringify({
+          type: propertyResult.type,
+          reportData: propertyResult.reportData,
+          analysisData: propertyResult.analysisData,
+          metadata: propertyResult.metadata
+        });
+        
+        console.log("Creating property report with metadata:", metadata.substring(0, 100) + "...");
+        
+        // Create messages
+        await handleCreateMessages(
+          chatMessages,
+          currentChat!,
+          profile!,
+          modelData!,
+          messageContent,
+          propertyResult.content,
+          newMessageImages,
+          isRegeneration,
+          [],
+          setChatMessages,
+          setChatFileItems,
+          setChatImages,
+          selectedAssistant,
+          JSON.stringify({
+            type: propertyResult.type,
+            reportData: propertyResult.reportData,
+            analysisData: propertyResult.analysisData,
+            metadata: propertyResult.metadata
+          })
+        );
+        
+        setIsGenerating(false);
+        setFirstTokenReceived(false);
+        
+        // Return early to avoid processing further
+        return;
+      } catch (error) {
+        console.error("Error handling property report:", error);
+        setIsGenerating(false);
+        setFirstTokenReceived(false);
+        // Continue with normal processing
+      }
+    }
+    
     try {
-      setUserInput("")
-      setIsGenerating(true)
-      setIsPromptPickerOpen(false)
-      setIsFilePickerOpen(false)
-      setNewMessageImages([])
+      // Clear the user input immediately to fix input staying issue
+      setUserInput("");
+      setIsGenerating(true);
+      setIsPromptPickerOpen(false);
+      setIsFilePickerOpen(false);
+      setNewMessageImages([]);
 
-      const newAbortController = new AbortController()
-      setAbortController(newAbortController)
+      const newAbort = new AbortController()
+      setAbortController(newAbort)
 
       const modelData = [
-        ...models.map(model => ({
-          modelId: model.model_id as LLMID,
-          modelName: model.name,
+        ...models.map(m => ({
+          modelId: m.model_id as LLMID,
+          modelName: m.name,
           provider: "custom" as ModelProvider,
-          hostedId: model.id,
+          hostedId: m.id,
           platformLink: "",
           imageInput: false
         })),
@@ -228,18 +424,12 @@ export const useChatHandler = () => {
       )
 
       let currentChat = selectedChat ? { ...selectedChat } : null
+      const b64s = newMessageImages.map(img => img.base64)
+      let retrieved: Tables<"file_items">[] = []
 
-      const b64Images = newMessageImages.map(image => image.base64)
-
-      let retrievedFileItems: Tables<"file_items">[] = []
-
-      if (
-        (newMessageFiles.length > 0 || chatFiles.length > 0) &&
-        useRetrieval
-      ) {
+      if ((newMessageFiles.length || chatFiles.length) && useRetrieval) {
         setToolInUse("retrieval")
-
-        retrievedFileItems = await handleRetrieval(
+        retrieved = await handleRetrieval(
           userInput,
           newMessageFiles,
           chatFiles,
@@ -248,96 +438,148 @@ export const useChatHandler = () => {
         )
       }
 
+      // Create temp messages
       const { tempUserChatMessage, tempAssistantChatMessage } =
         createTempMessages(
           messageContent,
           chatMessages,
           chatSettings!,
-          b64Images,
+          b64s,
           isRegeneration,
           setChatMessages,
           selectedAssistant
         )
-
-      let payload: ChatPayload = {
-        chatSettings: chatSettings!,
-        workspaceInstructions: selectedWorkspace!.instructions || "",
-        chatMessages: isRegeneration
-          ? [...chatMessages]
-          : [...chatMessages, tempUserChatMessage],
-        assistant: selectedChat?.assistant_id ? selectedAssistant : null,
-        messageFileItems: retrievedFileItems,
-        chatFileItems: chatFileItems
-      }
-
-      let generatedText = ""
-
-      if (selectedTools.length > 0) {
-        setToolInUse("Tools")
-
-        const formattedMessages = await buildFinalMessages(
-          payload,
-          profile!,
-          chatImages
-        )
-
-        const response = await fetch("/api/chat/tools", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            chatSettings: payload.chatSettings,
-            messages: formattedMessages,
-            selectedTools
-          })
-        })
-
-        setToolInUse("none")
-
-        generatedText = await processResponse(
-          response,
-          isRegeneration
-            ? payload.chatMessages[payload.chatMessages.length - 1]
-            : tempAssistantChatMessage,
-          true,
-          newAbortController,
-          setFirstTokenReceived,
-          setChatMessages,
-          setToolInUse
-        )
+        
+      // Special handling for weather queries
+      let generatedText = "";
+      let documentMetadata: any[] = [];
+      
+      if (isWeatherRequest && !isRegeneration) {
+        console.log("Weather query detected, processing with location extraction");
+        
+        // First try extracting location via API if available
+        let location = await extractLocationAPI(messageContent);
+        
+        // Fall back to pattern matching if API fails
+        if (!location) {
+          console.log("API location extraction failed, using pattern matching");
+          location = extractLocationFromWeatherQuery(messageContent);
+        }
+        
+        // Use a default as last resort
+        if (!location) {
+          console.log("Location extraction failed, using default");
+          location = "unknown location";
+        }
+        
+        console.log("Extracted location:", location);
+        
+        // Create a response with both visible and hidden markers for the weather widget
+        generatedText = `Here's the current weather information for ${location}:\n\n[TRIGGER_WEATHER_LOOKUP:${location}]\n\nThe weather widget above shows current conditions and forecast for ${location}. This includes precipitation forecast, wind conditions, temperature, and safety indicators important for roofing work.`;
+        
+        // Also add a hidden HTML comment that the weather widget can find
+        generatedText += `\n\n<!-- WEATHER_WIDGET_LOCATION:${location} -->`;
+        
+        // Mark as completed so we skip the LLM
+        setFirstTokenReceived(true);
+        
       } else {
-        if (modelData!.provider === "ollama") {
-          generatedText = await handleLocalChat(
+        // For non-weather queries, process normally
+        const payload: ChatPayload = {
+          chatSettings: chatSettings!,
+          workspaceInstructions: selectedWorkspace?.instructions || "",
+          workspaceId: selectedWorkspace?.id || "",
+          chatMessages: isRegeneration
+            ? [...chatMessages]
+            : [...chatMessages, tempUserChatMessage],
+          assistant: selectedChat?.assistant_id ? selectedAssistant : null,
+          messageFileItems: retrieved,
+          chatFileItems
+        }
+
+        // Generate the response using the appropriate method
+        if (selectedTools.length) {
+          setToolInUse("Tools")
+          const formatted = await buildFinalMessages(
             payload,
             profile!,
-            chatSettings!,
-            tempAssistantChatMessage,
-            isRegeneration,
-            newAbortController,
-            setIsGenerating,
+            chatImages
+          )
+          const res = await fetch("/api/chat/tools", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chatSettings: payload.chatSettings, messages: formatted, selectedTools })
+          })
+          
+          console.log("Property Result Structure:", {
+            type: propertyResult.type,
+            hasReportData: !!propertyResult.reportData,
+            hasAnalysisData: !!propertyResult.analysisData,
+            reportDataKeys: propertyResult.reportData ? Object.keys(propertyResult.reportData) : [],
+            analysisDataKeys: propertyResult.analysisData ? Object.keys(propertyResult.analysisData) : []
+          });
+
+          setToolInUse("none")
+          const result = await processResponse(
+            res,
+            isRegeneration
+              ? payload.chatMessages[payload.chatMessages.length - 1]
+              : tempAssistantChatMessage,
+            true,
+            newAbort,
             setFirstTokenReceived,
             setChatMessages,
             setToolInUse
           )
+          generatedText = result.fullText
+          documentMetadata = result.documentMetadata
+
+          // Removed auto-injection of weather markers from AI responses
+          // Weather widget should only trigger when user explicitly requests weather
         } else {
-          generatedText = await handleHostedChat(
-            payload,
-            profile!,
-            modelData!,
-            tempAssistantChatMessage,
-            isRegeneration,
-            newAbortController,
-            newMessageImages,
-            chatImages,
-            setIsGenerating,
-            setFirstTokenReceived,
-            setChatMessages,
-            setToolInUse
-          )
+          const result =
+            modelData!.provider === "ollama"
+              ? await handleLocalChat(
+                  payload,
+                  profile!,
+                  chatSettings!,
+                  tempAssistantChatMessage,
+                  isRegeneration,
+                  newAbort,
+                  setIsGenerating,
+                  setFirstTokenReceived,
+                  setChatMessages,
+                  setToolInUse
+                )
+              : await handleHostedChat(
+                  payload,
+                  profile!,
+                  modelData!,
+                  tempAssistantChatMessage,
+                  isRegeneration,
+                  newAbort,
+                  newMessageImages,
+                  chatImages,
+                  setIsGenerating,
+                  setFirstTokenReceived,
+                  setChatMessages,
+                  setToolInUse
+                )
+
+          // Handle both string (local chat) and object (hosted chat) return values
+          if (typeof result === "string") {
+            generatedText = result
+          } else {
+            generatedText = result.fullText
+            documentMetadata = result.documentMetadata
+          }
+
+          // Removed auto-injection of weather markers from AI responses
+          // Weather widget should only trigger when user explicitly requests weather
         }
       }
 
+      // Create or update the chat
       if (!currentChat) {
         currentChat = await handleCreateChat(
           chatSettings!,
@@ -351,41 +593,90 @@ export const useChatHandler = () => {
           setChatFiles
         )
       } else {
-        const updatedChat = await updateChat(currentChat.id, {
+        const updated = await updateChat(currentChat.id, {
           updated_at: new Date().toISOString()
         })
-
-        setChats(prevChats => {
-          const updatedChats = prevChats.map(prevChat =>
-            prevChat.id === updatedChat.id ? updatedChat : prevChat
-          )
-
-          return updatedChats
-        })
+        setChats(prev => prev.map(c => (c.id === updated.id ? updated : c)))
       }
 
-      await handleCreateMessages(
-        chatMessages,
-        currentChat,
-        profile!,
-        modelData!,
-        messageContent,
-        generatedText,
-        newMessageImages,
-        isRegeneration,
-        retrievedFileItems,
-        setChatMessages,
-        setChatFileItems,
-        setChatImages,
-        selectedAssistant
-      )
-
-      setIsGenerating(false)
-      setFirstTokenReceived(false)
-    } catch (error) {
-      setIsGenerating(false)
-      setFirstTokenReceived(false)
-      setUserInput(startingInput)
+      // After text generation is complete and before message creation:
+      if (isDocumentRequest && generatedText) {
+        console.log("Document request completed, updating document content:", generatedText.substring(0, 50) + "...");
+        
+        // Create a unique ID for this document
+        const documentId = `doc_${Date.now()}`;
+        
+        // Set the content
+        setDocumentContent(generatedText);
+        
+        // Save the document with this ID
+        saveDocument(documentId);
+        
+        // Make sure document mode stays enabled
+        setDocumentMode(true);
+        
+        // Turn off streaming
+        setIsStreaming(false);
+        
+        // Use plain text format that won't be rendered as a code block
+        const chatDisplayText = `I've created a document based on your request.\n\nDOCUMENT_ID:${documentId}\n\nClick to view the document.`;
+        
+        // Create messages with the modified text
+        await handleCreateMessages(
+          chatMessages,
+          currentChat!,
+          profile!,
+          modelData!,
+          messageContent,
+          chatDisplayText, // Use the modified text
+          newMessageImages,
+          isRegeneration,
+          retrieved,
+          setChatMessages,
+          setChatFileItems,
+          setChatImages,
+          selectedAssistant
+        );
+      } else {
+        // Normal message creation for non-document requests
+        const metadataJson = documentMetadata.length > 0 ? JSON.stringify({ sources: documentMetadata }) : undefined
+        console.log("Passing metadata to handleCreateMessages:", metadataJson ? metadataJson.substring(0, 200) : "none")
+        await handleCreateMessages(
+          chatMessages,
+          currentChat!,
+          profile!,
+          modelData!,
+          messageContent,
+          generatedText,
+          newMessageImages,
+          isRegeneration,
+          retrieved,
+          setChatMessages,
+          setChatFileItems,
+          setChatImages,
+          selectedAssistant,
+          metadataJson
+        );
+      }
+      
+      // IMPORTANT: Even if there's an error later, we want to make sure the document isn't closed
+      if (isDocumentRequest) {
+        // One final check to ensure document mode stays on
+        setDocumentMode(true);
+      }
+      
+      setIsGenerating(false);
+      setFirstTokenReceived(false);
+      setIsStreaming(false);
+      
+    } catch (err) {
+      console.error("Error in handleSendMessage:", err);
+      setIsGenerating(false);
+      setFirstTokenReceived(false);
+      setIsStreaming(false);
+      
+      // Don't reset document mode on error, just restore the input
+      setUserInput(startingInput);
     }
   }
 
@@ -394,25 +685,21 @@ export const useChatHandler = () => {
     sequenceNumber: number
   ) => {
     if (!selectedChat) return
-
     await deleteMessagesIncludingAndAfter(
       selectedChat.user_id,
       selectedChat.id,
       sequenceNumber
     )
-
-    const filteredMessages = chatMessages.filter(
-      chatMessage => chatMessage.message.sequence_number < sequenceNumber
+    const filtered = chatMessages.filter(
+      m => m.message.sequence_number < sequenceNumber
     )
-
-    setChatMessages(filteredMessages)
-
-    handleSendMessage(editedContent, filteredMessages, false)
+    setChatMessages(filtered)
+    handleSendMessage(editedContent, filtered, false)
   }
 
   return {
     chatInputRef,
-    prompt,
+    prompt: userInput,
     handleNewChat,
     handleSendMessage,
     handleFocusChatInput,

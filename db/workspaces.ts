@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Special route paths that should bypass workspace lookup
+const SPECIAL_ROUTES = ["explore"]
+
 export const getHomeWorkspaceByUserId = async (userId: string) => {
   const { data: homeWorkspace, error } = await supabase
     .from("workspaces")
@@ -17,17 +20,37 @@ export const getHomeWorkspaceByUserId = async (userId: string) => {
 }
 
 export const getWorkspaceById = async (workspaceId: string) => {
-  const { data: workspace, error } = await supabase
-    .from("workspaces")
-    .select("*")
-    .eq("id", workspaceId)
-    .single()
-
-  if (!workspace) {
-    throw new Error(error.message)
+  // Check if the workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return null or a placeholder workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      description: "This is a special route, not a workspace",
+      user_id: "system",
+      is_home: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
   }
 
-  return workspace
+  // Regular workspace lookup logic
+  try {
+    const { data: workspace, error } = await supabase
+      .from("workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .single()
+
+    if (error || !workspace) {
+      throw new Error(error?.message || "Workspace not found")
+    }
+
+    return workspace
+  } catch (error) {
+    console.error("Error fetching workspace:", error)
+    throw new Error(error.message)
+  }
 }
 
 export const getWorkspacesByUserId = async (userId: string) => {
@@ -64,6 +87,11 @@ export const updateWorkspace = async (
   workspaceId: string,
   workspace: TablesUpdate<"workspaces">
 ) => {
+  // Prevent updating special routes
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot update special route workspaces")
+  }
+
   const { data: updatedWorkspace, error } = await supabase
     .from("workspaces")
     .update(workspace)
@@ -79,6 +107,11 @@ export const updateWorkspace = async (
 }
 
 export const deleteWorkspace = async (workspaceId: string) => {
+  // Prevent deleting special routes
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete special route workspaces")
+  }
+
   const { error } = await supabase
     .from("workspaces")
     .delete()

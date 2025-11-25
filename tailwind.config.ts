@@ -64,11 +64,33 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: 0 }
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+          '50%': { opacity: 0.8, transform: 'scale(1.05)' }
+        },
+        'spin-slow': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
+        },
+        'wave': {
+          '0%, 100%': { transform: 'scale(1) rotate(0deg)' },
+          '25%': { transform: 'scale(1.1) rotate(5deg)' },
+          '50%': { transform: 'scale(0.9) rotate(0deg)' },
+          '75%': { transform: 'scale(1.1) rotate(-5deg)' }
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
+        'spin-slow': 'spin-slow 8s linear infinite',
+        'wave': 'wave 2s ease-in-out infinite',
+        'float': 'float 4s ease-in-out infinite'
       }
     }
   },

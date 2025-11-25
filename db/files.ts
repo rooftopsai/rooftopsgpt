@@ -4,6 +4,9 @@ import mammoth from "mammoth"
 import { toast } from "sonner"
 import { uploadFile } from "./storage/files"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getFileById = async (fileId: string) => {
   const { data: file, error } = await supabase
     .from("files")
@@ -19,6 +22,16 @@ export const getFileById = async (fileId: string) => {
 }
 
 export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return a mock workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      files: []
+    };
+  }
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
@@ -64,6 +77,11 @@ export const createFileBasedOnExtension = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create file for special routes")
+  }
+
   const fileExtension = file.name.split(".").pop()
 
   if (fileExtension === "docx") {
@@ -91,6 +109,11 @@ export const createFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create file for special routes")
+  }
+
   let validFilename = fileRecord.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase()
   const extension = file.name.split(".").pop()
   const extensionIndex = validFilename.lastIndexOf(".")
@@ -153,7 +176,7 @@ export const createFile = async (
   return fetchedFile
 }
 
-// // Handle docx files
+// Handle docx files
 export const createDocXFile = async (
   text: string,
   file: File,
@@ -161,6 +184,11 @@ export const createDocXFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create file for special routes")
+  }
+
   const { data: createdFile, error } = await supabase
     .from("files")
     .insert([fileRecord])
@@ -221,6 +249,11 @@ export const createFiles = async (
   files: TablesInsert<"files">[],
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create files for special routes")
+  }
+
   const { data: createdFiles, error } = await supabase
     .from("files")
     .insert(files)
@@ -246,6 +279,11 @@ export const createFileWorkspace = async (item: {
   file_id: string
   workspace_id: string
 }) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(item.workspace_id)) {
+    throw new Error("Cannot create file workspace for special routes")
+  }
+
   const { data: createdFileWorkspace, error } = await supabase
     .from("file_workspaces")
     .insert([item])
@@ -262,6 +300,11 @@ export const createFileWorkspace = async (item: {
 export const createFileWorkspaces = async (
   items: { user_id: string; file_id: string; workspace_id: string }[]
 ) => {
+  // Check if any workspace_id is a special route
+  if (items.some(item => SPECIAL_ROUTES.includes(item.workspace_id))) {
+    throw new Error("Cannot create file workspaces for special routes")
+  }
+
   const { data: createdFileWorkspaces, error } = await supabase
     .from("file_workspaces")
     .insert(items)
@@ -304,6 +347,11 @@ export const deleteFileWorkspace = async (
   fileId: string,
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete file workspace for special routes")
+  }
+
   const { error } = await supabase
     .from("file_workspaces")
     .delete()

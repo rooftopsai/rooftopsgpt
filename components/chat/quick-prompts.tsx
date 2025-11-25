@@ -123,27 +123,27 @@ export function QuickPrompts() {
   }
 
   return (
-    <div className="w-full mb-6">
+    <div className="mb-6 w-full">
       {/* Horizontal scrolling cards */}
-      <div className="flex gap-3 overflow-x-auto pb-2 px-1 snap-x snap-mandatory scrollbar-hide">
+      <div className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2">
         {/* Featured Property Report Card with map background */}
         <button
           onClick={handleExploreClick}
-          className="flex-none w-[180px] snap-start"
+          className="w-[180px] flex-none snap-start"
         >
-          <div className="h-[100px] rounded-xl border backdrop-blur-md p-4 flex flex-col justify-center items-center transition-all shadow-lg hover:shadow-xl text-left relative overflow-hidden bg-white/60 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
+          <div className="relative flex h-[100px] flex-col items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white/60 p-4 text-left shadow-lg backdrop-blur-md transition-all hover:border-gray-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/80 dark:hover:border-gray-600">
             {/* Subtle map background */}
             <div
-              className="absolute inset-0 opacity-5 dark:opacity-10 bg-cover bg-center"
+              className="absolute inset-0 bg-cover bg-center opacity-5 dark:opacity-10"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
               }}
             />
 
             <div className="relative z-10 flex items-center gap-3">
-              <IconMap size={24} className="text-blue-500 dark:text-blue-400 flex-shrink-0" />
+              <IconMap size={24} className="shrink-0 text-blue-500 dark:text-blue-400" />
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Property Reports</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Property Reports</h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400">Instant analysis</p>
               </div>
             </div>
@@ -157,17 +157,17 @@ export function QuickPrompts() {
             <button
               key={category.id}
               onClick={() => handleCategoryClick(category.id)}
-              className="flex-none w-[180px] snap-start"
+              className="w-[180px] flex-none snap-start"
             >
-              <div className={`h-[100px] rounded-xl backdrop-blur-md p-4 flex flex-col justify-center items-center transition-all text-left border ${
+              <div className={`flex h-[100px] flex-col items-center justify-center rounded-xl border p-4 text-left backdrop-blur-md transition-all ${
                 selectedCategory === category.id
-                  ? "bg-white/80 dark:bg-gray-700/90 border-gray-300 dark:border-gray-600 shadow-lg"
-                  : "bg-white/50 dark:bg-gray-800/70 border-gray-200 dark:border-gray-700 hover:bg-white/70 dark:hover:bg-gray-700/80 hover:border-gray-300 dark:hover:border-gray-600 shadow-md hover:shadow-lg"
+                  ? "border-gray-300 bg-white/80 shadow-lg dark:border-gray-600 dark:bg-gray-700/90"
+                  : "border-gray-200 bg-white/50 shadow-md hover:border-gray-300 hover:bg-white/70 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/70 dark:hover:border-gray-600 dark:hover:bg-gray-700/80"
               }`}>
                 <div className="flex items-center gap-3">
-                  <Icon size={24} className="text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                  <Icon size={24} className="shrink-0 text-blue-500 dark:text-blue-400" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{category.title}</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{category.title}</h3>
                     <p className="text-xs text-gray-600 dark:text-gray-400">{category.description}</p>
                   </div>
                 </div>
@@ -178,23 +178,23 @@ export function QuickPrompts() {
       </div>
 
       {/* Scroll indicator on mobile */}
-      <div className="text-center mt-2 text-xs text-muted-foreground sm:hidden">
+      <div className="text-muted-foreground mt-2 text-center text-xs sm:hidden">
         ← Scroll for more →
       </div>
 
       {/* Prompt suggestions dropdown */}
       {selectedCategory && (
-        <div className="mt-4 bg-white/70 dark:bg-gray-800/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between mb-3">
+        <div className="animate-in fade-in slide-in-from-top-2 mt-4 rounded-xl border border-gray-200 bg-white/70 p-4 shadow-2xl backdrop-blur-xl duration-200 dark:border-gray-700 dark:bg-gray-800/90">
+          <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {PROMPT_CATEGORIES.find((c) => c.id === selectedCategory)?.title} suggestions
             </h3>
             <button
               onClick={() => setSelectedCategory(null)}
-              className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 rounded hover:bg-gray-200/50 dark:hover:bg-gray-700/50 backdrop-blur-sm transition-all"
+              className="rounded p-1 text-gray-500 backdrop-blur-sm transition-all hover:bg-gray-200/50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
             >
               <svg
-                className="h-4 w-4"
+                className="size-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -214,7 +214,7 @@ export function QuickPrompts() {
                 <button
                   key={index}
                   onClick={() => handlePromptClick(prompt)}
-                  className="w-full text-left px-4 py-3 rounded-md backdrop-blur-sm bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:bg-white/80 dark:hover:bg-gray-600/70 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-sm text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white shadow-sm hover:shadow-md"
+                  className="w-full rounded-md border border-gray-200 bg-white/50 px-4 py-3 text-left text-sm text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:border-gray-300 hover:bg-white/80 hover:text-gray-900 hover:shadow-md dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-600/70 dark:hover:text-white"
                 >
                   {prompt}
                 </button>

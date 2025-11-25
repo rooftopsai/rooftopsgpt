@@ -1,6 +1,6 @@
 import { ModelIcon } from "@/components/models/model-icon"
 import { WithTooltip } from "@/components/ui/with-tooltip"
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
@@ -23,7 +23,7 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
     availableLocalModels,
     assistantImages,
     availableOpenRouterModels
-  } = useContext(ChatbotUIContext)
+  } = useChatbotUI()
 
   const router = useRouter()
   const params = useParams()
@@ -80,17 +80,9 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
             size={30}
           />
         )
-      ) : (
-        <WithTooltip
-          delayDuration={200}
-          display={<div>{MODEL_DATA?.modelName}</div>}
-          trigger={
-            <ModelIcon provider={MODEL_DATA?.provider} height={30} width={30} />
-          }
-        />
-      )}
+      ) : null}
 
-      <div className="ml-3 flex-1 truncate text-sm font-semibold">
+      <div className={cn("flex-1 truncate text-sm font-semibold", chat.assistant_id ? "ml-3" : "")}>
         {chat.name}
       </div>
 

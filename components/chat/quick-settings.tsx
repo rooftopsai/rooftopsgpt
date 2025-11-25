@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { getAssistantCollectionsByAssistantId } from "@/db/assistant-collections"
 import { getAssistantFilesByAssistantId } from "@/db/assistant-files"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
@@ -43,7 +43,7 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
     setSelectedTools,
     setShowFilesDisplay,
     selectedWorkspace
-  } = useContext(ChatbotUIContext)
+  } = useChatbotUI()
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -224,7 +224,6 @@ export const QuickSettings: FC<QuickSettingsProps> = ({}) => {
                 {isModified &&
                   (selectedPreset || selectedAssistant) &&
                   "Modified "}
-
                 {selectedPreset?.name ||
                   selectedAssistant?.name ||
                   t("Quick Settings")}

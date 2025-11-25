@@ -174,7 +174,7 @@ export const handleLocalChat = async (
     setChatMessages
   )
 
-  return await processResponse(
+  const result = await processResponse(
     response,
     isRegeneration
       ? payload.chatMessages[payload.chatMessages.length - 1]
@@ -185,6 +185,8 @@ export const handleLocalChat = async (
     setChatMessages,
     setToolInUse
   )
+
+  return result.fullText
 }
 
 export const handleHostedChat = async (
@@ -221,7 +223,8 @@ export const handleHostedChat = async (
   const requestBody = {
     chatSettings: payload.chatSettings,
     messages: formattedMessages,
-    customModelId: provider === "custom" ? modelData.hostedId : ""
+    customModelId: provider === "custom" ? modelData.hostedId : "",
+    workspaceId: payload.workspaceId
   }
 
   const response = await fetchChatResponse(
@@ -289,11 +292,39 @@ export const processResponse = async (
 ) => {
   let fullText = ""
   let contentToAdd = ""
+  let documentMetadata: any[] = []
+  let isFirstChunk = true
 
   if (response.body) {
     await consumeReadableStream(
       response.body,
       chunk => {
+        // Check if this is the first chunk and contains document metadata
+        if (isFirstChunk) {
+          console.log("First chunk received:", chunk.substring(0, 100))
+          if (chunk.startsWith("__DOCUMENTS__:")) {
+            isFirstChunk = false
+            const metadataLineEnd = chunk.indexOf("\n")
+            console.log("Found metadata line, end index:", metadataLineEnd)
+            if (metadataLineEnd !== -1) {
+              const metadataLine = chunk.substring(0, metadataLineEnd)
+              const jsonStr = metadataLine.substring("__DOCUMENTS__:".length)
+              console.log("Metadata JSON string:", jsonStr.substring(0, 200))
+              try {
+                documentMetadata = JSON.parse(jsonStr)
+                console.log("Extracted document metadata:", documentMetadata)
+              } catch (error) {
+                console.error("Error parsing document metadata:", error, jsonStr)
+              }
+              // Continue processing the rest of the chunk
+              chunk = chunk.substring(metadataLineEnd + 1)
+            }
+          } else {
+            console.log("First chunk does not start with __DOCUMENTS__:")
+            isFirstChunk = false
+          }
+        }
+
         setFirstTokenReceived(true)
         setToolInUse("none")
 
@@ -337,7 +368,7 @@ export const processResponse = async (
       controller.signal
     )
 
-    return fullText
+    return { fullText, documentMetadata }
   } else {
     throw new Error("Response body is null")
   }
@@ -399,7 +430,8 @@ export const handleCreateMessages = async (
     React.SetStateAction<Tables<"file_items">[]>
   >,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
-  selectedAssistant: Tables<"assistants"> | null
+  selectedAssistant: Tables<"assistants"> | null,
+  metadata?: string
 ) => {
   const finalUserMessage: TablesInsert<"messages"> = {
     chat_id: currentChat.id,
@@ -420,7 +452,8 @@ export const handleCreateMessages = async (
     model: modelData.modelId,
     role: "assistant",
     sequence_number: chatMessages.length + 1,
-    image_paths: []
+    image_paths: [],
+    metadata 
   }
 
   let finalChatMessages: ChatMessage[] = []

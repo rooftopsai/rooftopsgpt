@@ -4,6 +4,11 @@ import { NextResponse, type NextRequest } from "next/server"
 import i18nConfig from "./i18nConfig"
 
 export async function middleware(request: NextRequest) {
+  // Check for special routes first
+  const pathname = request.nextUrl.pathname
+
+
+  // Process i18n routing
   const i18nResult = i18nRouter(request, i18nConfig)
   if (i18nResult) return i18nResult
 
@@ -41,6 +46,9 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+// Update the matcher to include special routes
 export const config = {
-  matcher: "/((?!api|static|.*\\..*|_next|auth).*)"
+  matcher: [
+    "/((?!api|static|.*\\..*|_next|auth).*)",
+  ]
 }

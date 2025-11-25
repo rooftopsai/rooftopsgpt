@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { WORKSPACE_INSTRUCTIONS_MAX } from "@/db/limits"
 import {
   getWorkspaceImageFromStorage,
@@ -39,7 +39,7 @@ export const WorkspaceSettings: FC<WorkspaceSettingsProps> = ({}) => {
     setChatSettings,
     workspaceImages,
     setWorkspaceImages
-  } = useContext(ChatbotUIContext)
+  } = useChatbotUI()
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 

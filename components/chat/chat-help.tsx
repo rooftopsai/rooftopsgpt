@@ -173,7 +173,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
           </div>
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="flex justify-between">
+        {/* <DropdownMenuItem className="flex justify-between">
           <div>Open Quick Settings</div>
           <div className="flex opacity-60">
             <div className="min-w-[30px] rounded border-DEFAULT p-1 text-center">
@@ -186,7 +186,7 @@ export const ChatHelp: FC<ChatHelpProps> = ({}) => {
               P
             </div>
           </div>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
 
         <DropdownMenuItem className="flex justify-between">
           <div>Toggle Sidebar</div>

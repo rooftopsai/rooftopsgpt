@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getPromptById = async (promptId: string) => {
   const { data: prompt, error } = await supabase
     .from("prompts")
@@ -16,6 +19,16 @@ export const getPromptById = async (promptId: string) => {
 }
 
 export const getPromptWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return a mock workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      prompts: []
+    };
+  }
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
@@ -59,6 +72,11 @@ export const createPrompt = async (
   prompt: TablesInsert<"prompts">,
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create prompt for special routes")
+  }
+
   const { data: createdPrompt, error } = await supabase
     .from("prompts")
     .insert([prompt])
@@ -82,6 +100,11 @@ export const createPrompts = async (
   prompts: TablesInsert<"prompts">[],
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create prompts for special routes")
+  }
+
   const { data: createdPrompts, error } = await supabase
     .from("prompts")
     .insert(prompts)
@@ -107,6 +130,11 @@ export const createPromptWorkspace = async (item: {
   prompt_id: string
   workspace_id: string
 }) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(item.workspace_id)) {
+    throw new Error("Cannot create prompt workspace for special routes")
+  }
+
   const { data: createdPromptWorkspace, error } = await supabase
     .from("prompt_workspaces")
     .insert([item])
@@ -123,6 +151,11 @@ export const createPromptWorkspace = async (item: {
 export const createPromptWorkspaces = async (
   items: { user_id: string; prompt_id: string; workspace_id: string }[]
 ) => {
+  // Check if any workspace_id is a special route
+  if (items.some(item => SPECIAL_ROUTES.includes(item.workspace_id))) {
+    throw new Error("Cannot create prompt workspaces for special routes")
+  }
+
   const { data: createdPromptWorkspaces, error } = await supabase
     .from("prompt_workspaces")
     .insert(items)
@@ -165,6 +198,11 @@ export const deletePromptWorkspace = async (
   promptId: string,
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete prompt workspace for special routes")
+  }
+
   const { error } = await supabase
     .from("prompt_workspaces")
     .delete()

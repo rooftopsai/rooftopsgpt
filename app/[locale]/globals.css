@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
@@ -93,6 +104,35 @@
     --ring: 0 0% 14.9%;
   }
 }
+/* Mobile-friendly document panel styles */
+@media (max-width: 768px) {
+  /* Make document panel full width on mobile */
+  .document-panel-container {
+    width: 100% !important;
+  }
+  
+  /* Adjust main content when document panel is open on mobile */
+  .main-content-container.doc-open {
+    display: none; /* Hide chat when document is open on mobile */
+  }
+  
+  /* Make the document button more visible on mobile */
+  .document-button {
+    bottom: 70px; /* Position above chat input */
+    right: 20px;
+    padding: 12px;
+  }
+}
+
+/* Animation for document panel */
+.document-panel-container {
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+/* Animation for main content */
+.main-content-container {
+  transition: margin-right 0.3s ease-in-out, width 0.3s ease-in-out;
+}
 
 @layer base {
   * {
@@ -101,4 +141,22 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Thinner icon styles - applies to all SVG icons */
+svg {
+  stroke-width: 1.5;
+}
+
+/* Specifically target Tabler icons for even thinner strokes */
+[class*="tabler-icon"],
+[class*="IconTabler"] {
+  stroke-width: 1.25;
+}
+
+/* Target all icon SVGs globally for consistent thin appearance */
+button svg,
+a svg,
+div[role="button"] svg {
+  stroke-width: 1.25;
 }

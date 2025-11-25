@@ -1,14 +1,24 @@
+// components/utility/providers.tsx
 "use client"
 
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { ThemeProviderProps } from "next-themes/dist/types"
-import { FC } from "react"
+import { ThemeProvider } from "next-themes"
+import { ChatbotUIProvider } from "@/context/context"
 
-export const Providers: FC<ThemeProviderProps> = ({ children, ...props }) => {
+export function Providers({
+  attribute,
+  defaultTheme,
+  children
+}: {
+  attribute: string
+  defaultTheme: string
+  children: React.ReactNode
+}) {
   return (
-    <NextThemesProvider {...props}>
-      <TooltipProvider>{children}</TooltipProvider>
-    </NextThemesProvider>
+    <ThemeProvider attribute={attribute} defaultTheme={defaultTheme}>
+      {/* 🎯 Wrap here so all downstream client components get context */}
+      <ChatbotUIProvider>
+        {children}
+      </ChatbotUIProvider>
+    </ThemeProvider>
   )
 }

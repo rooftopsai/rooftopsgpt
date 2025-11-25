@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getToolById = async (toolId: string) => {
   const { data: tool, error } = await supabase
     .from("tools")
@@ -16,6 +19,16 @@ export const getToolById = async (toolId: string) => {
 }
 
 export const getToolWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return a mock workspace for special routes
+    return {
+      id: "special",
+      name: "Special Route",
+      tools: []
+    };
+  }
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
@@ -59,6 +72,11 @@ export const createTool = async (
   tool: TablesInsert<"tools">,
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create tool for special routes")
+  }
+
   const { data: createdTool, error } = await supabase
     .from("tools")
     .insert([tool])
@@ -82,6 +100,11 @@ export const createTools = async (
   tools: TablesInsert<"tools">[],
   workspace_id: string
 ) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(workspace_id)) {
+    throw new Error("Cannot create tools for special routes")
+  }
+
   const { data: createdTools, error } = await supabase
     .from("tools")
     .insert(tools)
@@ -107,6 +130,11 @@ export const createToolWorkspace = async (item: {
   tool_id: string
   workspace_id: string
 }) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(item.workspace_id)) {
+    throw new Error("Cannot create tool workspace for special routes")
+  }
+
   const { data: createdToolWorkspace, error } = await supabase
     .from("tool_workspaces")
     .insert([item])
@@ -123,6 +151,11 @@ export const createToolWorkspace = async (item: {
 export const createToolWorkspaces = async (
   items: { user_id: string; tool_id: string; workspace_id: string }[]
 ) => {
+  // Check if any workspace_id is a special route
+  if (items.some(item => SPECIAL_ROUTES.includes(item.workspace_id))) {
+    throw new Error("Cannot create tool workspaces for special routes")
+  }
+
   const { data: createdToolWorkspaces, error } = await supabase
     .from("tool_workspaces")
     .insert(items)
@@ -165,6 +198,11 @@ export const deleteToolWorkspace = async (
   toolId: string,
   workspaceId: string
 ) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    throw new Error("Cannot delete tool workspace for special routes")
+  }
+
   const { error } = await supabase
     .from("tool_workspaces")
     .delete()

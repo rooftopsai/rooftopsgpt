@@ -1,4 +1,4 @@
-import { ChatbotUIContext } from "@/context/context"
+import { useChatbotUI } from "@/context/context"
 import { useContext, useEffect, useState } from "react"
 
 /**
@@ -11,7 +11,7 @@ import { useContext, useEffect, useState } from "react"
  */
 export const useChatHistoryHandler = () => {
   const { setUserInput, chatMessages, isGenerating } =
-    useContext(ChatbotUIContext)
+    useChatbotUI()
   const userRoleString = "user"
 
   const [messageHistoryIndex, setMessageHistoryIndex] = useState<number>(

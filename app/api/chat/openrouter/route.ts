@@ -1,9 +1,12 @@
-import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
 import { OpenAIStream, StreamingTextResponse } from "ai"
 import { ServerRuntime } from "next"
 import OpenAI from "openai"
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs"
+import { ROOFING_EXPERT_SYSTEM_PROMPT } from "@/lib/system-prompts"
+import { GLOBAL_API_KEYS } from "@/lib/api-keys"
+import { withSubscriptionCheck, trackChatUsage } from "@/lib/chat-with-subscription"
 
 export const runtime: ServerRuntime = "edge"
 
@@ -15,24 +18,44 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await getServerProfile()
+    // Check subscription
+    const subCheck = await withSubscriptionCheck()
+    if (!subCheck.allowed) return subCheck.response
+    const profile = subCheck.profile!
 
-    checkApiKey(profile.openrouter_api_key, "OpenRouter")
+    if (!GLOBAL_API_KEYS.openrouter) {
+      return new Response(
+        JSON.stringify({ error: "OpenRouter API key not configured" }),
+        { status: 500 }
+      )
+    }
 
     const openai = new OpenAI({
-      apiKey: profile.openrouter_api_key || "",
+      apiKey: GLOBAL_API_KEYS.openrouter,
       baseURL: "https://openrouter.ai/api/v1"
     })
 
+    // Prepend roofing expert prompt to system message
+    const modifiedMessages = [...messages]
+    if (modifiedMessages.length > 0) {
+      modifiedMessages[0] = {
+        ...modifiedMessages[0],
+        content: ROOFING_EXPERT_SYSTEM_PROMPT + "\n\n" + modifiedMessages[0].content
+      }
+    }
+
     const response = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
-      messages: messages as ChatCompletionCreateParamsBase["messages"],
+      messages: modifiedMessages as ChatCompletionCreateParamsBase["messages"],
       temperature: chatSettings.temperature,
       max_tokens: undefined,
       stream: true
     })
 
     const stream = OpenAIStream(response)
+
+    // Track usage after successful API call (don't await to not block response)
+    trackChatUsage(profile.user_id)
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {

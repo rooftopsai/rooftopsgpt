@@ -1,7 +1,16 @@
 import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 
+// Define special routes that should bypass normal database queries
+const SPECIAL_ROUTES = ["explore"];
+
 export const getFoldersByWorkspaceId = async (workspaceId: string) => {
+  // Check if workspaceId is a special route
+  if (SPECIAL_ROUTES.includes(workspaceId)) {
+    // Return empty array for special routes
+    return []
+  }
+
   const { data: folders, error } = await supabase
     .from("folders")
     .select("*")
@@ -15,6 +24,11 @@ export const getFoldersByWorkspaceId = async (workspaceId: string) => {
 }
 
 export const createFolder = async (folder: TablesInsert<"folders">) => {
+  // Check if workspace_id is a special route
+  if (SPECIAL_ROUTES.includes(folder.workspace_id)) {
+    throw new Error("Cannot create folder for special routes")
+  }
+
   const { data: createdFolder, error } = await supabase
     .from("folders")
     .insert([folder])

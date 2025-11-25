@@ -15,7 +15,7 @@ import { WithTooltip } from "../ui/with-tooltip"
 import { ProfileSettings } from "../utility/profile-settings"
 import { SidebarSwitchItem } from "./sidebar-switch-item"
 
-export const SIDEBAR_ICON_SIZE = 28
+export const SIDEBAR_ICON_SIZE = 20
 
 interface SidebarSwitcherProps {
   onContentTypeChange: (contentType: ContentType) => void
@@ -25,8 +25,8 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
   onContentTypeChange
 }) => {
   return (
-    <div className="flex flex-col justify-between border-r-2 pb-5">
-      <TabsList className="bg-background grid h-[440px] grid-rows-7">
+    <div className="flex flex-col justify-between border-r border-blue-500/10 py-3 dark:border-blue-400/15">
+      <TabsList className="grid h-auto grid-rows-8 gap-1 bg-transparent p-1">
         <SidebarSwitchItem
           icon={<IconMessage size={SIDEBAR_ICON_SIZE} />}
           contentType="chats"
@@ -76,13 +76,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
         />
       </TabsList>
 
-      <div className="flex flex-col items-center space-y-4">
-        {/* TODO */}
-        {/* <WithTooltip display={<div>Import</div>} trigger={<Import />} /> */}
-
-        {/* TODO */}
-        {/* <Alerts /> */}
-
+      <div className="flex flex-col items-center p-1">
         <WithTooltip
           display={<div>Profile Settings</div>}
           trigger={<ProfileSettings />}
