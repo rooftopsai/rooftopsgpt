@@ -9,7 +9,7 @@ import { withSubscriptionCheck, trackChatUsage } from "@/lib/chat-with-subscript
 
 export const runtime = "edge"
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   const json = await request.json()
   const { chatSettings, messages } = json as {
     chatSettings: ChatSettings
@@ -19,7 +19,9 @@ export async function POST(request: Request) {
   try {
     // Check subscription
     const subCheck = await withSubscriptionCheck()
-    if (!subCheck.allowed) return subCheck.response
+    if (!subCheck.allowed) {
+      return subCheck.response || new Response(JSON.stringify({ error: "Subscription check failed" }), { status: 403 })
+    }
     const profile = subCheck.profile!
 
     if (!GLOBAL_API_KEYS.mistral) {
