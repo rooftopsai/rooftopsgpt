@@ -15,12 +15,47 @@ import {
 
 export const runtime: ServerRuntime = "edge"
 
+// Add GET handler to verify routing works
+export async function GET(request: Request) {
+  console.log("[OpenAI Route] GET handler called - method not allowed")
+  return new Response(
+    JSON.stringify({ error: "Method GET not allowed. Use POST." }),
+    { status: 405, headers: { "Content-Type": "application/json" } }
+  )
+}
+
 export async function POST(request: Request) {
-  const json = await request.json()
-  const { chatSettings, messages, workspaceId } = json as {
-    chatSettings: ChatSettings
-    messages: any[]
-    workspaceId?: string
+  console.log("[OpenAI Route] POST handler called", {
+    url: request.url,
+    method: request.method,
+    headers: Object.fromEntries(request.headers.entries())
+  })
+
+  let json: any
+  let chatSettings: ChatSettings
+  let messages: any[]
+  let workspaceId: string | undefined
+
+  try {
+    json = await request.json()
+    chatSettings = json.chatSettings
+    messages = json.messages
+    workspaceId = json.workspaceId
+
+    console.log("[OpenAI Route] Request parsed successfully", {
+      model: chatSettings?.model,
+      messageCount: messages?.length,
+      workspaceId
+    })
+  } catch (parseError: any) {
+    console.error("[OpenAI Route] Failed to parse request", parseError)
+    return new Response(
+      JSON.stringify({
+        error: "Invalid request body",
+        details: parseError.message
+      }),
+      { status: 400 }
+    )
   }
 
   try {
