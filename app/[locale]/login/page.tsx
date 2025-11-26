@@ -173,7 +173,11 @@ export default async function Login({
   const signInWithGoogle = async () => {
     "use server"
 
-    const origin = headers().get("origin")
+    const headersList = headers()
+    const host = headersList.get("host")
+    const protocol = headersList.get("x-forwarded-proto") || "https"
+    const origin = `${protocol}://${host}`
+
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
