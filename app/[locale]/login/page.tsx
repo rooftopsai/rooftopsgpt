@@ -200,15 +200,33 @@ export default async function Login({
   return (
     <div className="flex h-screen w-full">
       {/* Left side - Hero section (hidden on mobile) */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 lg:flex lg:w-1/2">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE2YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00em0wIDI0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00ek0xMiAxNmMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNHptMCAyNGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30"></div>
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-zinc-950 via-black to-zinc-900 lg:flex lg:w-1/2">
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 via-transparent to-zinc-800/30"></div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center px-16 text-center text-white">
+        {/* Subtle animated waves pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, #18181b 1px, transparent 1px), linear-gradient(to bottom, #18181b 1px, transparent 1px)",
+              backgroundSize: "4rem 4rem",
+              maskImage:
+                "radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%)"
+            }}
+          ></div>
+        </div>
+
+        {/* Glow effect */}
+        <div className="absolute left-1/2 top-1/2 size-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-500/10 blur-[120px]"></div>
+
+        <div className="relative z-10 flex flex-col items-center justify-center px-16 text-center">
           <div className="mb-12">
-            <Brand />
+            <Brand theme="light" />
           </div>
 
-          <h1 className="text-6xl font-light leading-tight tracking-tight">
+          <h1 className="bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-6xl font-light leading-tight tracking-tight text-transparent">
             Every project
             <br />
             starts at the top
@@ -246,8 +264,8 @@ export default async function Login({
           )}
 
           {/* Google Sign-in - Separate form to avoid validation conflicts */}
-          <form action={signInWithGoogle} className="mb-4">
-            <SubmitButton className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-50">
+          <form action={signInWithGoogle} className="mb-6">
+            <SubmitButton className="flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 font-medium text-white transition-all hover:border-zinc-600 hover:bg-zinc-800 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:border-zinc-500 dark:hover:bg-zinc-700">
               <svg className="size-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -270,12 +288,12 @@ export default async function Login({
             </SubmitButton>
           </form>
 
-          <div className="relative my-4">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t border-zinc-700 dark:border-zinc-600"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-background text-muted-foreground px-2">
+              <span className="bg-background text-muted-foreground px-3">
                 Or continue with email
               </span>
             </div>
@@ -283,15 +301,15 @@ export default async function Login({
 
           {/* Email/Password Sign-in Form */}
           <form
-            className="animate-in text-foreground flex w-full flex-col gap-4"
+            className="animate-in text-foreground flex w-full flex-col gap-5"
             action={signIn}
           >
-            <div>
+            <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="email">
                 Email
               </Label>
               <Input
-                className="mt-2 rounded-md border bg-inherit px-4 py-2.5"
+                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 name="email"
                 placeholder="you@example.com"
                 required
@@ -299,12 +317,12 @@ export default async function Login({
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="password">
                 Password
               </Label>
               <Input
-                className="mt-2 rounded-md border bg-inherit px-4 py-2.5"
+                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 type="password"
                 name="password"
                 placeholder="••••••••"
@@ -312,16 +330,16 @@ export default async function Login({
               />
             </div>
 
-            <SubmitButton className="mt-2 rounded-md bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700">
+            <SubmitButton className="mt-2 rounded-lg bg-white px-4 py-3 font-semibold text-black transition-all hover:bg-zinc-100">
               Sign in
             </SubmitButton>
 
-            <div className="relative my-4">
+            <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-zinc-700 dark:border-zinc-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-background text-muted-foreground px-2">
+                <span className="bg-background text-muted-foreground px-3">
                   Don&apos;t have an account?
                 </span>
               </div>
@@ -329,16 +347,16 @@ export default async function Login({
 
             <SubmitButton
               formAction={signUp}
-              className="border-foreground/20 hover:bg-accent w-full rounded-md border px-4 py-2.5 font-medium transition-colors"
+              className="w-full rounded-lg border border-zinc-700 bg-transparent px-4 py-3 font-medium transition-all hover:border-zinc-600 hover:bg-zinc-900/50 dark:border-zinc-600 dark:hover:border-zinc-500 dark:hover:bg-zinc-800/50"
             >
               Create account
             </SubmitButton>
 
-            <div className="text-muted-foreground mt-2 flex justify-center text-sm">
+            <div className="text-muted-foreground mt-1 flex justify-center text-sm">
               <button
                 type="button"
                 formAction={handleResetPassword}
-                className="text-primary underline hover:opacity-80"
+                className="hover:text-foreground transition-colors"
               >
                 Forgot your password?
               </button>
