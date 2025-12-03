@@ -13,6 +13,7 @@ import {
   segmentRoofColors,
   enhanceRoofPitch
 } from "@/lib/image-processing"
+import { useChatbotUI } from "@/context/context"
 
 // Import our components
 import MapView from "./MapView"
@@ -78,11 +79,20 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   })
 
   const { toast } = useToast()
+  const { showSidebar, setShowSidebar } = useChatbotUI()
 
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Auto-collapse sidebar when report opens
+  useEffect(() => {
+    if ((roofAnalysis || reportData) && showSidebar) {
+      setShowSidebar(false)
+      localStorage.setItem("showSidebar", "false")
+    }
+  }, [roofAnalysis, reportData, showSidebar, setShowSidebar])
 
   // Debug logging function
   const logDebug = useCallback(
@@ -1016,25 +1026,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
   // Render the main component
   return (
-    <div className="explore-map-container flex h-full flex-col p-2 pb-[180px] md:p-4">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
-          <IconMapPin size={18} className="text-white" />
-        </div>
-        <h2 className="text-lg font-bold text-gray-900 md:text-2xl dark:text-white">
-          AI Property Explorer
-        </h2>
-      </div>
-
-      <p className="mb-3 text-sm text-gray-600 md:text-base dark:text-gray-300">
-        Search for an address or click on any rooftop to analyze solar potential
-        and generate a property report.
-      </p>
-
-      {/* Map Component */}
-      <div
-        className={`overflow-hidden ${roofAnalysis || reportData ? "h-[400px]" : "min-h-[400px] flex-1"}`}
-      >
+    <div className="explore-map-container relative flex h-full flex-col">
+      {/* Map Component - Full Screen */}
+      <div className="absolute inset-0 overflow-hidden">
         <MapView
           workspaceId={workspaceId}
           selectedLocation={selectedLocation}
@@ -1071,6 +1065,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           onModelChange={setSelectedModel}
           availableModels={availableModels}
           onToggleDebugMode={toggleDebugMode}
+          showSidebar={showSidebar}
         />
       </div>
 
@@ -1143,42 +1138,52 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             </div>
           </div> */}
 
-      {/* Results Section */}
-      <div className="mt-4">
-        {/* If there's a report, render a "back to map" button */}
-        {(roofAnalysis || reportData) && (
-          <div className="mb-4 flex justify-end">
+      {/* Report Modal Overlay */}
+      {(roofAnalysis || reportData) && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-gray-900">
+          {/* Modal Header with Close Button */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+            {/* Rooftops AI Logo */}
+            <img
+              src="https://uploads-ssl.webflow.com/64e9150f53771ac56ef528b7/64ee16bb300d3e08d25a03ac_rooftops-logo-gr-black.png"
+              alt="Rooftops AI"
+              className="h-7 w-auto dark:invert"
+            />
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 setRoofAnalysis(null)
                 setReportData(null)
               }}
-              className="text-blue-600 dark:text-blue-400"
+              className="size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              Close Report
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </Button>
           </div>
-        )}
 
-        {/* Loading state */}
-        {isLoading && !roofAnalysis && !reportData && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center space-y-4">
-              <IconLoader2 size={36} className="animate-spin text-blue-500" />
-              <p className="text-gray-600 dark:text-gray-300">
-                Analyzing property and generating report...
-              </p>
-            </div>
+          {/* Modal Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <CombinedReport
+              analysisData={roofAnalysis}
+              reportData={reportData}
+            />
           </div>
-        )}
-
-        {/* New combined report component with unified design */}
-        {(roofAnalysis || reportData) && (
-          <CombinedReport analysisData={roofAnalysis} reportData={reportData} />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Debug Logs */}
       {isDebugMode && debugLogs.length > 0 && (

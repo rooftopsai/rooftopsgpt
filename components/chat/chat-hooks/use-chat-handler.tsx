@@ -311,11 +311,6 @@ export const useChatHandler = () => {
         messageContent
       )
 
-    // Check if this message contains a property address
-    const propertyMessageHandler = new PropertyMessageHandler()
-    const propertyResult =
-      await propertyMessageHandler.handleMessage(messageContent)
-
     // Store the original message to restore on error
     const startingInput = messageContent
 
@@ -330,100 +325,8 @@ export const useChatHandler = () => {
       // Don't turn off document mode here
     }
 
-    // Handle property report if detected
-    if (propertyResult) {
-      console.log("Property address detected, handling property report")
-      console.log("Property result:", propertyResult)
-
-      try {
-        // Clear the user input immediately
-        setUserInput("")
-        setIsGenerating(true)
-
-        // Create or update the chat
-        let currentChat = selectedChat ? { ...selectedChat } : null
-        if (!currentChat) {
-          currentChat = await handleCreateChat(
-            chatSettings!,
-            profile!,
-            selectedWorkspace!,
-            messageContent,
-            selectedAssistant!,
-            newMessageFiles,
-            setSelectedChat,
-            setChats,
-            setChatFiles
-          )
-        } else {
-          const updated = await updateChat(currentChat.id, {
-            updated_at: new Date().toISOString()
-          })
-          setChats(prev => prev.map(c => (c.id === updated.id ? updated : c)))
-        }
-
-        // Create temp messages for display
-        const { tempUserChatMessage } = createTempMessages(
-          messageContent,
-          chatMessages,
-          chatSettings!,
-          [],
-          false,
-          setChatMessages,
-          selectedAssistant
-        )
-
-        // Store metadata with the property report data
-        const metadata = JSON.stringify({
-          type: propertyResult.type,
-          reportData: propertyResult.reportData,
-          analysisData: propertyResult.analysisData,
-          metadata: propertyResult.metadata
-        })
-
-        console.log(
-          "Creating property report with metadata:",
-          metadata.substring(0, 100) + "..."
-        )
-
-        // Create messages
-        await handleCreateMessages(
-          chatMessages,
-          currentChat!,
-          profile!,
-          modelData!,
-          messageContent,
-          propertyResult.content,
-          newMessageImages,
-          isRegeneration,
-          [],
-          setChatMessages,
-          setChatFileItems,
-          setChatImages,
-          selectedAssistant,
-          JSON.stringify({
-            type: propertyResult.type,
-            reportData: propertyResult.reportData,
-            analysisData: propertyResult.analysisData,
-            metadata: propertyResult.metadata
-          })
-        )
-
-        setIsGenerating(false)
-        setFirstTokenReceived(false)
-
-        // Return early to avoid processing further
-        return
-      } catch (error) {
-        console.error("Error handling property report:", error)
-        setIsGenerating(false)
-        setFirstTokenReceived(false)
-        // Continue with normal processing
-      }
-    }
-
     try {
-      // Clear the user input immediately to fix input staying issue
-      setUserInput("")
+      // Set generating state immediately for better UX
       setIsGenerating(true)
       setIsPromptPickerOpen(false)
       setIsFilePickerOpen(false)

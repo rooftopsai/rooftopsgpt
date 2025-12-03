@@ -16,12 +16,14 @@ interface SidebarProps {
   contentType: ContentType
   showSidebar: boolean
   toggleSidebar: () => void // Add the toggle function prop
+  isMobile?: boolean
 }
 
 export const Sidebar: FC<SidebarProps> = ({
   contentType,
   showSidebar,
-  toggleSidebar
+  toggleSidebar,
+  isMobile
 }) => {
   const {
     folders,
@@ -64,7 +66,13 @@ export const Sidebar: FC<SidebarProps> = ({
     folders: Tables<"folders">[]
   ) => {
     return (
-      <SidebarContent contentType={contentType} data={data} folders={folders} />
+      <SidebarContent
+        contentType={contentType}
+        data={data}
+        folders={folders}
+        isMobile={isMobile}
+        toggleSidebar={toggleSidebar}
+      />
     )
   }
 

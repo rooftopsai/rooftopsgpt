@@ -137,92 +137,84 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
     messages: any[],
     isRegeneration: boolean
   ) => {
+    // Clear input immediately for better UX
+    handleInputChange("")
+
     // Only check for property if this is a new message (not regeneration)
     if (!isRegeneration && content.trim()) {
-      try {
-        // Show typing indicator
-        setIsGenerating(true)
+      // Check if the content likely contains an address - but don't block on it
+      if (containsAddress(content)) {
+        // Show property report loading animation
+        setIsGeneratingPropertyReport(true)
 
-        // Check if the content likely contains an address and show the property report loading animation
-        if (containsAddress(content)) {
-          setIsGeneratingPropertyReport(true)
-        }
+        // Run property detection in the background
+        propertyHandler
+          .handleMessage(content)
+          .then(propertyResult => {
+            setIsGeneratingPropertyReport(false)
 
-        // Check if message contains property address
-        const propertyResult = await propertyHandler.handleMessage(content)
+            if (propertyResult) {
+              // Get chat details from existing messages
+              const chatId =
+                messages.length > 0 ? messages[0].message.chat_id : ""
+              const userId =
+                messages.length > 0 ? messages[0].message.user_id : ""
 
-        // Hide the property report loading animation
-        setIsGeneratingPropertyReport(false)
+              // Get next sequence number
+              const lastSequenceNumber =
+                messages.length > 0
+                  ? messages[messages.length - 1].message.sequence_number
+                  : -1
 
-        if (propertyResult) {
-          // Get chat details from existing messages
-          const chatId = messages.length > 0 ? messages[0].message.chat_id : ""
-          const userId = messages.length > 0 ? messages[0].message.user_id : ""
+              // Create a user message to show what was asked
+              const userMessage = {
+                id: nanoid(),
+                chat_id: chatId,
+                role: "user",
+                content,
+                model: chatSettings?.model || "gpt-4",
+                image_paths: [],
+                sequence_number: lastSequenceNumber + 1,
+                user_id: userId,
+                assistant_id: selectedAssistant?.id || null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }
 
-          // Get next sequence number
-          const lastSequenceNumber =
-            messages.length > 0
-              ? messages[messages.length - 1].message.sequence_number
-              : -1
+              // Create an assistant message with the property report
+              const assistantMessage = {
+                id: nanoid(),
+                chat_id: chatId,
+                role: "assistant",
+                content: propertyResult.content,
+                model: chatSettings?.model || "gpt-4",
+                image_paths: [],
+                sequence_number: lastSequenceNumber + 2,
+                user_id: userId,
+                assistant_id: selectedAssistant?.id || null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                reportData: propertyResult.reportData
+              }
 
-          // Create a user message to show what was asked
-          const userMessage = {
-            id: nanoid(),
-            chat_id: chatId,
-            role: "user",
-            content,
-            model: chatSettings?.model || "gpt-4",
-            image_paths: [],
-            sequence_number: lastSequenceNumber + 1,
-            user_id: userId,
-            assistant_id: selectedAssistant?.id || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
+              // Add these messages to the chat
+              setChatMessages(prevMessages => [
+                ...prevMessages,
+                { message: userMessage, fileItems: [] },
+                { message: assistantMessage, fileItems: [] }
+              ])
+            }
+          })
+          .catch(error => {
+            console.error("Error detecting property:", error)
+            setIsGeneratingPropertyReport(false)
+          })
 
-          // Create an assistant message with the property report
-          const assistantMessage = {
-            id: nanoid(),
-            chat_id: chatId,
-            role: "assistant",
-            content: propertyResult.content,
-            model: chatSettings?.model || "gpt-4",
-            image_paths: [],
-            sequence_number: lastSequenceNumber + 2,
-            user_id: userId,
-            assistant_id: selectedAssistant?.id || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            reportData: propertyResult.reportData
-          }
-
-          // Add these messages to the chat
-          setChatMessages(prevMessages => [
-            ...prevMessages,
-            { message: userMessage, fileItems: [] },
-            { message: assistantMessage, fileItems: [] }
-          ])
-
-          // Reset input field
-          handleInputChange("")
-
-          // Reset generating state
-          setIsGenerating(false)
-
-          return // Skip normal message handling
-        }
-
-        // No property detected, reset generating state
-        setIsGenerating(false)
-      } catch (error) {
-        console.error("Error detecting property:", error)
-        setIsGeneratingPropertyReport(false)
-        setIsGenerating(false)
+        // Don't wait for property detection - continue with normal flow
       }
     }
 
-    // If no property detected or there was an error,
-    // proceed with original message handling
+    // Proceed with original message handling immediately
     originalHandleSendMessage(content, messages, isRegeneration)
   }
 

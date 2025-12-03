@@ -8,7 +8,6 @@ import { PropertyData } from "@/lib/property/property-service"
 import { useChatbotUI } from "@/context/context"
 import { Button } from "@/components/ui/button"
 import { IconMenu2, IconSparkles, IconCrown } from "@tabler/icons-react"
-import { Brand } from "@/components/ui/brand"
 import Link from "next/link"
 
 export default function ExplorePage() {
@@ -36,7 +35,11 @@ export default function ExplorePage() {
           <IconMenu2 size={20} />
         </Button>
 
-        <Brand compact={true} />
+        <img
+          src="https://uploads-ssl.webflow.com/64e9150f53771ac56ef528b7/64ee16bb300d3e08d25a03ac_rooftops-logo-gr-black.png"
+          alt="Rooftops AI"
+          className="h-7 w-auto dark:invert"
+        />
 
         {isPremium ? (
           <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">

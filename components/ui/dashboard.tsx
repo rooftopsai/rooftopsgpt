@@ -138,6 +138,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
               contentType={contentType}
               showSidebar={showSidebar}
               toggleSidebar={handleToggleSidebar}
+              isMobile={isMobile}
             />
           </Tabs>
         )}
@@ -162,15 +163,15 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
         {!showSidebar && (
           <Button
-            className="absolute left-4 top-4 z-10 size-8"
-            variant="ghost"
+            className="absolute left-4 top-5 z-50 size-10 border-2 border-gray-300 bg-white shadow-lg hover:border-blue-500 hover:shadow-xl dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400"
+            variant="outline"
             size="icon"
             onClick={handleToggleSidebar}
             aria-label="Open sidebar"
           >
             <IconLayoutSidebarLeftExpand
-              size={18}
-              className="text-muted-foreground"
+              size={24}
+              className="text-gray-700 dark:text-gray-200"
             />
           </Button>
         )}

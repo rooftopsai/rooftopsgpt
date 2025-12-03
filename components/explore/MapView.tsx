@@ -73,6 +73,8 @@ interface MapViewProps {
   availableModels?: Array<{ value: string; label: string; provider: string }>
   // Debug toggle
   onToggleDebugMode?: () => void
+  // Sidebar state for layout adjustments
+  showSidebar?: boolean
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -99,7 +101,8 @@ const MapView: React.FC<MapViewProps> = ({
   selectedModel,
   onModelChange,
   availableModels,
-  onToggleDebugMode
+  onToggleDebugMode,
+  showSidebar = false
 }) => {
   const [isClient, setIsClient] = useState(false)
   const [mapInitialized, setMapInitialized] = useState(false)
@@ -331,6 +334,9 @@ const MapView: React.FC<MapViewProps> = ({
         zoomControlOptions: {
           position: window.google.maps.ControlPosition.RIGHT_BOTTOM
         },
+        // Default to bird's eye view (directly above, no tilt)
+        tilt: 0,
+        heading: 0,
         // Add this to show labels on satellite view
         styles: [
           {
@@ -408,10 +414,9 @@ const MapView: React.FC<MapViewProps> = ({
               marker.addListener("click", () => {
                 if (infoWindowRef.current) {
                   infoWindowRef.current.setContent(`
-                    <div style="padding: 8px; max-width: 200px;">
-                      <h3 style="margin: 0 0 8px; font-size: 16px; color: #333;">${place.name || "Selected Location"}</h3>
-                      <p style="margin: 0; font-size: 13px; color: #666;">${place.formatted_address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`}</p>
-                      <div style="margin-top: 8px; font-size: 12px; color: #4285F4;">Click Analyze Property to analyze this property</div>
+                    <div style="padding: 4px 6px; max-width: 220px;">
+                      <div style="margin: 0; font-size: 13px; font-weight: 500; color: #1a1a1a; line-height: 1.3;">${place.formatted_address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`}</div>
+                      <div style="margin-top: 3px; font-size: 10px; color: #0066cc;">Click Analyze Property to start</div>
                     </div>
                   `)
                   infoWindowRef.current.open(newMap, marker)
@@ -526,10 +531,9 @@ const MapView: React.FC<MapViewProps> = ({
           marker.addListener("click", () => {
             if (infoWindowRef.current) {
               infoWindowRef.current.setContent(`
-                <div style="padding: 8px; max-width: 200px;">
-                  <h3 style="margin: 0 0 8px; font-size: 16px; color: #333;">Selected Location</h3>
-                  <p style="margin: 0; font-size: 13px; color: #666;">${selectedAddress || `${lat.toFixed(6)}, ${lng.toFixed(6)}`}</p>
-                  <div style="margin-top: 8px; font-size: 12px; color: #4285F4;">Click Analyze Property to analyze this property</div>
+                <div style="padding: 4px 6px; max-width: 220px;">
+                  <div style="margin: 0; font-size: 13px; font-weight: 500; color: #1a1a1a; line-height: 1.3;">${selectedAddress || `${lat.toFixed(6)}, ${lng.toFixed(6)}`}</div>
+                  <div style="margin-top: 3px; font-size: 10px; color: #0066cc;">Click Analyze Property to start</div>
                 </div>
               `)
               infoWindowRef.current.open(newMap, marker)
@@ -566,10 +570,9 @@ const MapView: React.FC<MapViewProps> = ({
                 // Update info window content
                 if (infoWindowRef.current && markerRef.current) {
                   infoWindowRef.current.setContent(`
-                  <div style="padding: 8px; max-width: 200px;">
-                    <h3 style="margin: 0 0 8px; font-size: 16px; color: #333;">Selected Location</h3>
-                    <p style="margin: 0; font-size: 13px; color: #666;">${results[0].formatted_address}</p>
-                    <div style="margin-top: 8px; font-size: 12px; color: #4285F4;">Click Analyze Property to analyze this property</div>
+                  <div style="padding: 4px 6px; max-width: 220px;">
+                    <div style="margin: 0; font-size: 13px; font-weight: 500; color: #1a1a1a; line-height: 1.3;">${results[0].formatted_address}</div>
+                    <div style="margin-top: 3px; font-size: 10px; color: #0066cc;">Click Analyze Property to start</div>
                   </div>
                 `)
                   infoWindowRef.current.open(newMap, markerRef.current)
@@ -976,8 +979,7 @@ const MapView: React.FC<MapViewProps> = ({
   // Simple fixed style for map container - this is important for proper display
   const mapContainerStyle = {
     width: "100%",
-    height: "100%",
-    borderRadius: "0.5rem"
+    height: "100%"
   }
 
   if (!isClient) {
@@ -1120,265 +1122,257 @@ const MapView: React.FC<MapViewProps> = ({
         strategy="afterInteractive"
       />
 
-      <Card className="h-full overflow-hidden border-0 bg-gray-50 shadow-lg dark:bg-gray-900">
-        <CardContent className="flex h-full flex-col p-2 md:p-4">
-          {/* Desktop: Search at Top (hidden on mobile) */}
-          <div className="mb-3 hidden flex-col gap-3 md:flex">
-            <div className="flex flex-col gap-2 md:flex-row md:gap-4">
-              <div className="relative grow">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <IconSearch className="size-5 text-gray-400" />
-                </div>
-                <Input
-                  ref={autocompleteInputRef}
-                  type="text"
-                  placeholder="Search for an address"
-                  className="w-full border-gray-200 bg-white py-2 pl-10 pr-4 focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                  defaultValue={searchInputValue}
-                />
+      <div className="flex h-full flex-col">
+        {/* Desktop: Search at Top (hidden - now using bottom controls for all) */}
+        <div className="mb-3 hidden flex-col gap-3">
+          <div className="flex flex-col gap-2 md:flex-row md:gap-4">
+            <div className="relative grow">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <IconSearch className="size-5 text-gray-400" />
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={onAnalyzePropertyClick}
-                  disabled={!selectedLocation || isAnalyzing}
-                  className="min-w-[220px] rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 text-white hover:from-blue-700 hover:to-indigo-700"
-                >
-                  {isAnalyzing ? (
-                    <span className="flex items-center justify-center">
-                      <IconLoader2 size={18} className="mr-2 animate-spin" />
-                      Analyzing Property...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <IconBuildingSkyscraper size={18} className="mr-2" />
-                      Analyze Property
-                    </span>
-                  )}
-                </Button>
-              </div>
+              <Input
+                ref={autocompleteInputRef}
+                type="text"
+                placeholder="Search for an address"
+                className="w-full border-gray-200 bg-white py-2 pl-10 pr-4 focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800"
+                defaultValue={searchInputValue}
+              />
             </div>
 
-            {/* Desktop tools */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleDrawingTools}
-                className={`px-2 text-xs ${showDrawingTools ? "bg-blue-700 text-white hover:bg-blue-800" : "bg-white hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"} border-gray-200 dark:border-gray-700`}
-              >
-                <IconRuler size={14} className="mr-1" />
-                {showDrawingTools ? "Hide Measurement Tools" : "Drawing Tools"}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCurrentLocation}
-                disabled={isSearching}
-                className="border-gray-200 px-2 text-xs dark:border-gray-700"
-              >
-                <IconCurrentLocation size={14} className="mr-1" />
-                Current Location
-              </Button>
-            </div>
-
-            {/* Desktop measurements info */}
-            {(selectedLocation || measuredArea || measuredDistance) && (
-              <div className="text-sm">
-                {selectedLocation && (
-                  <div className="mb-1">
-                    <span className="font-medium text-blue-600 dark:text-blue-400">
-                      Selected Location:{" "}
-                    </span>
-                    <span className="text-gray-700 dark:text-gray-300">
-                      {selectedAddress ||
-                        `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}
-                    </span>
-                  </div>
-                )}
-
-                {measuredArea && (
-                  <div className="mb-1">
-                    <span className="font-medium text-green-600 dark:text-green-400">
-                      <IconBuildingSkyscraper
-                        size={14}
-                        className="mr-1 inline"
-                      />
-                      {measuredArea}
-                    </span>
-                  </div>
-                )}
-
-                {measuredDistance && (
-                  <div>
-                    <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                      <IconRuler size={14} className="mr-1 inline" />
-                      {measuredDistance}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Map Container */}
-          <div
-            className="relative mb-2 grow md:mb-0"
-            style={{ minHeight: "300px" }}
-          >
-            {isSearching && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-60">
-                <div className="flex items-center space-x-3 rounded-lg bg-gray-800 p-4 text-white">
-                  <IconLoader2
-                    size={24}
-                    className="animate-spin text-blue-400"
-                  />
-                  <span>Locating you...</span>
-                </div>
-              </div>
-            )}
-
-            {(!scriptLoaded || !mapInitialized) && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-800">
-                <div className="flex flex-col items-center text-white">
-                  <IconLoader2
-                    size={36}
-                    className="mb-3 animate-spin text-blue-400"
-                  />
-                  <div>Loading map...</div>
-                </div>
-              </div>
-            )}
-
-            <ProgressIndicator />
-
-            {/* The actual map container - uses absolute positioning */}
-            <div
-              ref={el => {
-                mapContainerRef.current = el
-                // Also call the parent's setter if provided
-                if (el && setMapContainerRef) {
-                  setMapContainerRef(el)
-                }
-              }}
-              style={mapContainerStyle}
-              className="absolute inset-0 bg-gray-200 dark:bg-gray-800"
-            ></div>
-          </div>
-
-          {/* Mobile: Chat-style Input at Bottom (sticky on mobile, hidden on desktop) */}
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white p-3 shadow-lg md:hidden dark:border-gray-700 dark:bg-gray-800">
-            {/* Main Search Row */}
-            <div className="flex items-center gap-2">
-              {/* Map Icon on Left */}
-              <div className="flex items-center justify-center text-gray-400">
-                <IconMap size={20} />
-              </div>
-
-              {/* Address Search Input */}
-              <div className="relative grow">
-                <Input
-                  ref={autocompleteInputRefMobile}
-                  type="text"
-                  placeholder="Search for an address or click the map..."
-                  className="w-full border-0 bg-transparent py-2 pr-10 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  defaultValue={searchInputValue}
-                />
-              </div>
-
-              {/* Current Location Button on Right */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCurrentLocation}
-                disabled={isSearching}
-                className="size-8 shrink-0 text-gray-500 hover:text-blue-500"
-                title="Use current location"
-              >
-                {isSearching ? (
-                  <IconLoader2 size={18} className="animate-spin" />
-                ) : (
-                  <IconCurrentLocation size={18} />
-                )}
-              </Button>
-
-              {/* Analyze Button */}
+            <div className="flex gap-2">
               <Button
                 onClick={onAnalyzePropertyClick}
                 disabled={!selectedLocation || isAnalyzing}
-                size="sm"
-                className="shrink-0 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-4 hover:from-blue-700 hover:to-indigo-700"
+                className="min-w-[220px] rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 text-white hover:from-blue-700 hover:to-indigo-700"
               >
                 {isAnalyzing ? (
-                  <IconLoader2 size={16} className="animate-spin" />
+                  <span className="flex items-center justify-center">
+                    <IconLoader2 size={18} className="mr-2 animate-spin" />
+                    Analyzing Property...
+                  </span>
                 ) : (
-                  <IconBuildingSkyscraper size={16} />
+                  <span className="flex items-center">
+                    <IconBuildingSkyscraper size={18} className="mr-2" />
+                    Analyze Property
+                  </span>
                 )}
               </Button>
             </div>
+          </div>
 
-            {/* Bottom Row - Model Selector, Debug, and Tools */}
-            <div className="mt-2 flex items-center gap-2 overflow-x-auto text-xs">
-              {/* Model Selector as Pill */}
-              {selectedModel && onModelChange && availableModels && (
-                <Select value={selectedModel} onValueChange={onModelChange}>
-                  <SelectTrigger className="h-6 w-auto min-w-[100px] rounded-full border px-2.5 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map(model => (
-                      <SelectItem
-                        key={model.value}
-                        value={model.value}
-                        className="text-xs"
-                      >
-                        {model.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Desktop tools */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleDrawingTools}
+              className={`px-2 text-xs ${showDrawingTools ? "bg-blue-700 text-white hover:bg-blue-800" : "bg-white hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"} border-gray-200 dark:border-gray-700`}
+            >
+              <IconRuler size={14} className="mr-1" />
+              {showDrawingTools ? "Hide Measurement Tools" : "Drawing Tools"}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCurrentLocation}
+              disabled={isSearching}
+              className="border-gray-200 px-2 text-xs dark:border-gray-700"
+            >
+              <IconCurrentLocation size={14} className="mr-1" />
+              Current Location
+            </Button>
+          </div>
+
+          {/* Desktop measurements info */}
+          {(selectedLocation || measuredArea || measuredDistance) && (
+            <div className="text-sm">
+              {selectedLocation && (
+                <div className="mb-1">
+                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                    Selected Location:{" "}
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {selectedAddress ||
+                      `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}
+                  </span>
+                </div>
               )}
-
-              {/* Debug Button as Pill */}
-              {onToggleDebugMode && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onToggleDebugMode}
-                  className={`h-6 rounded-full border px-2.5 text-xs ${isDebugMode ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "text-gray-600"}`}
-                >
-                  <IconInfoCircle size={12} className="mr-1" />
-                  Debug
-                </Button>
-              )}
-
-              {/* Measure Tools Button as Pill */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleDrawingTools}
-                className={`h-6 rounded-full border px-2.5 text-xs ${showDrawingTools ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "text-gray-600"}`}
-              >
-                <IconRuler size={12} className="mr-1" />
-                {showDrawingTools ? "Hide" : "Measure"}
-              </Button>
 
               {measuredArea && (
-                <span className="whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-                  {measuredArea}
-                </span>
+                <div className="mb-1">
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    <IconBuildingSkyscraper size={14} className="mr-1 inline" />
+                    {measuredArea}
+                  </span>
+                </div>
               )}
 
               {measuredDistance && (
-                <span className="whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-                  {measuredDistance}
-                </span>
+                <div>
+                  <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                    <IconRuler size={14} className="mr-1 inline" />
+                    {measuredDistance}
+                  </span>
+                </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Map Container */}
+        <div className="relative flex-1">
+          {isSearching && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-60">
+              <div className="flex items-center space-x-3 rounded-lg bg-gray-800 p-4 text-white">
+                <IconLoader2 size={24} className="animate-spin text-blue-400" />
+                <span>Locating you...</span>
+              </div>
+            </div>
+          )}
+
+          {(!scriptLoaded || !mapInitialized) && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-800">
+              <div className="flex flex-col items-center text-white">
+                <IconLoader2
+                  size={36}
+                  className="mb-3 animate-spin text-blue-400"
+                />
+                <div>Loading map...</div>
+              </div>
+            </div>
+          )}
+
+          <ProgressIndicator />
+
+          {/* The actual map container - uses absolute positioning */}
+          <div
+            ref={el => {
+              mapContainerRef.current = el
+              // Also call the parent's setter if provided
+              if (el && setMapContainerRef) {
+                setMapContainerRef(el)
+              }
+            }}
+            style={mapContainerStyle}
+            className="absolute inset-0 bg-gray-200 dark:bg-gray-800"
+          ></div>
+        </div>
+
+        {/* Floating Control Panel at Bottom - Like chat input */}
+        <div className="absolute inset-x-0 bottom-0 z-20 p-4">
+          <div className="mx-auto max-w-4xl">
+            {/* Floating Container with rounded edges */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-800">
+              {/* Search Input Row */}
+              <div className="mb-3 flex items-center gap-3">
+                {/* Address Search Input */}
+                <div className="relative grow">
+                  <Input
+                    ref={autocompleteInputRefMobile}
+                    type="text"
+                    placeholder="Search Address"
+                    className="h-12 w-full rounded-xl border-gray-300 bg-gray-50 pr-12 text-base focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                    defaultValue={searchInputValue}
+                  />
+                </div>
+
+                {/* Current Location Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCurrentLocation}
+                  disabled={isSearching}
+                  className="size-12 shrink-0 rounded-xl border-gray-300 hover:border-blue-500 hover:bg-blue-50 dark:border-gray-600 dark:hover:bg-blue-900/20"
+                  title="Use current location"
+                >
+                  {isSearching ? (
+                    <IconLoader2 size={20} className="animate-spin" />
+                  ) : (
+                    <IconCurrentLocation size={20} />
+                  )}
+                </Button>
+              </div>
+
+              {/* Analyze Button - Full Width */}
+              <Button
+                onClick={onAnalyzePropertyClick}
+                disabled={!selectedLocation || isAnalyzing}
+                className="mb-3 h-12 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-base font-semibold text-white hover:from-emerald-600 hover:to-cyan-600"
+              >
+                {isAnalyzing ? (
+                  <span className="flex items-center justify-center">
+                    <IconLoader2 size={20} className="mr-2 animate-spin" />
+                    Analyzing Property...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <IconBuildingSkyscraper size={20} className="mr-2" />
+                    Analyze Property
+                  </span>
+                )}
+              </Button>
+
+              {/* Bottom Row - Model Selector, Debug, and Tools (Smaller) */}
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {/* Model Selector as Pill */}
+                {selectedModel && onModelChange && availableModels && (
+                  <Select value={selectedModel} onValueChange={onModelChange}>
+                    <SelectTrigger className="h-8 w-auto min-w-[100px] rounded-full border border-gray-300 bg-gray-50 px-3 text-xs dark:border-gray-600 dark:bg-gray-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map(model => (
+                        <SelectItem
+                          key={model.value}
+                          value={model.value}
+                          className="text-xs"
+                        >
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
+                {/* Debug Button as Pill */}
+                {onToggleDebugMode && (
+                  <Button
+                    variant="outline"
+                    onClick={onToggleDebugMode}
+                    className={`h-8 rounded-full border border-gray-300 bg-gray-50 px-3 text-xs dark:border-gray-600 dark:bg-gray-700 ${isDebugMode ? "ring-2 ring-blue-500" : ""}`}
+                  >
+                    <IconInfoCircle size={14} className="mr-1" />
+                    Debug
+                  </Button>
+                )}
+
+                {/* Measure Tools Button as Pill */}
+                <Button
+                  variant="outline"
+                  onClick={toggleDrawingTools}
+                  className={`h-8 rounded-full border border-gray-300 bg-gray-50 px-3 text-xs dark:border-gray-600 dark:bg-gray-700 ${showDrawingTools ? "ring-2 ring-blue-500" : ""}`}
+                >
+                  <IconRuler size={14} className="mr-1" />
+                  {showDrawingTools ? "Hide" : "Measure"}
+                </Button>
+
+                {measuredArea && (
+                  <span className="whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
+                    {measuredArea}
+                  </span>
+                )}
+
+                {measuredDistance && (
+                  <span className="whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
+                    {measuredDistance}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

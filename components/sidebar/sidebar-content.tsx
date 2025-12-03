@@ -15,12 +15,16 @@ interface SidebarContentProps {
   contentType: ContentType
   data: DataListType
   folders: Tables<"folders">[]
+  isMobile?: boolean
+  toggleSidebar?: () => void
 }
 
 export const SidebarContent: FC<SidebarContentProps> = ({
   contentType,
   data,
-  folders
+  folders,
+  isMobile,
+  toggleSidebar
 }) => {
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -48,6 +52,11 @@ export const SidebarContent: FC<SidebarContentProps> = ({
             href={
               currentWorkspaceId ? `/${currentWorkspaceId}/explore` : "/explore"
             }
+            onClick={() => {
+              if (isMobile && toggleSidebar) {
+                toggleSidebar()
+              }
+            }}
           >
             <IconSparkles size={20} className="mr-2" stroke={2} />
             <span>AI Property Reports</span>
@@ -73,6 +82,11 @@ export const SidebarContent: FC<SidebarContentProps> = ({
             href={
               currentWorkspaceId ? `/${currentWorkspaceId}/creator` : "/creator"
             }
+            onClick={() => {
+              if (isMobile && toggleSidebar) {
+                toggleSidebar()
+              }
+            }}
           >
             <IconPalette size={20} className="mr-2" stroke={2} />
             <span>Creator Studio</span>
@@ -90,6 +104,8 @@ export const SidebarContent: FC<SidebarContentProps> = ({
         <SidebarCreateButtons
           contentType={contentType}
           hasData={data.length > 0}
+          isMobile={isMobile}
+          toggleSidebar={toggleSidebar}
         />
       </div>
 

@@ -17,11 +17,15 @@ import { CreateConnector } from "./items/tools/create-connector"
 interface SidebarCreateButtonsProps {
   contentType: ContentType
   hasData: boolean
+  isMobile?: boolean
+  toggleSidebar?: () => void
 }
 
 export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   contentType,
-  hasData
+  hasData,
+  isMobile,
+  toggleSidebar
 }) => {
   const { profile, selectedWorkspace, folders, setFolders } = useChatbotUI()
   const { handleNewChat } = useChatHandler()
@@ -54,6 +58,9 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
       case "chats":
         return async () => {
           handleNewChat()
+          if (isMobile && toggleSidebar) {
+            toggleSidebar()
+          }
         }
 
       case "presets":
