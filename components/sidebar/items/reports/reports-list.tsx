@@ -1,11 +1,11 @@
 "use client"
 
 import { useChatbotUI } from "@/context/context"
-import { IconHome, IconMapPin, IconTrash } from "@tabler/icons-react"
+import { IconHome, IconPlus, IconTrash } from "@tabler/icons-react"
 import { FC, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { formatDistanceToNow } from "date-fns"
+import { format } from "date-fns"
 
 interface PropertyReport {
   id: string
@@ -86,92 +86,109 @@ export const ReportsList: FC = () => {
     router.push(`/${selectedWorkspace?.id}/explore?reportId=${reportId}`)
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-4">
-        <div className="text-muted-foreground text-sm">Loading reports...</div>
-      </div>
-    )
+  const handleNewReport = () => {
+    // Navigate to explore page to create a new report
+    router.push(`/${selectedWorkspace?.id}/explore`)
   }
 
-  if (reports.length === 0) {
+  if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center">
-        <IconHome size={48} className="text-muted-foreground mb-4" />
-        <div className="text-muted-foreground mb-2 text-sm font-medium">
-          No property reports yet
+      <div className="flex h-full flex-col">
+        {/* New Report Button */}
+        <div className="mb-4 px-2">
+          <Button
+            variant="ghost"
+            className="hover:border-border flex h-[36px] w-full justify-start border-0 border-b border-transparent bg-transparent font-semibold hover:bg-transparent"
+            style={{ padding: "0px 10px 0px 4px" }}
+            onClick={handleNewReport}
+          >
+            <IconPlus className="mr-2" size={20} strokeWidth={2} />
+            New Report
+          </Button>
         </div>
-        <div className="text-muted-foreground text-xs">
-          Create your first report by analyzing a property
+
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="text-muted-foreground text-sm">
+            Loading reports...
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col space-y-2 overflow-y-auto">
-      {reports.map(report => (
-        <div
-          key={report.id}
-          onClick={() => handleViewReport(report.id)}
-          className={`hover:bg-accent group relative flex cursor-pointer flex-col rounded-lg border p-3 transition-colors ${
-            selectedReport === report.id
-              ? "bg-accent border-primary"
-              : "border-border"
-          }`}
+    <div className="flex h-full flex-col">
+      {/* New Report Button */}
+      <div className="mb-4 px-2">
+        <Button
+          variant="ghost"
+          className="hover:border-border flex h-[36px] w-full justify-start border-0 border-b border-transparent bg-transparent font-semibold hover:bg-transparent"
+          style={{ padding: "0px 10px 0px 4px" }}
+          onClick={handleNewReport}
         >
-          {/* Address */}
-          <div className="mb-1 flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <IconMapPin size={16} className="text-muted-foreground mt-0.5" />
-              <div className="line-clamp-2 text-sm font-medium">
-                {report.address}
-              </div>
-            </div>
+          <IconPlus className="mr-2" size={20} strokeWidth={2} />
+          New Report
+        </Button>
+      </div>
 
-            {/* Delete button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={e => handleDeleteReport(report.id, e)}
-            >
-              <IconTrash size={16} />
-            </Button>
+      {reports.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+          <IconHome size={48} className="text-muted-foreground mb-4" />
+          <div className="text-muted-foreground mb-2 text-sm font-medium">
+            No property reports yet
           </div>
-
-          {/* Report details */}
-          <div className="text-muted-foreground mt-2 flex flex-wrap gap-2 text-xs">
-            {report.roof_area && (
-              <span className="rounded-md bg-blue-500/10 px-2 py-1 text-blue-600 dark:text-blue-400">
-                {report.roof_area.toLocaleString()} sq ft
-              </span>
-            )}
-            {report.squares && (
-              <span className="rounded-md bg-green-500/10 px-2 py-1 text-green-600 dark:text-green-400">
-                {report.squares} squares
-              </span>
-            )}
-            {report.pitch && (
-              <span className="rounded-md bg-purple-500/10 px-2 py-1 text-purple-600 dark:text-purple-400">
-                {report.pitch} pitch
-              </span>
-            )}
-            {report.facet_count && (
-              <span className="rounded-md bg-orange-500/10 px-2 py-1 text-orange-600 dark:text-orange-400">
-                {report.facet_count} facets
-              </span>
-            )}
-          </div>
-
-          {/* Timestamp */}
-          <div className="text-muted-foreground mt-2 text-xs">
-            {formatDistanceToNow(new Date(report.created_at), {
-              addSuffix: true
-            })}
+          <div className="text-muted-foreground text-xs">
+            Create your first report by analyzing a property
           </div>
         </div>
-      ))}
+      ) : (
+        <>
+          {/* History Header */}
+          <div className="text-muted-foreground mb-2 px-2 text-xs font-semibold">
+            HISTORY
+          </div>
+
+          {/* Reports List */}
+          <div className="flex-1 space-y-2 overflow-y-auto px-2">
+            {reports.map(report => (
+              <div
+                key={report.id}
+                onClick={() => handleViewReport(report.id)}
+                className={`hover:bg-accent group relative flex cursor-pointer flex-col rounded-lg border p-3 transition-colors ${
+                  selectedReport === report.id
+                    ? "bg-accent border-primary"
+                    : "border-border"
+                }`}
+              >
+                {/* Address */}
+                <div className="mb-1 pr-8">
+                  <div className="line-clamp-2 text-sm font-medium">
+                    {report.address}
+                  </div>
+                </div>
+
+                {/* Date */}
+                <div className="text-muted-foreground text-xs">
+                  {format(
+                    new Date(report.created_at),
+                    "MMM d, yyyy 'at' h:mm a"
+                  )}
+                </div>
+
+                {/* Delete button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={e => handleDeleteReport(report.id, e)}
+                >
+                  <IconTrash size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

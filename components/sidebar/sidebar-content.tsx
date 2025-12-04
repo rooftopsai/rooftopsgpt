@@ -129,9 +129,6 @@ export const SidebarContent: FC<SidebarContentProps> = ({
 
       {contentType === "reports" ? (
         <div className="mt-2 flex-1 overflow-y-auto">
-          <div className="text-muted-foreground mb-2 px-2 text-xs font-semibold">
-            PROPERTY REPORTS
-          </div>
           <ReportsList />
         </div>
       ) : (
