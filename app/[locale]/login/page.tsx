@@ -206,28 +206,26 @@ export default async function Login({
           {/* Base gradient with deep space colors */}
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/30 via-black to-purple-950/20"></div>
 
-          {/* Animated stars/particles effect */}
-          <div className="absolute inset-0 opacity-40">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `
-                  radial-gradient(1px 1px at 20% 30%, white, transparent),
-                  radial-gradient(1px 1px at 60% 70%, white, transparent),
-                  radial-gradient(1px 1px at 50% 50%, white, transparent),
-                  radial-gradient(1px 1px at 80% 10%, white, transparent),
-                  radial-gradient(1px 1px at 90% 60%, white, transparent),
-                  radial-gradient(2px 2px at 33% 50%, #a78bfa, transparent),
-                  radial-gradient(2px 2px at 79% 53%, #818cf8, transparent),
-                  radial-gradient(1px 1px at 17% 70%, white, transparent),
-                  radial-gradient(1px 1px at 44% 23%, white, transparent)
-                `,
-                backgroundSize:
-                  "200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%",
-                backgroundPosition: "0% 0%",
-                animation: "galaxyMove 60s ease-in-out infinite"
-              }}
-            ></div>
+          {/* Animated stars/particles effect - Static version without animation for server components */}
+          <div className="absolute inset-0 opacity-30">
+            {/* White stars */}
+            <div className="absolute left-[20%] top-[30%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[60%] top-[70%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[50%] top-[50%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[80%] top-[10%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[90%] top-[60%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[17%] top-[70%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[44%] top-[23%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[35%] top-[85%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[75%] top-[40%] size-[2px] rounded-full bg-white"></div>
+            <div className="absolute left-[15%] top-[15%] size-[2px] rounded-full bg-white"></div>
+
+            {/* Colored stars (purple/blue) */}
+            <div className="absolute left-[33%] top-[50%] size-[3px] rounded-full bg-purple-400/60"></div>
+            <div className="absolute left-[79%] top-[53%] size-[3px] rounded-full bg-indigo-400/60"></div>
+            <div className="absolute left-[25%] top-[65%] size-[3px] rounded-full bg-blue-400/50"></div>
+            <div className="absolute left-[65%] top-[25%] size-[3px] rounded-full bg-violet-400/50"></div>
+            <div className="absolute left-[12%] top-[45%] size-[3px] rounded-full bg-purple-300/40"></div>
           </div>
 
           {/* Nebula-like glow effects */}
@@ -235,37 +233,6 @@ export default async function Login({
           <div className="absolute bottom-1/4 right-1/4 size-[350px] rounded-full bg-purple-500/10 blur-[120px]"></div>
           <div className="absolute left-1/2 top-1/2 size-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/5 blur-[150px]"></div>
         </div>
-
-        {/* Add keyframes animation inline */}
-        <style jsx>{`
-          @keyframes galaxyMove {
-            0%,
-            100% {
-              background-position:
-                0% 0%,
-                10% 20%,
-                30% 40%,
-                50% 60%,
-                70% 80%,
-                15% 25%,
-                45% 55%,
-                65% 75%,
-                85% 95%;
-            }
-            50% {
-              background-position:
-                100% 100%,
-                90% 80%,
-                70% 60%,
-                50% 40%,
-                30% 20%,
-                85% 75%,
-                55% 45%,
-                35% 25%,
-                15% 5%;
-            }
-          }
-        `}</style>
 
         <div className="relative z-10 flex size-full flex-col items-center justify-center px-16 text-center">
           <div className="mb-12 flex justify-center">
