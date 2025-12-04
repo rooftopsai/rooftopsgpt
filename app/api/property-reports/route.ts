@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import {
+  requireFeatureAccess,
+  trackAndCheckFeature
+} from "@/lib/subscription-helpers"
 
 // GET - Fetch all property reports for the current user
 export async function GET(request: Request) {
@@ -56,6 +60,19 @@ export async function POST(request: Request) {
 
     if (!user) {
       return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    // Check if user has access to property_reports feature
+    const accessCheck = await requireFeatureAccess(user.id, "property_reports")
+    if (!accessCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: accessCheck.error,
+          limit: accessCheck.limit,
+          currentUsage: accessCheck.currentUsage
+        },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -145,6 +162,9 @@ export async function POST(request: Request) {
       const errorDetails = error.code ? ` (Code: ${error.code})` : ""
       return new NextResponse(`${errorMessage}${errorDetails}`, { status: 500 })
     }
+
+    // Track the usage after successful report creation
+    await trackAndCheckFeature(user.id, "property_reports", 1)
 
     console.log("✅ Property report created successfully:", report.id)
     return NextResponse.json(report)

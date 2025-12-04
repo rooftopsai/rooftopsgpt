@@ -82,6 +82,8 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const [captureProgress, setCaptureProgress] = useState(0)
   const [livePreviewImages, setLivePreviewImages] = useState<any[]>([])
   const [currentCaptureStage, setCurrentCaptureStage] = useState("")
+  const [filteredModels, setFilteredModels] = useState(availableModels)
+  const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null)
 
   // This is a direct reference to the map container div from the MapView component
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -105,6 +107,39 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true)
+  }, [])
+
+  // Fetch subscription status and filter available models
+  useEffect(() => {
+    const fetchSubscriptionInfo = async () => {
+      try {
+        const response = await fetch("/api/subscription/check")
+        if (response.ok) {
+          const data = await response.json()
+          setSubscriptionInfo(data)
+
+          // Filter models based on allowed models for this plan
+          const allowed = availableModels.filter(model =>
+            data.allowedModels.includes(model.value)
+          )
+          setFilteredModels(allowed)
+
+          // If current selected model is not allowed, switch to first allowed model
+          if (
+            !data.allowedModels.includes(selectedModel) &&
+            allowed.length > 0
+          ) {
+            setSelectedModel(allowed[0].value)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching subscription info:", error)
+        // Default to showing all models if error
+        setFilteredModels(availableModels)
+      }
+    }
+
+    fetchSubscriptionInfo()
   }, [])
 
   // Auto-collapse sidebar when report opens
@@ -1639,6 +1674,17 @@ ${referenceSection}
       return
     }
 
+    // Check subscription limits before starting analysis
+    if (subscriptionInfo && !subscriptionInfo.propertyReports.canUse) {
+      const { limit, currentUsage } = subscriptionInfo.propertyReports
+      toast({
+        title: "Report Limit Reached",
+        description: `You've used ${currentUsage} of ${limit} reports this month. Upgrade your plan to generate more reports.`,
+        variant: "destructive"
+      })
+      return
+    }
+
     // Start the analysis process
     analyzeAndGenerateReport()
   }
@@ -1682,7 +1728,7 @@ ${referenceSection}
           onToggleImageProcessingOption={toggleImageProcessingOption}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
-          availableModels={availableModels}
+          availableModels={filteredModels}
           onToggleDebugMode={toggleDebugMode}
           showSidebar={showSidebar}
           livePreviewImages={livePreviewImages}
