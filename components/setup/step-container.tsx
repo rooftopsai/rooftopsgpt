@@ -7,12 +7,6 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
-import {
-  IconSparkles,
-  IconClock,
-  IconCurrencyDollar,
-  IconChartBar
-} from "@tabler/icons-react"
 import { FC, useRef } from "react"
 
 export const SETUP_STEP_COUNT = 2
@@ -55,8 +49,8 @@ export const StepContainer: FC<StepContainerProps> = ({
       onKeyDown={handleKeyDown}
     >
       {showHeroSection && (
-        <div className="border-b bg-white px-8 py-12 dark:bg-zinc-950">
-          <div className="mx-auto max-w-3xl">
+        <div className="border-b bg-white px-8 py-16 dark:bg-zinc-950">
+          <div className="mx-auto max-w-2xl">
             <h1 className="mb-3 text-center text-5xl font-bold tracking-tight">
               Welcome to the{" "}
               <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
@@ -64,51 +58,31 @@ export const StepContainer: FC<StepContainerProps> = ({
               </span>
             </h1>
 
-            <p className="mb-10 text-center text-xl text-zinc-600 dark:text-zinc-400">
-              We&apos;re bringing AI to your service business so you can
-              skyrocket efficiency and profits and reach{" "}
-              <span className="font-semibold italic">every rooftop</span> with
-              AI tailored for your business.
+            <p className="mb-12 text-center text-xl text-zinc-600 dark:text-zinc-400">
+              AI tools built specifically for roofing professionals to save time
+              and close more deals.
             </p>
 
-            <div className="mb-12 grid gap-6 sm:grid-cols-3">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
-                  <IconClock className="size-8 text-white" strokeWidth={2} />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold">Save Time</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Instant property analysis and estimates in seconds
+            <div className="space-y-8 text-left">
+              <div>
+                <h3 className="mb-2 text-2xl font-semibold">
+                  Instant Roof Reports
+                </h3>
+                <p className="text-lg text-zinc-600 dark:text-zinc-400">
+                  No more waiting days or hours for information your team needs
+                  now.
                 </p>
               </div>
 
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
-                  <IconCurrencyDollar
-                    className="size-8 text-white"
-                    strokeWidth={2}
-                  />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold">Cut Costs</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Reduce site visits and manual measurements
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30">
-                  <IconChartBar className="size-8 text-white" strokeWidth={2} />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold">Win More</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Professional reports that close deals faster
+              <div>
+                <h3 className="mb-2 text-2xl font-semibold">
+                  AI Chat Tailored for Roofers
+                </h3>
+                <p className="text-lg text-zinc-600 dark:text-zinc-400">
+                  Refine strategy, analyze results, create documents.
                 </p>
               </div>
             </div>
-
-            <p className="text-center text-sm text-zinc-500 dark:text-zinc-500">
-              No Credit Card Required
-            </p>
           </div>
         </div>
       )}
