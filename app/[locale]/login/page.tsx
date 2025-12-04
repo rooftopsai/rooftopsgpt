@@ -322,7 +322,7 @@ export default async function Login({
                 Email
               </Label>
               <Input
-                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 text-white transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="!placeholder:text-zinc-400 dark:!placeholder:text-zinc-400 rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 !text-white transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:!text-white dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 name="email"
                 placeholder="you@example.com"
                 required
@@ -335,7 +335,7 @@ export default async function Login({
                 Password
               </Label>
               <Input
-                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 text-white transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="!placeholder:text-zinc-400 dark:!placeholder:text-zinc-400 rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 !text-white transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:!text-white dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 type="password"
                 name="password"
                 placeholder="••••••••"
