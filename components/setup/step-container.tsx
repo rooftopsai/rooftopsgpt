@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
+import { IconFileText, IconMessageCircle } from "@tabler/icons-react"
 import { FC, useRef } from "react"
 
 export const SETUP_STEP_COUNT = 2
@@ -45,17 +46,14 @@ export const StepContainer: FC<StepContainerProps> = ({
 
   return (
     <Card
-      className="max-h-[calc(100vh-60px)] w-full max-w-[700px] overflow-auto border-zinc-800 bg-black px-4 shadow-xl sm:px-0"
+      className="w-full max-w-[700px] border-zinc-800 bg-black px-4 shadow-xl sm:px-0"
       onKeyDown={handleKeyDown}
     >
       {showHeroSection && (
         <div className="bg-black px-4 py-12">
           <div className="mx-auto max-w-2xl">
-            <h1 className="mb-3 text-center text-3xl font-bold tracking-tight text-white">
-              Welcome to the{" "}
-              <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
-                Future of Roofing
-              </span>
+            <h1 className="mb-3 text-center text-5xl font-bold tracking-tight text-white">
+              Let&apos;s create your profile
             </h1>
 
             <p className="mb-10 text-center text-base text-zinc-400">
@@ -64,23 +62,39 @@ export const StepContainer: FC<StepContainerProps> = ({
             </p>
 
             <div className="space-y-6 text-left">
-              <div>
-                <h3 className="mb-1 text-lg font-semibold text-white">
-                  Instant Roof Reports
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  No more waiting days or hours for information your team needs
-                  now.
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                  <IconFileText
+                    className="size-6 bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent"
+                    strokeWidth={2}
+                  />
+                </div>
+                <div>
+                  <h3 className="mb-1 text-lg font-semibold text-white">
+                    Instant Roof Reports
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    No more waiting days or hours for information your team
+                    needs now.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h3 className="mb-1 text-lg font-semibold text-white">
-                  AI Chat Tailored for Roofers
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Refine strategy, analyze results, create documents.
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                  <IconMessageCircle
+                    className="size-6 bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent"
+                    strokeWidth={2}
+                  />
+                </div>
+                <div>
+                  <h3 className="mb-1 text-lg font-semibold text-white">
+                    AI Chat Tailored for Roofers
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    Refine strategy, analyze results, create documents.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -88,10 +102,7 @@ export const StepContainer: FC<StepContainerProps> = ({
       )}
 
       <CardHeader className="bg-black px-4 pb-6 pt-8">
-        <CardTitle className="text-2xl font-bold text-white">
-          {stepTitle}
-        </CardTitle>
-        <CardDescription className="text-base text-zinc-400">
+        <CardDescription className="text-base text-white">
           {stepDescription}
         </CardDescription>
       </CardHeader>

@@ -90,10 +90,10 @@ export const ProfileStep: FC<ProfileStepProps> = ({
   return (
     <>
       <div className="space-y-2">
-        <Label className="text-sm font-semibold text-zinc-300">Username</Label>
+        <Label className="text-sm font-semibold text-white">Username</Label>
 
         <Input
-          className="h-12 rounded-lg border-zinc-700 bg-zinc-900 text-base text-zinc-400 placeholder:text-zinc-600"
+          className="h-12 rounded-lg border-zinc-700 bg-zinc-900 text-base !text-white placeholder:!text-zinc-500"
           placeholder="username"
           value={username}
           disabled
@@ -102,7 +102,7 @@ export const ProfileStep: FC<ProfileStepProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-semibold text-zinc-300">
+        <Label className="text-sm font-semibold text-white">
           Your Name <span className="text-rose-400">*</span>
         </Label>
 
