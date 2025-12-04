@@ -157,6 +157,107 @@ export const validatePropertyFitsInFrame = (
   }
 }
 
+// Calculate optimal zoom for a specific viewing angle
+// This accounts for property orientation, viewing angle, and tilt perspective
+export const calculateZoomForAngle = (
+  propertyWidthMeters: number,
+  propertyHeightMeters: number,
+  heading: number, // 0°, 90°, 180°, 270°
+  tilt: number, // 0° for overhead, 60° for angled views
+  latitude: number,
+  viewportWidthPixels: number = 1200,
+  viewportHeightPixels: number = 800,
+  targetCoverage: number = 0.85 // Target 85% frame coverage for tight shots
+): number => {
+  // Convert heading to radians
+  const headingRad = (heading * Math.PI) / 180
+
+  // Calculate apparent dimensions from this viewing angle
+  // Property might be rectangular (e.g., 20m x 40m), so apparent width varies by angle
+  const apparentWidth =
+    Math.abs(propertyWidthMeters * Math.cos(headingRad)) +
+    Math.abs(propertyHeightMeters * Math.sin(headingRad))
+
+  const apparentDepth =
+    Math.abs(propertyWidthMeters * Math.sin(headingRad)) +
+    Math.abs(propertyHeightMeters * Math.cos(headingRad))
+
+  // Adjust for tilt perspective
+  // At 60° tilt, we need more vertical space because we're viewing at an angle
+  // The vertical space needed increases by 1/cos(tilt)
+  let effectiveHeight = apparentDepth
+  if (tilt > 0) {
+    const tiltRad = (tilt * Math.PI) / 180
+    effectiveHeight = apparentDepth / Math.cos(tiltRad)
+  }
+
+  // Calculate required dimensions with target coverage
+  const requiredWidthMeters = apparentWidth / targetCoverage
+  const requiredHeightMeters = effectiveHeight / targetCoverage
+
+  // Use the larger dimension to ensure both fit
+  const requiredMeters = Math.max(requiredWidthMeters, requiredHeightMeters)
+
+  // Calculate required meters per pixel
+  const requiredMetersPerPixel =
+    requiredMeters / Math.min(viewportWidthPixels, viewportHeightPixels)
+
+  // Calculate zoom level from meters per pixel
+  const cosLat = Math.cos((latitude * Math.PI) / 180)
+  const calculatedZoom = Math.log2(
+    (156543.03392 * cosLat) / requiredMetersPerPixel
+  )
+
+  // Round and constrain to valid Google Maps zoom range
+  let optimalZoom = Math.round(calculatedZoom)
+  optimalZoom = Math.max(17, Math.min(22, optimalZoom))
+
+  // Validate that property fits at this zoom
+  const validation = validatePropertyFitsInFrame(
+    apparentWidth,
+    effectiveHeight,
+    optimalZoom,
+    latitude,
+    viewportWidthPixels,
+    viewportHeightPixels
+  )
+
+  // If property doesn't fit, reduce zoom until it does
+  while (!validation.fits && optimalZoom > 17) {
+    optimalZoom--
+    const newValidation = validatePropertyFitsInFrame(
+      apparentWidth,
+      effectiveHeight,
+      optimalZoom,
+      latitude,
+      viewportWidthPixels,
+      viewportHeightPixels
+    )
+    if (newValidation.fits) break
+  }
+
+  // If we can zoom in more while staying under 90% coverage, do it
+  let testZoom = optimalZoom + 1
+  while (testZoom <= 22) {
+    const testValidation = validatePropertyFitsInFrame(
+      apparentWidth,
+      effectiveHeight,
+      testZoom,
+      latitude,
+      viewportWidthPixels,
+      viewportHeightPixels
+    )
+    if (testValidation.fits && testValidation.coveragePercent < 0.9) {
+      optimalZoom = testZoom
+      testZoom++
+    } else {
+      break
+    }
+  }
+
+  return optimalZoom
+}
+
 // Assess image quality before processing
 const assessImageQuality = (
   data: Uint8ClampedArray,

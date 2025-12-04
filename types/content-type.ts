@@ -9,3 +9,4 @@ export type ContentType =
   | "models"
   | "explore"
   | "creator"
+  | "reports"

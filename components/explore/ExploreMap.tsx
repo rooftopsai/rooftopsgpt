@@ -14,6 +14,7 @@ import {
   enhanceRoofPitch,
   estimatePropertySize,
   calculateOptimalZoom,
+  calculateZoomForAngle,
   validatePropertyFitsInFrame
 } from "@/lib/image-processing"
 import {
@@ -303,8 +304,32 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       }
 
       // === MULTI-ZOOM TOP VIEWS (3 dynamically calculated zoom levels) ===
-      const zoomLevels = zoomCalc.zoomLevels
-      const zoomLabels = ["Context", "Standard", "Detail"]
+      // Calculate optimal zoom for overhead view (0° heading, 0° tilt)
+      // Use existing viewportWidth/viewportHeight variables from above
+
+      const optimalOverheadZoom = calculateZoomForAngle(
+        propertySize.widthMeters,
+        propertySize.heightMeters,
+        0, // 0° heading for overhead
+        0, // 0° tilt for overhead
+        selectedLocation.lat,
+        viewportWidth,
+        viewportHeight,
+        0.85 // 85% coverage
+      )
+
+      // Generate 2 meaningfully different zoom levels, each +1 closer than calculated
+      // Context view: Wider for neighborhood context
+      // Detail view: Close-up for roof detail
+      const zoomLevels = [
+        Math.max(17, optimalOverheadZoom - 1), // Context (wider) but +1 closer
+        Math.min(22, optimalOverheadZoom + 2) // Detail (much closer) +1 closer
+      ]
+      const zoomLabels = ["Context", "Detail"]
+
+      logDebug(
+        `Calculated overhead zoom levels: ${zoomLevels.join(", ")} (optimal: ${optimalOverheadZoom})`
+      )
 
       for (let zoomIdx = 0; zoomIdx < zoomLevels.length; zoomIdx++) {
         const zoomLevel = zoomLevels[zoomIdx]
@@ -378,19 +403,8 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         }
       }
 
-      // Reset to optimal zoom for angled views
-      if (mapRef.current) {
-        try {
-          mapRef.current.setZoom(zoomCalc.optimalZoom)
-          logDebug(
-            `Reset to optimal zoom ${zoomCalc.optimalZoom} for angled views`
-          )
-        } catch (e) {
-          console.error("Error resetting zoom:", e)
-        }
-      }
-
       // Capture views from all four cardinal directions: North, East, South, West
+      // Each angle gets its own optimized zoom level based on property geometry
       const angles = [0, 90, 180, 270] // North, East, South, West
       for (let i = 0; i < angles.length; i++) {
         const angle = angles[i]
@@ -399,7 +413,23 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           `Capturing view from ${getDirectionName(angle)}...`
         )
 
-        logDebug(`Capturing view at ${angle}° heading`)
+        // Calculate optimal zoom for this specific angle and tilt, then add +1 to get closer
+        const tiltAngle = is3DMode ? 60 : 0
+        const calculatedZoom = calculateZoomForAngle(
+          propertySize.widthMeters,
+          propertySize.heightMeters,
+          angle,
+          tiltAngle,
+          selectedLocation.lat,
+          viewportWidth,
+          viewportHeight,
+          0.85 // 85% coverage for tight shots
+        )
+        const angleZoom = Math.min(22, calculatedZoom + 1) // Add +1 to get closer
+
+        logDebug(
+          `Capturing view at ${angle}° heading with optimized zoom ${angleZoom} (tilt: ${tiltAngle}°)`
+        )
 
         // Check if we have the map reference before trying to use it
         if (mapRef.current) {
@@ -413,19 +443,22 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             // Set map to the current angle
             mapRef.current.setHeading(angle)
 
+            // Set the optimized zoom for this angle
+            mapRef.current.setZoom(angleZoom)
+
             // Add tilt in 3D mode for perspective views
             if (is3DMode) {
               mapRef.current.setTilt(60) // 60-degree tilt for better 3D perspective
             }
             logDebug(
-              `Map settings adjusted for angle ${angle}°, tilt: ${is3DMode ? "45°" : "0°"}`
+              `Map settings adjusted for angle ${angle}°: zoom ${angleZoom}, tilt: ${tiltAngle}°`
             )
           } catch (e) {
             console.error(
-              `Error setting map heading/tilt for angle ${angle}:`,
+              `Error setting map heading/tilt/zoom for angle ${angle}:`,
               e
             )
-            logDebug(`Error setting map heading/tilt: ${e.message}`)
+            logDebug(`Error setting map properties: ${e.message}`)
           }
         } else {
           logDebug("Map reference is not available for manipulation")
@@ -447,6 +480,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           }
           view.angle = angle
           view.tilt = is3DMode ? 60 : 0
+          view.zoomLevel = angleZoom // Store the optimized zoom for this angle
           views.push(view)
           setLivePreviewImages(prev => [...prev, view])
           // Update progress: 20% done after zoom levels, 80% for angled views
@@ -481,6 +515,17 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
       setRoofAnalysis(analysisResult)
       setCaptureProgress(100)
+
+      // Save the report to the database
+      if (analysisResult && selectedLocation) {
+        try {
+          await savePropertyReport(analysisResult, views, solarMetrics)
+          logDebug("Property report saved to database")
+        } catch (error) {
+          console.error("Error saving property report:", error)
+          logDebug(`Failed to save report: ${error.message}`)
+        }
+      }
 
       return analysisResult
     } catch (error) {
@@ -522,6 +567,61 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       "northwest"
     ]
     return directions[Math.round(angle / 45) % 8]
+  }
+
+  // Function to save property report to database
+  const savePropertyReport = async (
+    analysisData: any,
+    capturedImages: any[],
+    solarMetrics: any
+  ) => {
+    try {
+      // Extract image metadata without the full base64 data to avoid timeout
+      const imageMetadata =
+        capturedImages?.map((img, index) => ({
+          name: img.name || `View ${index + 1}`,
+          angle: img.angle || 0,
+          capturedAt: new Date().toISOString()
+          // Exclude imageData to prevent huge payload
+        })) || []
+
+      // Create a clean copy of analysisData without the large image data
+      const cleanAnalysisData = {
+        ...analysisData,
+        capturedImages: undefined, // Remove images from analysisData
+        satelliteViews: undefined // Remove duplicate images
+      }
+
+      const response = await fetch("/api/property-reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          workspaceId: workspaceId,
+          address:
+            selectedAddress ||
+            `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`,
+          latitude: selectedLocation?.lat,
+          longitude: selectedLocation?.lng,
+          analysisData: cleanAnalysisData,
+          capturedImages: imageMetadata,
+          satelliteViews: imageMetadata,
+          solarMetrics: solarMetrics,
+          debugInfo: analysisData.debug
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to save report: ${response.statusText}`)
+      }
+
+      const savedReport = await response.json()
+      return savedReport
+    } catch (error) {
+      console.error("Error in savePropertyReport:", error)
+      throw error
+    }
   }
 
   // Fixed captureMapView function with duplicate pitch enhancement removed
@@ -764,19 +864,33 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   ═══════════════════════════════════════════════════════════════════`
       }
 
-      // Create a more detailed prompt that explains the enhancements and measurement grid
-      const enhancedPrompt = `As an expert roofing analyst, I need your detailed assessment of a property at ${selectedAddress || `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`}. Focus on the property most centered in these images and compare all images to determine the most accurate details about the subject property.
+      // Create expert roofer prompt with latest thinking
+      const enhancedPrompt = `You are a master roofer with 30+ years of experience analyzing properties for estimates. You're looking at aerial imagery of a property at ${selectedAddress || `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`}. Your goal is to provide the MOST ACCURATE roof analysis possible - as if you were standing on the ground with your crew preparing a bid.
 ${referenceSection}
 
-  IMPORTANT VISUAL ENHANCEMENT INFORMATION:
-  - The images have been enhanced with edge detection to highlight roof facets and boundaries
-  - A measurement grid has been added for reference (approximately 10x10 grid)
-  - A scale bar shows the actual zoom level and meters per pixel
-  - North direction is indicated in the top right corner
-  - Shadow compensation has been applied to reveal features in shadowed areas
-  - Image sharpening has been applied for better detail visibility
+  ═══════════════════════════════════════════════════════════════════
+  🎯 YOUR MISSION AS AN EXPERT ROOFER
+  ═══════════════════════════════════════════════════════════════════
 
-  CRITICAL: You MUST respond with valid JSON in this exact format:
+  You've been provided 6 optimized aerial views of this property:
+  • 2 overhead views (wide context + zoomed detail)
+  • 4 angled views from each cardinal direction (N, E, S, W)
+
+  Each view has been captured at the OPTIMAL ZOOM LEVEL to maximize detail while keeping the entire roof visible. The zoom levels were calculated based on the property's actual dimensions and viewing angle - so trust that you're seeing the best possible view from each perspective.
+
+  IMAGE ENHANCEMENTS APPLIED:
+  ✓ Edge detection highlighting roof planes and boundaries
+  ✓ 10x10 measurement grid overlay for scale reference
+  ✓ Bright yellow scale bar showing actual distance (20 meters / 65 feet)
+  ✓ Shadow compensation to reveal features in dark areas
+  ✓ Image sharpening for maximum clarity
+  ✓ North arrow indicator for orientation
+
+  ═══════════════════════════════════════════════════════════════════
+  📋 REQUIRED OUTPUT FORMAT (MUST BE VALID JSON)
+  ═══════════════════════════════════════════════════════════════════
+
+  You MUST respond with ONLY this JSON structure (no markdown, no code blocks):
   {
     "userSummary": "A 2-3 sentence executive summary for the property owner describing the roof in plain language",
     "structuredData": {
@@ -795,33 +909,47 @@ ${referenceSection}
     "detailedAnalysis": "Your complete technical analysis with all measurements, observations, and recommendations"
   }
 
-  SYSTEMATIC MULTI-VIEW ANALYSIS PROTOCOL:
+  ═══════════════════════════════════════════════════════════════════
+  🔍 EXPERT ROOFER'S ANALYSIS WORKFLOW
+  ═══════════════════════════════════════════════════════════════════
 
-  You have 6 images provided in this order:
-  1. Overhead Context (zoomed out for full property view)
-  2. Overhead Detail (zoomed in for precise measurements)
-  3. Angled View - North
-  4. Angled View - East
-  5. Angled View - South
-  6. Angled View - West
+  Think like you're doing a site visit. You wouldn't just glance at the roof - you'd walk around the entire property, look from every angle, and mentally map out every plane, valley, and ridge. Do that same process with these 6 images.
 
-  ANALYSIS WORKFLOW - Follow this exact sequence:
+  IMAGE SEQUENCE PROVIDED:
+  1️⃣ Overhead Context - Wide view showing property in neighborhood
+  2️⃣ Overhead Detail - Zoomed in for precise measurements (YOUR PRIMARY MEASUREMENT IMAGE)
+  3️⃣ North View - 60° angled view from north side
+  4️⃣ East View - 60° angled view from east side
+  5️⃣ South View - 60° angled view from south side
+  6️⃣ West View - 60° angled view from west side
 
-  📋 PHASE 1 - Individual Image Analysis:
+  ═══════════════════════════════════════════════════════════════════
+  📐 STEP 1: UNDERSTAND THE ROOF STRUCTURE
+  ═══════════════════════════════════════════════════════════════════
 
-  IMAGE 1 (Overhead Context - Wide View):
-  - Identify the complete building footprint and property boundaries
-  - Count all separate structures (main house, garage, shed, addition, etc.)
-  - Identify main roof sections and their basic geometry
-  - Look for the overall roof TYPE: Gable, Hip, Dutch Hip, Mansard, Gambrel, etc.
-  - Note any complex features like dormers, valleys, or multiple levels
-  - Initial facet estimate: Count ONLY the major distinct planes you can clearly see
-  - Write down: "From context view, I see approximately X major roof planes"
+  Start with Image #1 (Context View):
+  As an expert roofer, first get the big picture. What are you looking at?
 
-  IMAGE 2 (Overhead Detail - Maximum Zoom):
-  ⚠️ THIS IS YOUR PRIMARY MEASUREMENT IMAGE - BE EXTREMELY CAREFUL HERE ⚠️
+  Ask yourself:
+  • Is this a simple gable, hip, or something more complex?
+  • Do I see a garage? Is it attached or separate?
+  • Are there dormers, additions, or multiple roof levels?
+  • What's the overall roof style - traditional, modern, ranch?
+  • Any obvious valleys, ridges, or architectural features?
 
-  SYSTEMATIC FACET COUNTING METHOD:
+  Make a mental note: "This looks like a [describe roof type] with approximately [X] major sections"
+
+  ═══════════════════════════════════════════════════════════════════
+  📏 STEP 2: COUNT EVERY SINGLE ROOF PLANE (FACET COUNTING)
+  ═══════════════════════════════════════════════════════════════════
+
+  Now go to Image #2 (Detail View) - THIS IS YOUR MONEY SHOT.
+  This image was captured at the OPTIMAL zoom level to show every detail while keeping the whole roof visible.
+
+  **AS AN EXPERT ROOFER, YOU KNOW:**
+  A "facet" = any distinct flat surface on the roof. If two surfaces meet at a ridge, valley, or hip, they're DIFFERENT facets.
+
+  SYSTEMATIC COUNTING METHOD (This is how a pro does it):
   Step 1: Start with the MAIN ROOF structure
     - Identify if it's a simple gable (2 planes) or hip (4+ planes)
     - Count each distinct flat surface as ONE facet
@@ -856,134 +984,135 @@ ${referenceSection}
   - Count grid squares to estimate dimensions
   - Each grid cell represents approximately [calculate from scale]
 
-  Final note for Image 2: "After systematic analysis, I count EXACTLY [number] distinct roof facets"
+  After counting in Image #2, write down: "From overhead detail, I count EXACTLY [X] facets"
 
-  IMAGE 3 (Angled North View):
-  - Look for facets hidden from overhead view
-  - Observe roof pitch from the visible slope
-  - Check for features obscured by trees or shadows in overhead views
-  - Note: [Did you find any additional facets?]
+  ═══════════════════════════════════════════════════════════════════
+  👁️ STEP 3: VERIFY FROM ALL ANGLES (CROSS-CHECK YOUR COUNT)
+  ═══════════════════════════════════════════════════════════════════
 
-  IMAGE 4 (Angled East View):
-  - Cross-validate facets seen in previous views
-  - Look for facets on different sides of the building
-  - Verify pitch consistency across different roof sections
-  - Note: [Did you find any additional facets?]
+  Now look at Images #3, #4, #5, #6 (the angled views). These were captured at OPTIMAL zoom levels based on the property geometry from each direction.
 
-  IMAGE 5 (Angled South View):
-  - Cross-validate facets seen in previous views
-  - Look for facets on the south side of the building
-  - Check for any missed features
-  - Note: [Did you find any additional facets?]
+  **LIKE A REAL ROOFER walking around the property:**
 
-  IMAGE 6 (Angled West View):
-  - Final cross-validation of all facets from all angles
-  - Ensure you haven't double-counted any facets
-  - Verify your complete understanding of the roof structure
-  - Note: [Final facet count after all 6 views]
+  Image #3 (North View - 60° angle):
+  • Can you see any facets that were hidden from overhead? (Back of dormers, etc.)
+  • Does the pitch look consistent with what you saw overhead?
+  • Any facets you need to add or subtract from your count?
 
-  📊 PHASE 2 - Cross-Validation:
-  - Compare your facet counts from all 6 images
-  - If counts differ, investigate why (hidden facets? double counting? viewing angle?)
-  - Reconcile discrepancies by re-examining specific views
-  - Arrive at your final, confident facet count
+  Image #4 (East View - 60° angle):
+  • New facets visible from this side?
+  • Does your count still make sense?
+  • Can you see ridges/valleys that confirm your overhead analysis?
 
-  📐 PHASE 3 - Measurements:
-  - Use the measurement scale from Image 2 (Detail zoom) for area calculations
-  - Count grid squares and multiply by scale to estimate square footage
-  - Measure ridge and valley lengths using the scale bar
-  - Estimate pitch from the angled views (Images 3-6)
+  Image #5 (South View - 60° angle):
+  • What about the south-facing planes?
+  • Any surprises or hidden features?
+  • Still confident in your facet count?
 
-  📏 AREA MEASUREMENT METHODOLOGY:
+  Image #6 (West View - 60° angle):
+  • Final check from the west side
+  • Do all 6 images tell the same story?
+  • What's your FINAL, CONFIDENT facet count?
 
-  METHOD 1 - Grid Square Counting (Primary Method):
-  1. Look at the BRIGHT YELLOW scale bar at the bottom of Image 2
-  2. Note that the scale bar = 20 meters (approximately 65 feet)
-  3. The green grid divides the image into 10x10 squares
-  4. Calculate: If image width is ~200m, each grid square ≈ 20m x 20m = 400 sq meters = 4,300 sq ft
-  5. Count how many grid squares the entire roof footprint covers
-  6. Multiply: (grid squares) × (area per square) = Total roof area
-  7. Convert to squares: Total sq ft ÷ 100 = Roofing squares
+  **CROSS-VALIDATION CHECK:**
+  If you counted 12 facets overhead but only see 9 from the angled views, something's wrong. Go back and recount. The numbers should align across all views.
 
-  METHOD 2 - Direct Measurement:
-  1. Measure the longest roof dimension using the scale bar
-  2. Measure the widest roof dimension
-  3. Calculate approximate area: length × width
-  4. Adjust for roof pitch (steeper roofs = more area)
-  5. Add ~10-20% for pitch depending on steepness
+  ═══════════════════════════════════════════════════════════════════
+  📏 STEP 4: MEASURE THE ROOF AREA (LIKE BIDDING A JOB)
+  ═══════════════════════════════════════════════════════════════════
 
-  METHOD 3 - Cross-Validation:
-  - Compare Method 1 and Method 2 results
-  - They should be within 15% of each other
-  - If different, re-examine your measurements
-  - Use the average of both methods for final estimate
+  Back to Image #2 (Detail View). Use that BRIGHT YELLOW scale bar!
 
-  ⚠️ REMEMBER TO ACCOUNT FOR PITCH:
-  - The overhead view shows FOOTPRINT, not actual roof surface area
-  - A 4/12 pitch adds ~5% area
-  - A 6/12 pitch adds ~12% area
-  - An 8/12 pitch adds ~20% area
-  - A 10/12 pitch adds ~30% area
-  - Use the angled views (Images 3-6) to estimate pitch
+  **AS AN EXPERT ROOFER, you have two methods:**
 
-  📐 PITCH DETECTION:
-  - Look at the angled views to see the slope of the roof
-  - Steeper slopes cast longer shadows and show more "side" of the roof
-  - Compare visible height vs width to estimate pitch ratio
-  - Common pitches: 4/12 (low), 6/12 (medium), 8/12 (medium-steep), 10/12+ (steep)
-  - Check shadow patterns - steeper roofs have more pronounced shadows
+  METHOD 1 - Use the Grid (Fastest)
+  1. See that yellow scale bar? It's 20 meters (65 feet)
+  2. The green grid is 10×10 squares
+  3. Figure out what each grid square represents
+  4. Count how many grid squares the roof footprint covers
+  5. Multiply: squares × area per square = footprint area
+  6. DON'T FORGET: This is FOOTPRINT. You need to adjust for pitch!
 
-  🏠 MATERIAL & CONDITION ASSESSMENT:
-  - Identify roofing material type (asphalt shingles, metal, tile, etc.)
-  - Assess visible condition (new, good, fair, poor, failing)
-  - Note any visible damage, wear patterns, or missing shingles
-  - Identify moss, algae, or biological growth
-  - Check for sagging, waviness, or structural concerns
-  - Look for proper flashing around chimneys, vents, skylights
+  METHOD 2 - Direct Measurement (Most Accurate)
+  1. Use the scale bar to measure the longest roof dimension
+  2. Measure the widest dimension
+  3. Calculate approximate area
+  4. Now look at the angled views - how steep is this roof?
 
-  🌲 ARCHITECTURAL FEATURES:
-  - Identify dormers, valleys, hips, ridges
-  - Note chimneys, vents, skylights, and penetrations
-  - Assess roof complexity (simple gable, complex multi-hip, etc.)
-  - Identify any unusual features or challenges
-  - Note tree coverage and shading patterns
+  **PITCH MULTIPLIER (This is critical!):**
+  Look at images #3-6. How much of the roof "side" can you see?
+  • Low slope (4/12 or less): Add 5-8% to footprint
+  • Medium (6/12): Add 12% to footprint
+  • Medium-steep (8/12): Add 20% to footprint
+  • Steep (10/12+): Add 30% or more
 
-  ⚠️ CRITICAL ACCURACY REQUIREMENTS:
+  **VERIFY YOUR MEASUREMENT:**
+  Both methods should be within 15% of each other. If not, remeasure!
 
-  1. FACET COUNTING (Most Important):
-     - Use the systematic 6-step method described above
-     - Count EVERY distinct flat surface as one facet
-     - Don't guess - if you can't see it clearly in the detail view, check angled views
-     - A facet is a continuous flat surface - if there's a ridge, hip, or valley, it's a different facet
-     - Re-count at least twice to verify
+  Final note: "Roof footprint is approximately [X] sq ft. With [pitch] pitch, actual roof area is approximately [Y] sq ft = [Z] squares"
 
-  2. AREA MEASUREMENT:
-     - Use BOTH grid counting AND direct measurement
-     - Results should match within 15%
-     - If they don't match, re-measure
-     - Account for pitch using the angled views
-     - Provide a range if uncertain: "2,400 - 2,700 sq ft"
+  ═══════════════════════════════════════════════════════════════════
+  🔍 STEP 5: ASSESS CONDITION & MATERIAL (THE WALKTHROUGH)
+  ═══════════════════════════════════════════════════════════════════
 
-  3. CONFIDENCE LEVELS:
-     - High confidence: Clear visibility, distinct features, measurements cross-validate
-     - Medium confidence: Some shadows/trees, but main structure clear
-     - Low confidence: Heavy obstruction, unclear features, measurements don't align
+  **MATERIAL IDENTIFICATION (What's on this roof?):**
+  Look closely at the detail view and angled views:
+  • Asphalt shingles (3-tab or architectural)?
+  • Metal roofing?
+  • Tile (clay or concrete)?
+  • Other?
 
-  4. CROSS-VALIDATION:
-     - Image 1 context should match Image 2 detail
-     - Facet count from overhead should match what you see in angled views
-     - If you count 8 facets overhead but only see 6 from angles, re-examine
-     - The number of valleys + ridges should match the facet geometry
+  **CONDITION ASSESSMENT (What shape is it in?):**
+  • Are the shingles intact or curling/missing?
+  • Any visible wear, algae, or moss?
+  • Sagging or waviness in the roof deck?
+  • How old does it look?
 
-  5. IF IN DOUBT:
-     - Provide a range instead of a single number
-     - Explain what's unclear: "Unable to confirm if dormer has 2 or 3 facets due to shadows"
-     - Be conservative - it's better to undercount than overcount
-     - Use the detail image as the authoritative source
+  Rate it: New / Good / Fair / Poor / Failing
 
-  Take your time. Accuracy over speed. You're a roofing professional analyzing this for a real customer.
+  **OTHER OBSERVATIONS:**
+  • Trees overhanging? (Future maintenance issue)
+  • Chimneys, vents, skylights? (Flashing to worry about)
+  • Valleys and complex features? (More labor = higher cost)
+  • Any obvious damage or concerns?
 
-  REMEMBER: Respond ONLY with valid JSON. No markdown, no code blocks, just the JSON object.`
+  ═══════════════════════════════════════════════════════════════════
+  ✅ FINAL CHECKLIST (BEFORE YOU SUBMIT YOUR ANALYSIS)
+  ═══════════════════════════════════════════════════════════════════
+
+  **ACCURACY CHECK (This is your livelihood - be precise!):**
+
+  ✓ FACET COUNT: Did you systematically count every plane?
+  ✓ CROSS-VALIDATION: Do all 6 images tell the same story?
+  ✓ MEASUREMENTS: Did you use the scale bar correctly?
+  ✓ PITCH ADJUSTMENT: Did you add area for the pitch?
+  ✓ DOUBLE-CHECK: Count your facets one more time
+  ✓ CONFIDENCE: Are you high/medium/low confidence? Be honest.
+
+  **IF YOU'RE UNSURE:**
+  • Give a range instead of exact number ("24-28 facets" or "2,400-2,700 sq ft")
+  • Explain what's unclear in your detailed analysis
+  • Be conservative - better to undercount than overcount
+  • The customer wants ACCURATE, not impressive numbers
+
+  **YOUR CONFIDENCE LEVEL:**
+  • HIGH: Crystal clear views, all measurements align, no obstructions
+  • MEDIUM: Some trees/shadows but main structure is clear
+  • LOW: Heavy obstruction, can't see key features, measurements uncertain
+
+  ═══════════════════════════════════════════════════════════════════
+  🎯 NOW WRITE YOUR PROFESSIONAL ANALYSIS
+  ═══════════════════════════════════════════════════════════════════
+
+  You're a master roofer. You've analyzed this property from every angle. You've counted facets, measured area, assessed pitch, checked condition.
+
+  Now write your analysis like you're explaining it to the homeowner AND your crew.
+
+  • User Summary: Plain English for the homeowner (2-3 sentences)
+  • Structured Data: The numbers (facets, area, pitch, etc.)
+  • Detailed Analysis: Your complete professional assessment with reasoning
+
+  CRITICAL: Respond with ONLY valid JSON. No markdown formatting, no code blocks, just the raw JSON object starting with { and ending with }.`
 
       // Format payload to match OpenAI chat API expectations
       const addressStr =

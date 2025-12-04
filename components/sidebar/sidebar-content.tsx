@@ -6,6 +6,7 @@ import { SidebarCreateButtons } from "./sidebar-create-buttons"
 import { SidebarDataList } from "./sidebar-data-list"
 import { SidebarSearch } from "./sidebar-search"
 import { ConnectionsList } from "./items/tools/connections-list"
+import { ReportsList } from "./items/reports/reports-list"
 import Link from "next/link"
 import { IconSparkles, IconPalette, IconCrown } from "@tabler/icons-react"
 import { usePathname } from "next/navigation"
@@ -126,11 +127,20 @@ export const SidebarContent: FC<SidebarContentProps> = ({
         </div>
       )}
 
-      <SidebarDataList
-        contentType={contentType}
-        data={filteredData}
-        folders={folders}
-      />
+      {contentType === "reports" ? (
+        <div className="mt-2 flex-1 overflow-y-auto">
+          <div className="text-muted-foreground mb-2 px-2 text-xs font-semibold">
+            PROPERTY REPORTS
+          </div>
+          <ReportsList />
+        </div>
+      ) : (
+        <SidebarDataList
+          contentType={contentType}
+          data={filteredData}
+          folders={folders}
+        />
+      )}
     </div>
   )
 }
