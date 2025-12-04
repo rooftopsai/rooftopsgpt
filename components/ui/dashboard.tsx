@@ -163,7 +163,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
         {!showSidebar && (
           <Button
-            className="absolute left-4 top-5 z-50 size-10 border-2 border-gray-300 bg-white shadow-lg hover:border-blue-500 hover:shadow-xl dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400"
+            className="absolute left-4 top-3 z-50 size-10 border-2 border-gray-300 bg-white shadow-lg hover:border-blue-500 hover:shadow-xl dark:border-gray-600 dark:bg-gray-800 dark:hover:border-blue-400"
             variant="outline"
             size="icon"
             onClick={handleToggleSidebar}

@@ -534,6 +534,12 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       return null
     }
 
+    // Store original container styles for restoration (outside try block for catch access)
+    const isMobile = window.innerWidth < 768
+    const originalWidth = containerRef.current.style.width
+    const originalHeight = containerRef.current.style.height
+    const originalPosition = containerRef.current.style.position
+
     try {
       logDebug(`Capturing ${viewName} view...`)
 
@@ -556,6 +562,25 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       mapControls.forEach((control: HTMLElement) => {
         control.style.display = "none"
       })
+
+      // Adjust container aspect ratio for portrait screenshots on mobile
+
+      if (isMobile) {
+        // Force portrait aspect ratio (9:16) for mobile screenshots
+        const targetWidth = Math.min(window.innerWidth, 720) // Max 720px width
+        const targetHeight = (targetWidth / 9) * 16 // 9:16 aspect ratio
+
+        containerRef.current.style.width = `${targetWidth}px`
+        containerRef.current.style.height = `${targetHeight}px`
+        containerRef.current.style.position = "relative"
+
+        logDebug(
+          `Mobile detected - resizing container to portrait: ${targetWidth}x${targetHeight}`
+        )
+
+        // Wait for map to adjust
+        await new Promise(resolve => setTimeout(resolve, 300))
+      }
 
       // Improved html2canvas settings for higher quality captures
       const canvas = await html2canvas(containerRef.current, {
@@ -580,6 +605,14 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       mapControls.forEach((control: HTMLElement) => {
         control.style.display = ""
       })
+
+      // Restore original container size if we modified it for mobile
+      if (isMobile && containerRef.current) {
+        containerRef.current.style.width = originalWidth
+        containerRef.current.style.height = originalHeight
+        containerRef.current.style.position = originalPosition
+        logDebug("Restored original container size after mobile capture")
+      }
 
       // Convert canvas to base64 image with maximum quality
       let imageData = canvas.toDataURL("image/jpeg", 0.98) // Near-lossless quality for accuracy
@@ -675,6 +708,15 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     } catch (error) {
       console.error(`Error capturing ${viewName} view:`, error)
       logDebug(`Failed to capture ${viewName} view: ${error.message}`)
+
+      // Restore original container size in case of error
+      if (containerRef.current && isMobile) {
+        containerRef.current.style.width = originalWidth
+        containerRef.current.style.height = originalHeight
+        containerRef.current.style.position = originalPosition
+        logDebug("Restored original container size after error")
+      }
+
       return null
     }
   }

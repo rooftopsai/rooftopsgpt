@@ -177,7 +177,11 @@ const CombinedReport: FC<CombinedReportProps> = ({
   }
 
   // Extract data from analysis
-  const { analysis: rawAnalysis = "", structuredData, debug } = analysisData
+  const {
+    detailedAnalysis: rawAnalysis = "",
+    structuredData,
+    debug
+  } = analysisData
   const userSummary = structuredData?.userSummary
 
   // Generate concise AI summary from structured data
@@ -697,7 +701,7 @@ Be realistic and professional. Show actual calculations.`
         },
         body: JSON.stringify({
           chatSettings: {
-            model: "gpt-5",
+            model: "gpt-4o",
             temperature: 0.3
           },
           messages: [
