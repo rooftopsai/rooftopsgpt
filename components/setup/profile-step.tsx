@@ -130,7 +130,7 @@ export const ProfileStep: FC<ProfileStepProps> = ({
       </div>
 
       <div className="space-y-1">
-        <Label>Chat Display Name</Label>
+        <Label>Your Name</Label>
 
         <Input
           placeholder="Your Name"

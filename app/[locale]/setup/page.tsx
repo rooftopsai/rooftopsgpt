@@ -73,7 +73,13 @@ export default function SetupPage() {
 
         const profile = await getProfileByUserId(user.id)
         setProfile(profile)
-        setUsername(profile.username)
+
+        // Pre-populate username with email if no username exists
+        if (!profile.username && user.email) {
+          setUsername(user.email)
+        } else {
+          setUsername(profile.username)
+        }
 
         if (!profile.has_onboarded) {
           setLoading(false)
