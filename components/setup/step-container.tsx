@@ -58,11 +58,10 @@ export const StepContainer: FC<StepContainerProps> = ({
         <div className="border-b bg-white px-8 py-12 dark:bg-zinc-950">
           <div className="mx-auto max-w-3xl">
             <h1 className="mb-3 text-center text-5xl font-bold tracking-tight">
-              Transform Your{" "}
+              Welcome to the{" "}
               <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
-                Roofing Business
-              </span>{" "}
-              with AI
+                Future of Roofing
+              </span>
             </h1>
 
             <p className="mb-10 text-center text-xl text-zinc-600 dark:text-zinc-400">
@@ -114,27 +113,28 @@ export const StepContainer: FC<StepContainerProps> = ({
         </div>
       )}
 
-      <CardHeader>
-        <CardTitle className="flex justify-between">
-          <div>{stepTitle}</div>
-
-          <div className="text-sm">
+      <CardHeader className="px-8 pb-6 pt-8">
+        <div className="mb-2 flex items-center justify-between">
+          <CardTitle className="text-2xl font-bold">{stepTitle}</CardTitle>
+          <span className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-1 text-xs font-semibold text-white">
             {stepNum} / {SETUP_STEP_COUNT}
-          </div>
-        </CardTitle>
-
-        <CardDescription>{stepDescription}</CardDescription>
+          </span>
+        </div>
+        <CardDescription className="text-base text-zinc-600 dark:text-zinc-400">
+          {stepDescription}
+        </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4">{children}</CardContent>
+      <CardContent className="space-y-6 px-8 pb-8">{children}</CardContent>
 
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between border-t bg-zinc-50 px-8 py-6 dark:bg-zinc-900/50">
         <div>
           {showBackButton && (
             <Button
-              size="sm"
+              size="lg"
               variant="outline"
               onClick={() => onShouldProceed(false)}
+              className="border-zinc-300 dark:border-zinc-700"
             >
               Back
             </Button>
@@ -145,8 +145,9 @@ export const StepContainer: FC<StepContainerProps> = ({
           {showNextButton && (
             <Button
               ref={buttonRef}
-              size="sm"
+              size="lg"
               onClick={() => onShouldProceed(true)}
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700"
             >
               Next
             </Button>
