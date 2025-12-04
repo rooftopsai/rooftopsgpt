@@ -801,8 +801,9 @@ export const enhanceImageForRoofAnalysis = async (
     imageQuality: finalQuality
   }
 
-  // Convert back to data URL with high quality
-  const enhancedImageData = canvas.toDataURL("image/jpeg", 0.98)
+  // Convert back to data URL with balanced quality for LLM analysis
+  // Lower quality to reduce payload size for Vercel limits (4.5MB)
+  const enhancedImageData = canvas.toDataURL("image/jpeg", 0.6)
 
   return {
     imageData: enhancedImageData,
@@ -1032,7 +1033,7 @@ export const segmentRoofColors = async (
   const segmentedImgData = new ImageData(segmented, canvas.width, canvas.height)
   ctx.putImageData(segmentedImgData, 0, 0)
 
-  return canvas.toDataURL("image/jpeg", 0.95)
+  return canvas.toDataURL("image/jpeg", 0.6)
 }
 
 // Enhanced pitch visualization
@@ -1158,7 +1159,7 @@ export const enhanceRoofPitch = async (imageData: string): Promise<string> => {
     ctx.fillText(pitches[i], 35, canvas.height - 58 + i * 10)
   }
 
-  return canvas.toDataURL("image/jpeg", 0.95)
+  return canvas.toDataURL("image/jpeg", 0.6)
 }
 
 // Fast box blur for noise reduction
