@@ -200,33 +200,79 @@ export default async function Login({
   return (
     <div className="flex h-screen w-full">
       {/* Left side - Hero section (hidden on mobile) */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-zinc-950 via-black to-zinc-900 lg:flex lg:w-1/2">
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 via-transparent to-zinc-800/30"></div>
+      <div className="relative hidden overflow-hidden bg-black lg:flex lg:w-1/2">
+        {/* Subtle galaxy-like animated background */}
+        <div className="absolute inset-0">
+          {/* Base gradient with deep space colors */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/30 via-black to-purple-950/20"></div>
 
-        {/* Subtle animated waves pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, #18181b 1px, transparent 1px), linear-gradient(to bottom, #18181b 1px, transparent 1px)",
-              backgroundSize: "4rem 4rem",
-              maskImage:
-                "radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%)"
-            }}
-          ></div>
+          {/* Animated stars/particles effect */}
+          <div className="absolute inset-0 opacity-40">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `
+                  radial-gradient(1px 1px at 20% 30%, white, transparent),
+                  radial-gradient(1px 1px at 60% 70%, white, transparent),
+                  radial-gradient(1px 1px at 50% 50%, white, transparent),
+                  radial-gradient(1px 1px at 80% 10%, white, transparent),
+                  radial-gradient(1px 1px at 90% 60%, white, transparent),
+                  radial-gradient(2px 2px at 33% 50%, #a78bfa, transparent),
+                  radial-gradient(2px 2px at 79% 53%, #818cf8, transparent),
+                  radial-gradient(1px 1px at 17% 70%, white, transparent),
+                  radial-gradient(1px 1px at 44% 23%, white, transparent)
+                `,
+                backgroundSize:
+                  "200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%, 200% 200%",
+                backgroundPosition: "0% 0%",
+                animation: "galaxyMove 60s ease-in-out infinite"
+              }}
+            ></div>
+          </div>
+
+          {/* Nebula-like glow effects */}
+          <div className="absolute left-1/4 top-1/4 size-[400px] rounded-full bg-indigo-500/10 blur-[100px]"></div>
+          <div className="absolute bottom-1/4 right-1/4 size-[350px] rounded-full bg-purple-500/10 blur-[120px]"></div>
+          <div className="absolute left-1/2 top-1/2 size-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/5 blur-[150px]"></div>
         </div>
 
-        {/* Glow effect */}
-        <div className="absolute left-1/2 top-1/2 size-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-500/10 blur-[120px]"></div>
+        {/* Add keyframes animation inline */}
+        <style jsx>{`
+          @keyframes galaxyMove {
+            0%,
+            100% {
+              background-position:
+                0% 0%,
+                10% 20%,
+                30% 40%,
+                50% 60%,
+                70% 80%,
+                15% 25%,
+                45% 55%,
+                65% 75%,
+                85% 95%;
+            }
+            50% {
+              background-position:
+                100% 100%,
+                90% 80%,
+                70% 60%,
+                50% 40%,
+                30% 20%,
+                85% 75%,
+                55% 45%,
+                35% 25%,
+                15% 5%;
+            }
+          }
+        `}</style>
 
-        <div className="relative z-10 flex flex-col items-center justify-center px-16 text-center">
-          <div className="mb-12">
+        <div className="relative z-10 flex size-full flex-col items-center justify-center px-16 text-center">
+          <div className="mb-12 flex justify-center">
             <Brand theme="light" />
           </div>
 
-          <h1 className="bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-6xl font-light leading-tight tracking-tight text-transparent">
+          <h1 className="bg-gradient-to-b from-white via-zinc-200 to-zinc-500 bg-clip-text text-6xl font-light leading-tight tracking-tight text-transparent">
             Every project
             <br />
             starts at the top
@@ -309,7 +355,7 @@ export default async function Login({
                 Email
               </Label>
               <Input
-                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 text-white transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 name="email"
                 placeholder="you@example.com"
                 required
@@ -322,7 +368,7 @@ export default async function Login({
                 Password
               </Label>
               <Input
-                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 text-white transition-colors placeholder:text-zinc-500 focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
                 type="password"
                 name="password"
                 placeholder="••••••••"
