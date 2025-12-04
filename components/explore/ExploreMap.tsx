@@ -245,8 +245,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       )
 
       // Get viewport dimensions (approximate map container size)
-      const viewportWidth = mapContainerRef.current?.offsetWidth || 1200
-      const viewportHeight = mapContainerRef.current?.offsetHeight || 800
+      // Reduced from 1200x800 to 640x480 to reduce payload size while maintaining quality
+      const viewportWidth = mapContainerRef.current?.offsetWidth || 640
+      const viewportHeight = mapContainerRef.current?.offsetHeight || 480
 
       const zoomCalc = calculateOptimalZoom(
         propertySize.widthMeters,
@@ -687,7 +688,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         useCORS: true,
         allowTaint: true,
         logging: isDebugMode,
-        scale: 3.0, // Maximum scale for highest resolution and accuracy
+        scale: 1.5, // Reduced from 3.0 to 1.5 to optimize payload size (640x480 -> 960x720)
         backgroundColor: null, // Preserve transparency
         imageTimeout: 0, // No timeout for better handling of complex maps
         removeContainer: false, // Keep the original container
@@ -714,8 +715,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         logDebug("Restored original container size after mobile capture")
       }
 
-      // Convert canvas to base64 image with maximum quality
-      let imageData = canvas.toDataURL("image/jpeg", 0.98) // Near-lossless quality for accuracy
+      // Convert canvas to base64 image with high quality
+      // Increased from 0.6 to 0.85 to maintain accuracy with smaller dimensions
+      let imageData = canvas.toDataURL("image/jpeg", 0.85)
 
       // Apply image enhancements with improved settings + metadata
       logDebug(`Enhancing ${viewName} view with image processing v2.0...`)

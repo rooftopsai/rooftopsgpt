@@ -31,27 +31,46 @@ export const ReportsList: FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedReport, setSelectedReport] = useState<string | null>(null)
 
+  console.log("📋 ReportsList: Component rendered")
+  console.log("📋 ReportsList: selectedWorkspace:", selectedWorkspace)
+
   useEffect(() => {
+    console.log("📋 ReportsList: useEffect triggered")
     if (selectedWorkspace) {
       fetchReports()
     }
   }, [selectedWorkspace])
 
   const fetchReports = async () => {
-    if (!selectedWorkspace) return
+    if (!selectedWorkspace) {
+      console.log("📋 ReportsList: No selectedWorkspace")
+      return
+    }
 
     try {
       setIsLoading(true)
+      console.log(
+        "📋 ReportsList: Fetching reports for workspace:",
+        selectedWorkspace.id
+      )
       const response = await fetch(
         `/api/property-reports?workspace_id=${selectedWorkspace.id}`
       )
 
+      console.log("📋 ReportsList: Response status:", response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log("📋 ReportsList: Fetched reports:", data)
         setReports(data)
+      } else {
+        console.error(
+          "📋 ReportsList: Failed to fetch reports:",
+          response.statusText
+        )
       }
     } catch (error) {
-      console.error("Error fetching property reports:", error)
+      console.error("📋 ReportsList: Error fetching property reports:", error)
     } finally {
       setIsLoading(false)
     }

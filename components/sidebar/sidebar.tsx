@@ -185,6 +185,8 @@ export const Sidebar: FC<SidebarProps> = ({
                 return renderSidebarContent("tools", tools, toolFolders)
               case "models":
                 return renderSidebarContent("models", models, modelFolders)
+              case "reports":
+                return renderSidebarContent("reports", [], [])
               case "creator":
                 return renderSidebarContent("creator", [], [])
               default:

@@ -101,22 +101,26 @@ export const SidebarContent: FC<SidebarContentProps> = ({
         </Button>
       </div>
 
-      <div className="flex items-center">
-        <SidebarCreateButtons
-          contentType={contentType}
-          hasData={data.length > 0}
-          isMobile={isMobile}
-          toggleSidebar={toggleSidebar}
-        />
-      </div>
+      {contentType !== "reports" && (
+        <>
+          <div className="flex items-center">
+            <SidebarCreateButtons
+              contentType={contentType}
+              hasData={data.length > 0}
+              isMobile={isMobile}
+              toggleSidebar={toggleSidebar}
+            />
+          </div>
 
-      <div className="mt-2">
-        <SidebarSearch
-          contentType={contentType}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-        />
-      </div>
+          <div className="mt-2">
+            <SidebarSearch
+              contentType={contentType}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          </div>
+        </>
+      )}
 
       {contentType === "tools" && (
         <div className="mt-2">

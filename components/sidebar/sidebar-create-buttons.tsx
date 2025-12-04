@@ -103,13 +103,15 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
     }
   }
 
+  const createFunction = getCreateFunction()
+
   return (
     <div className="flex w-full space-x-2">
       <Button
         variant="ghost"
         className="hover:border-border flex h-[36px] grow justify-start border-0 border-b border-transparent bg-transparent font-semibold hover:bg-transparent"
         style={{ padding: "0px 10px 0px 4px" }}
-        onClick={getCreateFunction()}
+        onClick={createFunction}
       >
         <IconPlus className="mr-2" size={20} strokeWidth={2} />
         New{" "}

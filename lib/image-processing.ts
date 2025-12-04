@@ -71,8 +71,8 @@ export const calculateOptimalZoom = (
   propertyWidthMeters: number,
   propertyHeightMeters: number,
   latitude: number,
-  viewportWidthPixels: number = 1200,
-  viewportHeightPixels: number = 800,
+  viewportWidthPixels: number = 640,
+  viewportHeightPixels: number = 480,
   targetCoveragePercent: number = 0.7 // Property should fill 70% of frame
 ): { optimalZoom: number; zoomLevels: number[]; metersPerPixel: number } => {
   // Calculate how many meters we need to show to fit the property
@@ -121,8 +121,8 @@ export const validatePropertyFitsInFrame = (
   propertyHeightMeters: number,
   zoom: number,
   latitude: number,
-  viewportWidthPixels: number = 1200,
-  viewportHeightPixels: number = 800
+  viewportWidthPixels: number = 640,
+  viewportHeightPixels: number = 480
 ): { fits: boolean; coveragePercent: number; warning?: string } => {
   const scale = calculateScale(zoom, latitude)
   const metersPerPixel = scale.metersPerPixel
@@ -165,8 +165,8 @@ export const calculateZoomForAngle = (
   heading: number, // 0°, 90°, 180°, 270°
   tilt: number, // 0° for overhead, 60° for angled views
   latitude: number,
-  viewportWidthPixels: number = 1200,
-  viewportHeightPixels: number = 800,
+  viewportWidthPixels: number = 640,
+  viewportHeightPixels: number = 480,
   targetCoverage: number = 0.85 // Target 85% frame coverage for tight shots
 ): number => {
   // Convert heading to radians
@@ -659,7 +659,7 @@ export const enhanceImageForRoofAnalysis = async (
     addMeasurementGrid: true,
     compensateShadows: true,
     sharpenImage: true,
-    dimensions: { width: 800, height: 600 },
+    dimensions: { width: 640, height: 480 },
     zoom: 20,
     latitude: 0,
     ...options
@@ -801,9 +801,9 @@ export const enhanceImageForRoofAnalysis = async (
     imageQuality: finalQuality
   }
 
-  // Convert back to data URL with balanced quality for LLM analysis
-  // Lower quality to reduce payload size for Vercel limits (4.5MB)
-  const enhancedImageData = canvas.toDataURL("image/jpeg", 0.6)
+  // Convert back to data URL with higher quality for LLM analysis
+  // Using higher quality (0.8) with smaller dimensions to balance accuracy and payload size
+  const enhancedImageData = canvas.toDataURL("image/jpeg", 0.8)
 
   return {
     imageData: enhancedImageData,
@@ -1033,7 +1033,7 @@ export const segmentRoofColors = async (
   const segmentedImgData = new ImageData(segmented, canvas.width, canvas.height)
   ctx.putImageData(segmentedImgData, 0, 0)
 
-  return canvas.toDataURL("image/jpeg", 0.6)
+  return canvas.toDataURL("image/jpeg", 0.8)
 }
 
 // Enhanced pitch visualization
@@ -1159,7 +1159,7 @@ export const enhanceRoofPitch = async (imageData: string): Promise<string> => {
     ctx.fillText(pitches[i], 35, canvas.height - 58 + i * 10)
   }
 
-  return canvas.toDataURL("image/jpeg", 0.6)
+  return canvas.toDataURL("image/jpeg", 0.8)
 }
 
 // Fast box blur for noise reduction
