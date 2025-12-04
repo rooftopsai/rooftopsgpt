@@ -90,10 +90,10 @@ export const ProfileStep: FC<ProfileStepProps> = ({
   return (
     <>
       <div className="space-y-2">
-        <Label className="text-sm font-semibold">Username</Label>
+        <Label className="text-sm font-semibold text-zinc-400">Username</Label>
 
         <Input
-          className="h-12 rounded-lg border-zinc-300 text-base dark:border-zinc-700"
+          className="h-12 rounded-lg border-zinc-700 bg-zinc-900 text-base text-zinc-400"
           placeholder="username"
           value={username}
           disabled
@@ -102,12 +102,12 @@ export const ProfileStep: FC<ProfileStepProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-semibold">
-          Your Name <span className="text-rose-600">*</span>
+        <Label className="text-sm font-semibold text-zinc-400">
+          Your Name <span className="text-rose-500">*</span>
         </Label>
 
         <Input
-          className="h-12 rounded-lg border-zinc-300 text-base dark:border-zinc-700"
+          className="h-12 rounded-lg border-zinc-700 bg-zinc-900 text-base text-white placeholder:text-zinc-500"
           placeholder="Your Name"
           value={displayName}
           onChange={e => onDisplayNameChange(e.target.value)}

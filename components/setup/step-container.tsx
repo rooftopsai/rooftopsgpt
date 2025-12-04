@@ -49,36 +49,36 @@ export const StepContainer: FC<StepContainerProps> = ({
       onKeyDown={handleKeyDown}
     >
       {showHeroSection && (
-        <div className="bg-white px-8 py-12 dark:bg-zinc-950">
+        <div className="bg-black px-8 py-12">
           <div className="mx-auto max-w-2xl">
-            <h1 className="mb-3 text-center text-3xl font-bold tracking-tight">
+            <h1 className="mb-3 text-center text-3xl font-bold tracking-tight text-white">
               Welcome to the{" "}
               <span className="bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
                 Future of Roofing
               </span>
             </h1>
 
-            <p className="mb-10 text-center text-base text-zinc-600 dark:text-zinc-400">
+            <p className="mb-10 text-center text-base text-zinc-400">
               AI tools built specifically for roofing professionals to save time
               and close more deals.
             </p>
 
             <div className="space-y-6 text-left">
               <div>
-                <h3 className="mb-1 text-lg font-semibold">
+                <h3 className="mb-1 text-lg font-semibold text-white">
                   Instant Roof Reports
                 </h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-400">
                   No more waiting days or hours for information your team needs
                   now.
                 </p>
               </div>
 
               <div>
-                <h3 className="mb-1 text-lg font-semibold">
+                <h3 className="mb-1 text-lg font-semibold text-white">
                   AI Chat Tailored for Roofers
                 </h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-400">
                   Refine strategy, analyze results, create documents.
                 </p>
               </div>
@@ -87,40 +87,39 @@ export const StepContainer: FC<StepContainerProps> = ({
         </div>
       )}
 
-      <CardHeader className="bg-white px-8 pb-6 pt-8 dark:bg-zinc-950">
-        <CardTitle className="text-2xl font-bold">{stepTitle}</CardTitle>
-        <CardDescription className="text-base text-zinc-600 dark:text-zinc-400">
+      <CardHeader className="bg-black px-8 pb-6 pt-8">
+        <CardTitle className="text-2xl font-bold text-white">
+          {stepTitle}
+        </CardTitle>
+        <CardDescription className="text-base text-zinc-400">
           {stepDescription}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6 bg-white px-8 pb-8 dark:bg-zinc-950">
+      <CardContent className="space-y-6 bg-black px-8 pb-8">
         {children}
       </CardContent>
 
-      <CardFooter className="flex justify-between bg-white px-8 py-6 dark:bg-zinc-950">
-        <div>
-          {showBackButton && (
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => onShouldProceed(false)}
-              className="border-zinc-300 dark:border-zinc-700"
-            >
-              Back
-            </Button>
-          )}
-        </div>
-
-        <div>
+      <CardFooter className="bg-black px-8 py-6">
+        <div className="w-full space-y-3">
           {showNextButton && (
             <Button
               ref={buttonRef}
               size="lg"
               onClick={() => onShouldProceed(true)}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700"
             >
               Next
+            </Button>
+          )}
+          {showBackButton && (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => onShouldProceed(false)}
+              className="w-full border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            >
+              Back
             </Button>
           )}
         </div>
