@@ -12,7 +12,10 @@ import OpenAI from "openai"
 import { createClient } from "@supabase/supabase-js"
 import { ROOFING_EXPERT_SYSTEM_PROMPT } from "@/lib/system-prompts"
 import { GLOBAL_API_KEYS } from "@/lib/api-keys"
-import { requireFeatureAccess, trackAndCheckFeature } from "@/lib/subscription-helpers"
+import {
+  requireFeatureAccess,
+  trackAndCheckFeature
+} from "@/lib/subscription-helpers"
 
 export const runtime = "edge"
 
@@ -24,11 +27,20 @@ export async function POST(request: NextRequest) {
     workspaceId?: string
   }
 
+  console.log("[Anthropic Route] POST handler called", {
+    model: chatSettings?.model,
+    messageCount: messages?.length,
+    workspaceId
+  })
+
   try {
     const profile = await getServerProfile()
 
     // Check subscription limits before processing
-    const accessCheck = await requireFeatureAccess(profile.user_id, 'chat_messages')
+    const accessCheck = await requireFeatureAccess(
+      profile.user_id,
+      "chat_messages"
+    )
     if (!accessCheck.allowed) {
       return NextResponse.json(
         {
@@ -42,7 +54,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Use global API key
+    console.log("[Anthropic Route] API key check:", {
+      hasKey: !!GLOBAL_API_KEYS.anthropic,
+      keyPrefix: GLOBAL_API_KEYS.anthropic?.substring(0, 10) + "..."
+    })
+
     if (!GLOBAL_API_KEYS.anthropic) {
+      console.error("[Anthropic Route] API key not found")
       return NextResponse.json(
         { error: "Anthropic API key not configured" },
         { status: 500 }
@@ -57,9 +75,10 @@ export async function POST(request: NextRequest) {
       // Get the user's latest message
       const userMessages = messages.filter((m: any) => m.role === "user")
       const latestUserMessage = userMessages[userMessages.length - 1]
-      const userQuery = typeof latestUserMessage?.content === "string"
-        ? latestUserMessage.content
-        : latestUserMessage?.content?.[0]?.text || ""
+      const userQuery =
+        typeof latestUserMessage?.content === "string"
+          ? latestUserMessage.content
+          : latestUserMessage?.content?.[0]?.text || ""
 
       // Check if query is relevant for document retrieval
       const isRelevantQuery = (query: string): boolean => {
@@ -82,15 +101,42 @@ export async function POST(request: NextRequest) {
 
         // Only use RAG for queries that seem to need specific information
         const documentRelevantKeywords = [
-          'specification', 'specifications', 'datasheet', 'manual', 'guide',
-          'documentation', 'document', 'standard', 'requirement', 'requirements',
-          'code', 'regulation', 'osha', 'safety', 'installation', 'procedure',
-          'warranty', 'product', 'material', 'manufacturer', 'technical',
-          'model', 'compliance', 'certified', 'rating', 'dimension',
-          'what does', 'how to', 'according to', 'as per', 'refer to'
+          "specification",
+          "specifications",
+          "datasheet",
+          "manual",
+          "guide",
+          "documentation",
+          "document",
+          "standard",
+          "requirement",
+          "requirements",
+          "code",
+          "regulation",
+          "osha",
+          "safety",
+          "installation",
+          "procedure",
+          "warranty",
+          "product",
+          "material",
+          "manufacturer",
+          "technical",
+          "model",
+          "compliance",
+          "certified",
+          "rating",
+          "dimension",
+          "what does",
+          "how to",
+          "according to",
+          "as per",
+          "refer to"
         ]
 
-        return documentRelevantKeywords.some(keyword => lowerQuery.includes(keyword))
+        return documentRelevantKeywords.some(keyword =>
+          lowerQuery.includes(keyword)
+        )
       }
 
       if (userQuery && workspaceId && isRelevantQuery(userQuery)) {
@@ -111,22 +157,28 @@ export async function POST(request: NextRequest) {
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        const { data: results, error } = await supabase.rpc("search_documents", {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.7,
-          match_count: 3,
-          filter_workspace_id: workspaceId
-        })
+        const { data: results, error } = await supabase.rpc(
+          "search_documents",
+          {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.7,
+            match_count: 3,
+            filter_workspace_id: workspaceId
+          }
+        )
 
         let sourceCounter = 0
 
         if (!error && results && results.length > 0) {
           documentContext = "\n\n--- RELEVANT DOCUMENTATION ---\n"
-          documentContext += "The following information has been retrieved from uploaded manufacturer documentation. Please cite these sources in your response:\n\n"
+          documentContext +=
+            "The following information has been retrieved from uploaded manufacturer documentation. Please cite these sources in your response:\n\n"
 
           results.forEach((result: any) => {
             sourceCounter++
-            const sourceType = result.is_global ? "Rooftops AI Search" : "Your Documents"
+            const sourceType = result.is_global
+              ? "Rooftops AI Search"
+              : "Your Documents"
             documentContext += `[Source ${sourceCounter}] (${sourceType}: ${result.document_title || result.file_name})\n${result.content}\n\n`
 
             sourceDocs.push({
@@ -147,14 +199,19 @@ export async function POST(request: NextRequest) {
           console.log("Anthropic RAG - Starting Brave search")
           const braveStartTime = Date.now()
 
-          const braveResponse = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/search/brave`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: userQuery, count: 3 })
-          })
+          const braveResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/api/search/brave`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query: userQuery, count: 3 })
+            }
+          )
 
           const braveElapsed = Date.now() - braveStartTime
-          console.log(`Anthropic RAG - Brave response received after ${braveElapsed}ms, status: ${braveResponse.status}`)
+          console.log(
+            `Anthropic RAG - Brave response received after ${braveElapsed}ms, status: ${braveResponse.status}`
+          )
 
           if (braveResponse.ok) {
             const braveData = await braveResponse.json()
@@ -167,7 +224,8 @@ export async function POST(request: NextRequest) {
 
               braveData.results.forEach((result: any) => {
                 sourceCounter++
-                const snippet = result.description || result.extra_snippets?.[0] || ""
+                const snippet =
+                  result.description || result.extra_snippets?.[0] || ""
                 documentContext += `[Source ${sourceCounter}] (Web Search: ${result.title})\nURL: ${result.url}\n${snippet}\n\n`
 
                 sourceDocs.push({
@@ -190,7 +248,8 @@ export async function POST(request: NextRequest) {
 
         if (documentContext) {
           documentContext += "--- END INFORMATION ---\n"
-          documentContext += "When answering, cite specific sources using the format [Source X] where applicable.\n\n"
+          documentContext +=
+            "When answering, cite specific sources using the format [Source X] where applicable.\n\n"
         }
       }
     } catch (ragError) {
@@ -239,7 +298,20 @@ export async function POST(request: NextRequest) {
 
     try {
       // Prepend roofing expert prompt and document context to system message
-      const systemMessage = ROOFING_EXPERT_SYSTEM_PROMPT + "\n\n" + (documentContext || "") + messages[0].content
+      const systemMessage =
+        ROOFING_EXPERT_SYSTEM_PROMPT +
+        "\n\n" +
+        (documentContext || "") +
+        messages[0].content
+
+      console.log("[Anthropic Route] Creating Anthropic API request", {
+        model: chatSettings.model,
+        messageCount: ANTHROPIC_FORMATTED_MESSAGES.length,
+        temperature: chatSettings.temperature,
+        hasSystemMessage: !!systemMessage,
+        maxTokens:
+          CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TOKEN_OUTPUT_LENGTH
+      })
 
       const response = await anthropic.messages.create({
         model: chatSettings.model,
@@ -251,12 +323,14 @@ export async function POST(request: NextRequest) {
         stream: true
       })
 
+      console.log("[Anthropic Route] API request successful")
+
       try {
         const stream = AnthropicStream(response)
 
         // Track usage after successful API call (don't await to not block response)
-        trackAndCheckFeature(profile.user_id, 'chat_messages', 1).catch(err =>
-          console.error('Failed to track usage:', err)
+        trackAndCheckFeature(profile.user_id, "chat_messages", 1).catch(err =>
+          console.error("Failed to track usage:", err)
         )
 
         // If we have document sources, prepend metadata to the stream
@@ -299,15 +373,27 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (error: any) {
-      console.error("Error calling Anthropic API:", error)
+      console.error("[Anthropic Route] Error calling Anthropic API:", {
+        message: error.message,
+        status: error.status,
+        type: error.type,
+        error: error
+      })
       return new NextResponse(
         JSON.stringify({
-          message: "An error occurred while calling the Anthropic API"
+          message: `Anthropic API error: ${error.message || "Unknown error"}`,
+          details: error.type || error.status
         }),
         { status: 500 }
       )
     }
   } catch (error: any) {
+    console.error("[Anthropic Route] Outer error catch:", {
+      message: error.message,
+      status: error.status,
+      stack: error.stack
+    })
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
@@ -319,8 +405,11 @@ export async function POST(request: NextRequest) {
         "Anthropic API Key is incorrect. Please fix it in your profile settings."
     }
 
-    return new NextResponse(JSON.stringify({ message: errorMessage }), {
-      status: errorCode
-    })
+    return new NextResponse(
+      JSON.stringify({ message: errorMessage, error: error.message }),
+      {
+        status: errorCode
+      }
+    )
   }
 }

@@ -75,11 +75,6 @@ interface MapViewProps {
   onToggleDebugMode?: () => void
   // Sidebar state for layout adjustments
   showSidebar?: boolean
-  // Live preview state
-  livePreviewImages?: any[]
-  currentCaptureStage?: string
-  // Info window ref
-  setInfoWindowRef?: (infoWindow: google.maps.InfoWindow | null) => void
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -103,9 +98,6 @@ const MapView: React.FC<MapViewProps> = ({
   onAnalyzePropertyClick,
   setMapContainerRef,
   setMapRef,
-  livePreviewImages = [],
-  currentCaptureStage = "",
-  setInfoWindowRef,
   selectedModel,
   onModelChange,
   availableModels,
@@ -1016,65 +1008,26 @@ const MapView: React.FC<MapViewProps> = ({
   const ProgressIndicator = () => {
     if (!isAnalyzing) return null
 
-    const message =
-      currentCaptureStage ||
-      (captureProgress < 10
-        ? "Preparing capture..."
-        : captureProgress < 90
-          ? `Capturing view from ${getDirectionName(captureAngle)} (${Math.round(captureProgress)}%)`
-          : "Analyzing with AI...")
+    let message = "Processing..."
+    if (captureProgress < 10) {
+      message = "Preparing capture..."
+    } else if (captureProgress < 90) {
+      message = `Capturing view from ${getDirectionName(captureAngle)} (${Math.round(captureProgress)}%)`
+    } else {
+      message = "Thinking..."
+    }
 
     return (
-      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
-        <div className="flex w-full max-w-2xl flex-col items-center space-y-4 rounded-xl bg-gray-900/95 p-6 text-white shadow-2xl">
-          <IconLoader2 size={40} className="animate-spin text-blue-400" />
-          <div className="text-center text-xl font-semibold">{message}</div>
-
-          {/* Progress Bar */}
-          <div className="h-3 w-full overflow-hidden rounded-full bg-gray-700">
+      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black bg-opacity-60">
+        <div className="flex max-w-md flex-col items-center space-y-4 rounded-lg bg-gray-800 p-6 text-white">
+          <IconLoader2 size={32} className="animate-spin text-blue-400" />
+          <div className="text-xl font-medium">{message}</div>
+          <div className="h-2.5 w-full rounded-full bg-gray-700">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
+              className="h-2.5 rounded-full bg-blue-500"
               style={{ width: `${captureProgress}%` }}
             ></div>
           </div>
-          <div className="text-sm text-gray-400">
-            {Math.round(captureProgress)}% Complete
-          </div>
-
-          {/* Live Preview Thumbnails */}
-          {livePreviewImages.length > 0 && (
-            <div className="w-full">
-              <div className="mb-2 text-sm font-medium text-gray-300">
-                Captured Views ({livePreviewImages.length}/6)
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {livePreviewImages.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="group relative aspect-square overflow-hidden rounded-lg border-2 border-blue-500/50 bg-gray-800 shadow-lg"
-                  >
-                    <img
-                      src={img.imageData || img.url || img}
-                      alt={img.viewName || `View ${idx + 1}`}
-                      className="size-full object-cover transition-transform duration-200 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1 text-center text-xs font-medium">
-                      {img.viewName || `View ${idx + 1}`}
-                    </div>
-                  </div>
-                ))}
-                {/* Placeholder for remaining images */}
-                {Array.from({ length: 6 - livePreviewImages.length }).map(
-                  (_, idx) => (
-                    <div
-                      key={`placeholder-${idx}`}
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50"
-                    />
-                  )
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )

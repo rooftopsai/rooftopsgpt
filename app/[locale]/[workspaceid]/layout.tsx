@@ -16,7 +16,6 @@ import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 
 import { Dashboard } from "@/components/ui/dashboard"
-import Loading from "../loading"
 
 interface WorkspaceLayoutProps {
   children: ReactNode
@@ -156,7 +155,13 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
     setLoading(false)
   }
 
-  if (loading) return <Loading />
+  if (loading) {
+    return (
+      <div className="flex size-full items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
+      </div>
+    )
+  }
 
   return <Dashboard>{children}</Dashboard>
 }

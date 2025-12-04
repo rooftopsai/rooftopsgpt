@@ -354,7 +354,6 @@ export default async function Login({
 
             <div className="text-muted-foreground mt-1 flex justify-center text-sm">
               <button
-                type="button"
                 formAction={handleResetPassword}
                 className="hover:text-foreground transition-colors"
               >

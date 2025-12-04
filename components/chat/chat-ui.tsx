@@ -1,6 +1,5 @@
 // components > chat > chat-ui.tsx (with message padding)
 
-import Loading from "@/app/[locale]/loading"
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
 import { useChatbotUI } from "@/context/context"
 import { getAssistantToolsByAssistantId } from "@/db/assistant-tools"
@@ -202,7 +201,16 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   }
 
   if (loading) {
-    return <Loading />
+    return (
+      <div className="flex size-full items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-500" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Loading chat...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   // Get appropriate chat input width based on document panel and screen size

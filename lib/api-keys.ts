@@ -30,6 +30,9 @@ export const GLOBAL_API_KEYS = {
   openrouter:
     process.env.GLOBAL_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY,
 
+  // xAI Grok
+  xai: process.env.GLOBAL_XAI_API_KEY || process.env.XAI_API_KEY,
+
   // Azure OpenAI
   azure_openai:
     process.env.GLOBAL_AZURE_OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY,

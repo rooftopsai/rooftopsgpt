@@ -1,4 +1,4 @@
-import React, { FC, useState, useRef, useEffect } from "react"
+import React, { FC, useState, useRef } from "react"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import {
@@ -67,96 +67,9 @@ const CombinedReport: FC<CombinedReportProps> = ({
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const reportRef = useRef<HTMLDivElement>(null)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
-  const [isSharing, setIsSharing] = useState(false)
-
-  // Cost estimation state
-  const [selectedMaterial, setSelectedMaterial] = useState<string>(
-    "architectural-shingles"
-  )
-  const [customPricePerSquare, setCustomPricePerSquare] = useState<string>("")
-  const [isGeneratingEstimate, setIsGeneratingEstimate] = useState(false)
-  const [generatedEstimate, setGeneratedEstimate] = useState<string>("")
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  // Share functionality
-  const handleShare = async () => {
-    setIsSharing(true)
-    try {
-      const propertyAddress = getPropertyAddress()
-      const shareData = {
-        title: `Property Report: ${propertyAddress}`,
-        text: `Check out this property analysis for ${propertyAddress}`,
-        url: window.location.href
-      }
-
-      if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare(shareData)
-      ) {
-        await navigator.share(shareData)
-      } else {
-        // Fallback: Copy link to clipboard
-        await navigator.clipboard.writeText(window.location.href)
-        alert("Report link copied to clipboard!")
-      }
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("Error sharing:", error)
-      }
-    } finally {
-      setIsSharing(false)
-    }
-  }
 
   console.log("ANALYSIS DATA:", analysisData)
   console.log("REPORT DATA:", reportData)
-
-  // Swipe gesture handlers
-  const minSwipeDistance = 50
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-
-    const capturedImages =
-      analysisData.capturedImages ||
-      analysisData.satelliteViews ||
-      reportData?.jsonData?.enhancedAnalysis?.capturedImages ||
-      reportData?.jsonData?.enhancedAnalysis?.satelliteViews ||
-      []
-
-    if (isLeftSwipe && selectedImageIndex < capturedImages.length - 1) {
-      setSelectedImageIndex(selectedImageIndex + 1)
-    }
-    if (isRightSwipe && selectedImageIndex > 0) {
-      setSelectedImageIndex(selectedImageIndex - 1)
-    }
-  }
 
   // If no analysis data, render a placeholder
   if (!analysisData) {
@@ -179,137 +92,6 @@ const CombinedReport: FC<CombinedReportProps> = ({
   // Extract data from analysis
   const { analysis: rawAnalysis = "", structuredData, debug } = analysisData
   const userSummary = structuredData?.userSummary
-
-  // Generate concise AI summary from structured data
-  const generateConciseSummary = (): string => {
-    if (!structuredData) return "Sorry, no analysis data available."
-
-    const {
-      facetCount,
-      roofArea,
-      complexity = "unknown",
-      material = "unknown",
-      condition = "unknown"
-    } = structuredData
-
-    const complexityMap: { [key: string]: string } = {
-      simple: "simple",
-      moderate: "moderately complex",
-      complex: "highly complex"
-    }
-
-    const complexityText = complexityMap[complexity.toLowerCase()] || complexity
-
-    let summary = `This is a residential property with an estimated ${facetCount || "unknown"} facets and ${complexityText} roof structure.`
-
-    if (roofArea) {
-      summary += ` The total roof area is approximately ${roofArea.toLocaleString()} square feet.`
-    }
-
-    if (material && material !== "unknown") {
-      summary += ` The roof appears to be ${material}.`
-    }
-
-    return summary
-  }
-
-  // Material pricing options (price per square - 100 sq ft)
-  const materialOptions = [
-    {
-      value: "3-tab-shingles",
-      label: "3-Tab Asphalt Shingles",
-      pricePerSquare: 350,
-      lifespan: "15-20 years"
-    },
-    {
-      value: "architectural-shingles",
-      label: "Architectural Shingles (Recommended)",
-      pricePerSquare: 450,
-      lifespan: "25-30 years"
-    },
-    {
-      value: "designer-shingles",
-      label: "Designer/Premium Shingles",
-      pricePerSquare: 600,
-      lifespan: "30-50 years"
-    },
-    {
-      value: "metal-standing-seam",
-      label: "Metal Roofing (Standing Seam)",
-      pricePerSquare: 800,
-      lifespan: "40-70 years"
-    },
-    {
-      value: "metal-panels",
-      label: "Metal Roofing (Panels)",
-      pricePerSquare: 550,
-      lifespan: "40-60 years"
-    },
-    {
-      value: "clay-tile",
-      label: "Clay Tile",
-      pricePerSquare: 1200,
-      lifespan: "50-100 years"
-    },
-    {
-      value: "concrete-tile",
-      label: "Concrete Tile",
-      pricePerSquare: 900,
-      lifespan: "40-50 years"
-    },
-    {
-      value: "slate",
-      label: "Natural Slate",
-      pricePerSquare: 1500,
-      lifespan: "75-100+ years"
-    },
-    {
-      value: "wood-shake",
-      label: "Wood Shake/Shingles",
-      pricePerSquare: 700,
-      lifespan: "20-40 years"
-    },
-    {
-      value: "custom",
-      label: "Custom Price",
-      pricePerSquare: 0,
-      lifespan: "Varies"
-    }
-  ]
-
-  // Truncate detailed analysis to 200 words max
-  const truncateAnalysis = (text: string, maxWords: number = 200): string => {
-    if (!text) return "No detailed analysis available."
-
-    // Remove excessive whitespace and line breaks
-    const cleanText = text
-      .replace(/\n{3,}/g, "\n\n") // Max 2 consecutive line breaks
-      .replace(/[ \t]+/g, " ") // Normalize spaces
-      .trim()
-
-    // Split into words
-    const words = cleanText.split(/\s+/)
-
-    if (words.length <= maxWords) {
-      return cleanText
-    }
-
-    // Truncate to maxWords and add ellipsis
-    const truncated = words.slice(0, maxWords).join(" ")
-
-    // Try to end at a sentence if possible
-    const lastPeriod = truncated.lastIndexOf(".")
-    const lastQuestion = truncated.lastIndexOf("?")
-    const lastExclamation = truncated.lastIndexOf("!")
-    const lastSentenceEnd = Math.max(lastPeriod, lastQuestion, lastExclamation)
-
-    if (lastSentenceEnd > maxWords * 0.8) {
-      // If we found a sentence ending in the last 20% of text, use that
-      return truncated.substring(0, lastSentenceEnd + 1)
-    }
-
-    return truncated + "..."
-  }
 
   // Helper function to extract a summary from the raw analysis text
   const extractSummary = (analysisText: string): string | null => {
@@ -576,172 +358,6 @@ const CombinedReport: FC<CombinedReportProps> = ({
         d.roofDetails?.details?.roofPitch ?? // nested
         d.propertyData?.roofDetails?.roofPitch ?? // alternate nesting
         d.roofPitch
-    }
-  }
-
-  // Generate cost estimate using LLM
-  const generateCostEstimate = async () => {
-    setIsGeneratingEstimate(true)
-    setGeneratedEstimate("")
-
-    try {
-      // Get selected material details
-      const selectedMaterialOption = materialOptions.find(
-        m => m.value === selectedMaterial
-      )
-      const pricePerSquare =
-        selectedMaterial === "custom"
-          ? parseFloat(customPricePerSquare) || 0
-          : selectedMaterialOption?.pricePerSquare || 0
-
-      if (pricePerSquare === 0) {
-        alert("Please enter a valid price per square for custom pricing.")
-        setIsGeneratingEstimate(false)
-        return
-      }
-
-      // Get roof data
-      const roofArea = structuredData?.roofArea || 0
-      const squares = structuredData?.squares || Math.round(roofArea / 100)
-      const pitch = structuredData?.pitch || "6/12"
-      const complexity = structuredData?.complexity || "moderate"
-      const facetCount = structuredData?.facetCount || "unknown"
-      const condition = structuredData?.condition || "unknown"
-
-      // Create prompt for LLM
-      const prompt = `You are a professional roofing estimator. Generate a detailed, well-structured cost estimate for replacing this roof.
-
-ROOF DETAILS:
-- Total Area: ${roofArea.toLocaleString()} square feet
-- Roofing Squares: ${squares} squares (1 square = 100 sq ft)
-- Roof Pitch: ${pitch}
-- Complexity: ${complexity}
-- Facet Count: ${facetCount}
-- Current Condition: ${condition}
-- Material Selected: ${selectedMaterialOption?.label || "Custom Material"}
-- Base Price per Square: $${pricePerSquare.toLocaleString()}
-- Material Lifespan: ${selectedMaterialOption?.lifespan || "Varies"}
-
-Generate a comprehensive estimate breakdown. Provide the estimate in this EXACT format:
-
-## 🏠 ROOF REPLACEMENT ESTIMATE
-
-### Property Details
-- **Roof Size**: ${roofArea.toLocaleString()} sq ft (${squares} squares)
-- **Pitch**: ${pitch}
-- **Complexity**: ${complexity}
-- **Material**: ${selectedMaterialOption?.label || "Custom Material"}
-
----
-
-### 💰 Cost Breakdown
-
-**1. Materials**
-- ${squares} squares × $${pricePerSquare} = [calculate exact amount]
-- Materials include roofing shingles/panels, starter strips, and basic components
-
-**2. Labor**
-- Installation labor based on complexity and pitch
-- Calculate as 40-60% of materials cost depending on roof complexity
-
-**3. Tear-Off & Disposal**
-- Remove existing roofing: $${Math.round(squares * 50)}-$${Math.round(squares * 80)}
-- Debris disposal included
-
-**4. Additional Components**
-- Underlayment: $${Math.round(squares * 40)}-$${Math.round(squares * 60)}
-- Flashing & drip edge: Estimate based on roof perimeter
-- Ridge cap: Calculate based on ridge length
-- Vents & penetrations: $300-$800
-- Ice & water shield: $200-$500
-
-**5. Complexity Adjustment**
-- ${complexity} roof design adds 10-20% to labor
-
-**6. Pitch Adjustment**
-- ${pitch} pitch adds 5-15% to labor cost
-
-**7. Permits & Inspection**
-- Building permits: $${Math.round(roofArea * 0.25)}-$${Math.round(roofArea * 0.5)}
-
----
-
-### 📊 TOTAL ESTIMATE
-
-**Low Range**: [calculate]
-**High Range**: [calculate]
-
-**Most Likely Cost**: [provide realistic range]
-
----
-
-### 📝 Notes & Recommendations
-
-Provide 3-4 bullet points about:
-- Why this price range
-- What could increase/decrease the cost
-- Material lifespan and value
-- Special considerations
-
----
-
-**⚠️ Disclaimer**: Rough estimate based on satellite imagery. Actual costs vary based on local rates, materials, contractor markup, and hidden damage. Get multiple quotes from licensed contractors.
-
-Be realistic and professional. Show actual calculations.`
-
-      // Call LLM API
-      const response = await fetch("/api/chat/openai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          chatSettings: {
-            model: "gpt-5",
-            temperature: 0.3
-          },
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a professional roofing estimator with 20 years of experience."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to generate estimate")
-      }
-
-      // Read the streaming response
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error("No response reader available")
-      }
-
-      const decoder = new TextDecoder()
-      let estimate = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        estimate += chunk
-        setGeneratedEstimate(estimate) // Update in real-time
-      }
-
-      setGeneratedEstimate(estimate)
-    } catch (error) {
-      console.error("Error generating estimate:", error)
-      setGeneratedEstimate("❌ Failed to generate estimate. Please try again.")
-    } finally {
-      setIsGeneratingEstimate(false)
     }
   }
 
@@ -1044,58 +660,24 @@ Be realistic and professional. Show actual calculations.`
             </h2>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              onClick={handleShare}
-              disabled={isSharing}
-              size="sm"
-              variant="outline"
-              className="border-gray-300 dark:border-gray-600"
-            >
-              {isSharing ? (
-                <>
-                  <IconLoader2 className="size-4 animate-spin sm:mr-2" />
-                  <span className="hidden sm:inline">Sharing...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="size-4 sm:mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Share</span>
-                </>
-              )}
-            </Button>
-
-            <Button
-              onClick={downloadAsPDF}
-              disabled={isDownloading}
-              size="sm"
-              className="bg-blue-600 text-white hover:bg-blue-700"
-            >
-              {isDownloading ? (
-                <>
-                  <IconLoader2 className="size-4 animate-spin sm:mr-2" />
-                  <span className="hidden sm:inline">Generating...</span>
-                </>
-              ) : (
-                <>
-                  <IconDownload className="size-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Download PDF</span>
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={downloadAsPDF}
+            disabled={isDownloading}
+            size="sm"
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            {isDownloading ? (
+              <>
+                <IconLoader2 className="mr-2 size-4 animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <IconDownload className="mr-2 size-4" />
+                <span>Download PDF</span>
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Mobile view address */}
@@ -1109,7 +691,7 @@ Be realistic and professional. Show actual calculations.`
         </div>
       </div>
 
-      <div className="p-3 sm:p-6">
+      <div className="p-2 sm:p-6">
         {/* AI Summary Card */}
         <div className="mb-6 overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 shadow-sm dark:from-blue-900/20 dark:to-indigo-900/20">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -1118,7 +700,7 @@ Be realistic and professional. Show actual calculations.`
                 AI Analysis Summary
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                {generateConciseSummary()}
+                {userSummary ?? "Sorry, no summary available."}
               </p>
             </div>
 
@@ -1140,7 +722,7 @@ Be realistic and professional. Show actual calculations.`
         </div>
 
         {/* Responsive Metric Cards */}
-        <div className="my-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="my-4 grid grid-cols-3 gap-3">
           <Metric
             label="Facet Count"
             value={
@@ -1184,56 +766,7 @@ Be realistic and professional. Show actual calculations.`
             </div>
 
             {/* Selected Image Viewer */}
-            <div
-              className="group relative mb-3 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-900"
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
-            >
-              {/* Navigation Arrows */}
-              {selectedImageIndex > 0 && (
-                <button
-                  onClick={() => setSelectedImageIndex(selectedImageIndex - 1)}
-                  className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white opacity-0 transition-opacity hover:bg-black/70 group-hover:opacity-100"
-                  aria-label="Previous image"
-                >
-                  <svg
-                    className="size-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-              )}
-              {selectedImageIndex < capturedImages.length - 1 && (
-                <button
-                  onClick={() => setSelectedImageIndex(selectedImageIndex + 1)}
-                  className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white opacity-0 transition-opacity hover:bg-black/70 group-hover:opacity-100"
-                  aria-label="Next image"
-                >
-                  <svg
-                    className="size-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              )}
-
+            <div className="mb-3 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-900">
               <img
                 src={
                   capturedImages[selectedImageIndex]?.imageData ||
@@ -1244,15 +777,8 @@ Be realistic and professional. Show actual calculations.`
                 className="max-h-72 w-full object-contain"
               />
               <div className="border-t border-gray-200 bg-white p-2 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                <div className="flex items-center justify-between">
-                  <span>
-                    {capturedImages[selectedImageIndex]?.viewName ||
-                      `View ${selectedImageIndex + 1} - ${["Top", "North", "East", "South", "West", "Northeast", "Southeast", "Southwest", "Northwest"][selectedImageIndex] || "Enhanced"}`}
-                  </span>
-                  <span className="text-xs text-gray-500 sm:hidden dark:text-gray-500">
-                    Swipe to navigate
-                  </span>
-                </div>
+                {capturedImages[selectedImageIndex]?.viewName ||
+                  `View ${selectedImageIndex + 1} - ${["Top", "North", "East", "South", "West", "Northeast", "Southeast", "Southwest", "Northwest"][selectedImageIndex] || "Enhanced"}`}
               </div>
             </div>
 
@@ -1278,9 +804,7 @@ Be realistic and professional. Show actual calculations.`
         {/* Accordion Sections */}
         <Accordion
           type="multiple"
-          defaultValue={
-            isMobile ? [] : ["overview", "solar", "details", "recommendations"]
-          }
+          defaultValue={["overview", "solar", "details", "recommendations"]}
           className="w-full"
         >
           {/* Overview Section */}
@@ -1605,38 +1129,34 @@ Be realistic and professional. Show actual calculations.`
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 py-3">
-              {/* Truncated and formatted analysis (max 200 words) */}
+              {/* if you have @tailwindcss/typography installed */}
               <div className="prose prose-sm dark:prose-invert max-w-none rounded-lg bg-white p-4 dark:bg-gray-800">
-                <div className="whitespace-pre-line leading-relaxed">
-                  {truncateAnalysis(rawAnalysis, 200)}
-                </div>
+                {rawAnalysis
+                  .split("\n\n") // split into paragraphs
+                  .map((para, i) => (
+                    <p key={i}>{para.trim()}</p>
+                  ))}
               </div>
 
-              {/* Model info - always visible */}
-              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/50">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">
-                      Analysis Model:
+              {/* keep your debug info if you want */}
+              {debug && (
+                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex flex-wrap gap-x-3">
+                    <span>
+                      <span className="font-medium">Model:</span>{" "}
+                      {debug.modelUsed || "Unknown"}
                     </span>
-                    <span className="rounded-md bg-blue-100 px-2 py-1 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                      {debug?.modelUsed || "Unknown"}
+                    <span>
+                      <span className="font-medium">Time:</span>{" "}
+                      {debug.responseTime}ms
+                    </span>
+                    <span>
+                      <strong>Images:</strong>{" "}
+                      {debug.imageCount || capturedImages.length}
                     </span>
                   </div>
-                  {debug && (
-                    <>
-                      <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Processing Time:</span>
-                        <span>{debug.responseTime}ms</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Images Analyzed:</span>
-                        <span>{debug.imageCount || capturedImages.length}</span>
-                      </div>
-                    </>
-                  )}
                 </div>
-              </div>
+              )}
             </AccordionContent>
           </AccordionItem>
 
@@ -1773,197 +1293,6 @@ Be realistic and professional. Show actual calculations.`
                     </button>
                   </div>
                 </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Cost Estimation Section */}
-          <AccordionItem
-            value="cost-estimation"
-            className="overflow-hidden rounded-xl border border-gray-200 shadow-sm dark:border-gray-800"
-          >
-            <AccordionTrigger className="bg-gray-100 px-4 py-3 hover:bg-gray-50 dark:bg-gray-900/30 dark:hover:bg-gray-900/50">
-              <div className="flex items-center gap-2">
-                <IconCurrencyDollar className="size-5 text-green-600 dark:text-green-400" />
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Instant Cost Estimate
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 py-3">
-              <div className="space-y-4">
-                {/* Introduction */}
-                <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Get an instant AI-powered estimate for roof replacement
-                    based on your roof&apos;s size, pitch, and complexity.
-                    Choose from preset material options or enter custom pricing.
-                  </p>
-                </div>
-
-                {/* Current Roof Metrics */}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  <Metric
-                    label="Roof Area"
-                    value={`${structuredData?.roofArea?.toLocaleString() || "N/A"} sq ft`}
-                  />
-                  <Metric
-                    label="Squares"
-                    value={
-                      structuredData?.squares ||
-                      Math.round((structuredData?.roofArea || 0) / 100)
-                    }
-                  />
-                  <Metric
-                    label="Pitch"
-                    value={structuredData?.pitch || "N/A"}
-                  />
-                  <Metric
-                    label="Complexity"
-                    value={
-                      <span className="capitalize">
-                        {structuredData?.complexity || "N/A"}
-                      </span>
-                    }
-                  />
-                </div>
-
-                {/* Material Selection */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    Select Material Type
-                  </label>
-                  <select
-                    value={selectedMaterial}
-                    onChange={e => setSelectedMaterial(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                  >
-                    {materialOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                        {option.value !== "custom" &&
-                          ` - $${option.pricePerSquare}/sq (${option.lifespan})`}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Custom Price Input */}
-                  {selectedMaterial === "custom" && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Price Per Square (100 sq ft)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          value={customPricePerSquare}
-                          onChange={e =>
-                            setCustomPricePerSquare(e.target.value)
-                          }
-                          placeholder="Enter price per square"
-                          className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-8 pr-4 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selected Material Info */}
-                  {selectedMaterial !== "custom" && (
-                    <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        <strong>Base Price:</strong> $
-                        {materialOptions.find(m => m.value === selectedMaterial)
-                          ?.pricePerSquare || 0}
-                        /square • <strong>Lifespan:</strong>{" "}
-                        {
-                          materialOptions.find(
-                            m => m.value === selectedMaterial
-                          )?.lifespan
-                        }
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Generate Button */}
-                <Button
-                  onClick={generateCostEstimate}
-                  disabled={
-                    isGeneratingEstimate ||
-                    (selectedMaterial === "custom" && !customPricePerSquare)
-                  }
-                  className="w-full bg-green-600 py-6 text-base font-semibold text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
-                >
-                  {isGeneratingEstimate ? (
-                    <span className="flex items-center gap-2">
-                      <IconLoader2 className="size-5 animate-spin" />
-                      Generating Estimate...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <IconCurrencyDollar className="size-5" />
-                      Generate Instant Estimate
-                    </span>
-                  )}
-                </Button>
-
-                {/* Generated Estimate Display */}
-                {generatedEstimate && (
-                  <div className="space-y-3">
-                    <div className="rounded-lg border border-green-200 bg-white p-6 shadow-md dark:border-green-800 dark:bg-gray-800">
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <div
-                          className="text-gray-800 dark:text-gray-200"
-                          dangerouslySetInnerHTML={{
-                            __html: generatedEstimate
-                              .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                              .replace(
-                                /^## (.*$)/gm,
-                                '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>'
-                              )
-                              .replace(
-                                /^### (.*$)/gm,
-                                '<h3 class="text-lg font-semibold mt-3 mb-2">$1</h3>'
-                              )
-                              .replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>')
-                              .replace(
-                                /^---$/gm,
-                                '<hr class="my-4 border-gray-300 dark:border-gray-700" />'
-                              )
-                              .replace(/\n\n/g, "</p><p class='mt-2'>")
-                              .replace(/^(?!<[h|li|hr|p])(.+)$/gm, "<p>$1</p>")
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            generatedEstimate.replace(/[#*-]/g, "")
-                          )
-                          alert("Estimate copied to clipboard!")
-                        }}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        📋 Copy Estimate
-                      </Button>
-                      <Button
-                        onClick={() => setGeneratedEstimate("")}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        🔄 Clear & Regenerate
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </AccordionContent>
           </AccordionItem>

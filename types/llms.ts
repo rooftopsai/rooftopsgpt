@@ -7,6 +7,7 @@ export type LLMID =
   | MistralLLMID
   | GroqLLMID
   | PerplexityLLMID
+  | XaiLLMID
 
 // OpenAI Models (UPDATED 5/13/24)
 export type OpenAILLMID =
@@ -33,6 +34,7 @@ export type AnthropicLLMID =
   | "claude-3-sonnet-20240229" // Claude 3 Sonnet
   | "claude-3-opus-20240229" // Claude 3 Opus
   | "claude-3-5-sonnet-20240620" // Claude 3.5 Sonnet
+  | "claude-sonnet-4-5-20250929" // Claude Sonnet 4.5 (Latest)
 
 // Mistral Models
 export type MistralLLMID =
@@ -62,6 +64,13 @@ export type PerplexityLLMID =
   | "sonar-small-online" // Sonar Small Online
   | "sonar-medium-chat" // Sonar Medium Chat
   | "sonar-medium-online" // Sonar Medium Online
+
+// xAI Grok Models (UPDATED 12/3/25)
+export type XaiLLMID =
+  | "grok-beta" // Grok Beta (Legacy)
+  | "grok-vision-beta" // Grok Vision Beta (Multimodal)
+  | "grok-2-1212" // Grok 2
+  | "grok-2-vision-1212" // Grok 2 Vision
 
 export interface LLM {
   modelId: LLMID

@@ -1037,17 +1037,15 @@ const MapView: React.FC<MapViewProps> = ({
               style={{ width: `${captureProgress}%` }}
             ></div>
           </div>
-          <div className="text-sm text-gray-400">
-            {Math.round(captureProgress)}% Complete
-          </div>
+          <div className="text-sm text-gray-400">{Math.round(captureProgress)}% Complete</div>
 
           {/* Live Preview Thumbnails */}
           {livePreviewImages.length > 0 && (
             <div className="w-full">
               <div className="mb-2 text-sm font-medium text-gray-300">
-                Captured Views ({livePreviewImages.length}/6)
+                Captured Views ({livePreviewImages.length}/4)
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {livePreviewImages.map((img, idx) => (
                   <div
                     key={idx}
@@ -1058,20 +1056,18 @@ const MapView: React.FC<MapViewProps> = ({
                       alt={img.viewName || `View ${idx + 1}`}
                       className="size-full object-cover transition-transform duration-200 group-hover:scale-110"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1 text-center text-xs font-medium">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1 text-center text-xs font-medium">
                       {img.viewName || `View ${idx + 1}`}
                     </div>
                   </div>
                 ))}
                 {/* Placeholder for remaining images */}
-                {Array.from({ length: 6 - livePreviewImages.length }).map(
-                  (_, idx) => (
-                    <div
-                      key={`placeholder-${idx}`}
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50"
-                    />
-                  )
-                )}
+                {Array.from({ length: 4 - livePreviewImages.length }).map((_, idx) => (
+                  <div
+                    key={`placeholder-${idx}`}
+                    className="aspect-square rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50"
+                  />
+                ))}
               </div>
             </div>
           )}

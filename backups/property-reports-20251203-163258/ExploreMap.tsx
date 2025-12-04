@@ -11,16 +11,8 @@ import axios from "axios"
 import {
   enhanceImageForRoofAnalysis,
   segmentRoofColors,
-  enhanceRoofPitch,
-  estimatePropertySize,
-  calculateOptimalZoom,
-  validatePropertyFitsInFrame
+  enhanceRoofPitch
 } from "@/lib/image-processing"
-import {
-  extractSolarRoofMetrics,
-  estimatePropertySizeFromSolar,
-  formatRoofMetricsForReport
-} from "@/lib/solar-data-extractor"
 import { useChatbotUI } from "@/context/context"
 
 // Import our components
@@ -34,19 +26,9 @@ import {
   SelectValue
 } from "@/components/ui/select"
 
-// Available models for roof analysis
+// Available OpenAI models for roof analysis
 const availableModels = [
   { value: "gpt-5.1", label: "GPT-5.1 (Recommended)", provider: "openai" },
-  {
-    value: "claude-sonnet-4-5-20250929",
-    label: "Claude Sonnet 4.5 (Latest)",
-    provider: "anthropic"
-  },
-  {
-    value: "grok-2-vision-1212",
-    label: "Grok 2 Vision (xAI)",
-    provider: "xai"
-  },
   { value: "gpt-4o", label: "GPT-4o (Balanced)", provider: "openai" },
   { value: "o4-mini-2025-04-16", label: "GPT-o4-mini", provider: "openai" },
   { value: "gpt-4.1-2025-04-14", label: "GPT-4.1", provider: "openai" }
@@ -79,8 +61,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const [captureAngle, setCaptureAngle] = useState(0)
   const [is3DMode, setIs3DMode] = useState(true)
   const [captureProgress, setCaptureProgress] = useState(0)
-  const [livePreviewImages, setLivePreviewImages] = useState<any[]>([])
-  const [currentCaptureStage, setCurrentCaptureStage] = useState("")
 
   // This is a direct reference to the map container div from the MapView component
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -165,8 +145,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
     setIsAnalyzing(true)
     setCaptureProgress(0)
-    setLivePreviewImages([])
-    setCurrentCaptureStage("Initializing capture...")
 
     try {
       logDebug(
@@ -176,109 +154,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       // Create the views array to store our captures
       const views = []
 
-      // === FETCH SOLAR API DATA FIRST (FOR ACCURATE MEASUREMENTS) ===
-      logDebug("Fetching Solar API data for accurate roof measurements...")
-
-      let solarMetrics: any = null
-      let propertySize: any
-
-      try {
-        const solarResponse = await fetch("/api/solar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lat: selectedLocation.lat,
-            lng: selectedLocation.lng
-          })
-        })
-
-        if (solarResponse.ok) {
-          const solarData = await solarResponse.json()
-          solarMetrics = extractSolarRoofMetrics(solarData)
-
-          if (solarMetrics) {
-            logDebug(`✓ Solar API data received:`)
-            logDebug(`  - Roof Area: ${solarMetrics.totalRoofAreaSqFt} sq ft`)
-            logDebug(`  - Facet Count: ${solarMetrics.roofSegmentCount}`)
-            logDebug(`  - Predominant Pitch: ${solarMetrics.predominantPitch}`)
-            logDebug(
-              `  - Building Area: ${solarMetrics.buildingAreaSqFt} sq ft`
-            )
-
-            // Use Solar API data to estimate property size for zoom
-            propertySize = estimatePropertySizeFromSolar(solarMetrics)
-            logDebug(
-              `Calculated property size from Solar API: ${propertySize.widthMeters}m x ${propertySize.heightMeters}m`
-            )
-          } else {
-            logDebug(
-              "⚠ Could not extract solar metrics, using default estimate"
-            )
-            propertySize = estimatePropertySize(
-              selectedLocation.lat,
-              selectedLocation.lng
-            )
-          }
-        } else {
-          logDebug(
-            "⚠ Solar API call failed, using default property size estimate"
-          )
-          propertySize = estimatePropertySize(
-            selectedLocation.lat,
-            selectedLocation.lng
-          )
-        }
-      } catch (error) {
-        console.error("Error fetching Solar API data:", error)
-        logDebug("⚠ Solar API error, using default property size estimate")
-        propertySize = estimatePropertySize(
-          selectedLocation.lat,
-          selectedLocation.lng
-        )
-      }
-
-      // === DYNAMIC ZOOM CALCULATION (USING SOLAR API DATA) ===
-      logDebug("Calculating optimal zoom for property...")
-      logDebug(
-        `Property size for zoom calc: ${propertySize.widthMeters}m x ${propertySize.heightMeters}m`
-      )
-
-      // Get viewport dimensions (approximate map container size)
-      const viewportWidth = mapContainerRef.current?.offsetWidth || 1200
-      const viewportHeight = mapContainerRef.current?.offsetHeight || 800
-
-      const zoomCalc = calculateOptimalZoom(
-        propertySize.widthMeters,
-        propertySize.heightMeters,
-        selectedLocation.lat,
-        viewportWidth,
-        viewportHeight,
-        0.7 // Property fills 70% of frame
-      )
-
-      logDebug(
-        `Optimal zoom: ${zoomCalc.optimalZoom}, Using levels: ${zoomCalc.zoomLevels.join(", ")}`
-      )
-      logDebug(
-        `Scale at optimal zoom: ${zoomCalc.metersPerPixel.toFixed(3)}m/pixel`
-      )
-
-      // Validate each zoom level
-      zoomCalc.zoomLevels.forEach((zoom, idx) => {
-        const validation = validatePropertyFitsInFrame(
-          propertySize.widthMeters,
-          propertySize.heightMeters,
-          zoom,
-          selectedLocation.lat,
-          viewportWidth,
-          viewportHeight
-        )
-        logDebug(
-          `Zoom ${zoom}: Coverage ${(validation.coveragePercent * 100).toFixed(0)}%${validation.warning ? ` - ${validation.warning}` : ""}`
-        )
-      })
-
-      // CRITICAL FIX: First re-center the map on the selected property with optimal zoom
+      // CRITICAL FIX: First re-center the map on the selected property
       if (mapRef.current && selectedLocation) {
         try {
           // Center the map on the selected location before starting captures
@@ -287,117 +163,66 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             lng: selectedLocation.lng
           })
 
-          // Set OPTIMAL zoom level for capturing property details
-          mapRef.current.setZoom(zoomCalc.optimalZoom)
+          // Set appropriate zoom level for capturing property details
+          mapRef.current.setZoom(20)
 
           logDebug(
-            `Map centered on property at ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)} with optimal zoom ${zoomCalc.optimalZoom}`
+            "Map centered on selected property at " +
+              selectedLocation.lat.toFixed(6) +
+              ", " +
+              selectedLocation.lng.toFixed(6)
           )
 
           // Add a brief delay to ensure the map is properly centered before starting captures
-          await new Promise(resolve => setTimeout(resolve, 800))
+          await new Promise(resolve => setTimeout(resolve, 1000))
         } catch (e) {
           console.error("Error centering map on property:", e)
           logDebug(`Error centering map: ${e.message}`)
         }
       }
 
-      // === MULTI-ZOOM TOP VIEWS (3 dynamically calculated zoom levels) ===
-      const zoomLevels = zoomCalc.zoomLevels
-      const zoomLabels = ["Context", "Standard", "Detail"]
+      // === TOP VIEW (directly overhead) ===
+      logDebug("Capturing top view")
 
-      for (let zoomIdx = 0; zoomIdx < zoomLevels.length; zoomIdx++) {
-        const zoomLevel = zoomLevels[zoomIdx]
-        const zoomLabel = zoomLabels[zoomIdx]
-
-        setCurrentCaptureStage(
-          `Capturing overhead view (${zoomLabel} - Zoom ${zoomLevel})...`
-        )
-        logDebug(`Capturing top view at zoom ${zoomLevel} (${zoomLabel})`)
-
-        // Check if we have the map reference before trying to use it
-        if (mapRef.current) {
-          try {
-            // Set map to default tilt (0) for overhead view
-            mapRef.current.setTilt(0)
-            // Reset heading to north (0 degrees)
-            mapRef.current.setHeading(0)
-
-            // Set zoom level and wait for tiles to load
-            const map = mapRef.current
-            map.setZoom(zoomLevel)
-
-            // Wait for tiles to finish loading using Google Maps tilesloaded event
-            await new Promise(resolve => {
-              const tilesLoadedListener = map.addListener("tilesloaded", () => {
-                google.maps.event.removeListener(tilesLoadedListener)
-                resolve()
-              })
-              // Fallback timeout in case tilesloaded doesn't fire
-              setTimeout(() => {
-                google.maps.event.removeListener(tilesLoadedListener)
-                resolve()
-              }, 5000)
-            })
-
-            // Additional delay to ensure rendering is complete
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            logDebug(
-              `Map settings adjusted and tiles loaded for zoom ${zoomLevel}`
-            )
-          } catch (e) {
-            console.error("Error setting map properties:", e)
-            logDebug(`Error setting map properties: ${e.message}`)
-          }
-        } else {
-          logDebug("Map reference is not available for manipulation")
-        }
-
-        // Allow extra time for final rendering
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Capture top view at this zoom level
-        const topView = await captureMapView(
-          mapContainerRef,
-          `top-zoom${zoomLevel}`
-        )
-        if (topView) {
-          topView.enhancementOptions = {
-            enhanceEdges: imageProcessingOptions.enhanceEdges,
-            enhanceContrast: imageProcessingOptions.enhanceContrast,
-            addMeasurementGrid: imageProcessingOptions.addMeasurementGrid
-          }
-          topView.zoomLevel = zoomLevel
-          topView.zoomLabel = zoomLabel
-          // Update view name to be more descriptive
-          topView.viewName = `Overhead (${zoomLabel})`
-          views.push(topView)
-          setLivePreviewImages(prev => [...prev, topView])
-          setCaptureProgress(5 + ((zoomIdx + 1) / zoomLevels.length) * 15)
-        }
-      }
-
-      // Reset to optimal zoom for angled views
+      // Check if we have the map reference before trying to use it
       if (mapRef.current) {
         try {
-          mapRef.current.setZoom(zoomCalc.optimalZoom)
-          logDebug(
-            `Reset to optimal zoom ${zoomCalc.optimalZoom} for angled views`
-          )
+          // Set map to default tilt (0) for overhead view
+          mapRef.current.setTilt(0)
+          // Set zoom level appropriate for roof details
+          mapRef.current.setZoom(20)
+          // Reset heading to north (0 degrees)
+          mapRef.current.setHeading(0)
+          logDebug("Map settings adjusted for top view")
         } catch (e) {
-          console.error("Error resetting zoom:", e)
+          console.error("Error setting map properties:", e)
+          logDebug(`Error setting map properties: ${e.message}`)
         }
+      } else {
+        logDebug("Map reference is not available for manipulation")
       }
 
-      // Capture views from all four cardinal directions: North, East, South, West
-      const angles = [0, 90, 180, 270] // North, East, South, West
+      // Allow time for map to render with new settings
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Capture top view
+      const topView = await captureMapView(mapContainerRef, "top")
+      if (topView) {
+        topView.enhancementOptions = {
+          enhanceEdges: imageProcessingOptions.enhanceEdges,
+          enhanceContrast: imageProcessingOptions.enhanceContrast,
+          addMeasurementGrid: imageProcessingOptions.addMeasurementGrid
+        }
+        views.push(topView)
+        setCaptureProgress(10)
+      }
+
+      // Capture views from multiple angles with tilt if 3D mode is enabled
+      // FIXED: Removed 0 from the angles array to avoid duplication with top view
+      const angles = [45, 90, 180]
       for (let i = 0; i < angles.length; i++) {
         const angle = angles[i]
         setCaptureAngle(angle)
-        setCurrentCaptureStage(
-          `Capturing view from ${getDirectionName(angle)}...`
-        )
 
         logDebug(`Capturing view at ${angle}° heading`)
 
@@ -415,7 +240,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
             // Add tilt in 3D mode for perspective views
             if (is3DMode) {
-              mapRef.current.setTilt(60) // 60-degree tilt for better 3D perspective
+              mapRef.current.setTilt(45) // 45-degree tilt for 3D view
             }
             logDebug(
               `Map settings adjusted for angle ${angle}°, tilt: ${is3DMode ? "45°" : "0°"}`
@@ -432,7 +257,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         }
 
         // Allow time for map to render with new orientation
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000))
 
         // Get the direction name based on the angle
         const directionName = getDirectionName(angle)
@@ -446,11 +271,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             addMeasurementGrid: imageProcessingOptions.addMeasurementGrid
           }
           view.angle = angle
-          view.tilt = is3DMode ? 60 : 0
+          view.tilt = is3DMode ? 45 : 0
           views.push(view)
-          setLivePreviewImages(prev => [...prev, view])
-          // Update progress: 20% done after zoom levels, 80% for angled views
-          setCaptureProgress(20 + ((i + 1) / angles.length) * 70)
+          setCaptureProgress(10 + ((i + 1) / angles.length) * 80)
         }
       }
 
@@ -468,10 +291,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
       logDebug(`Successfully captured ${views.length} views`)
       setCaptureProgress(90)
-      setCurrentCaptureStage("Analyzing images with AI...")
 
-      // Send views to LLM for analysis (with Solar API ground truth if available)
-      const analysisResult = await sendToLLMForAnalysis(views, solarMetrics)
+      // Send views to LLM for analysis
+      const analysisResult = await sendToLLMForAnalysis(views)
 
       // Store the captured views in the analysis result
       if (analysisResult) {
@@ -504,8 +326,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       }
       setIsAnalyzing(false)
       setCaptureAngle(0)
-      setCurrentCaptureStage("")
-      // Don't clear livePreviewImages here - let them stay visible until next capture
     }
   }
 
@@ -562,7 +382,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         useCORS: true,
         allowTaint: true,
         logging: isDebugMode,
-        scale: 3.0, // Maximum scale for highest resolution and accuracy
+        scale: 2.5, // Increased scale for higher quality (was 2)
         backgroundColor: null, // Preserve transparency
         imageTimeout: 0, // No timeout for better handling of complex maps
         removeContainer: false, // Keep the original container
@@ -581,43 +401,22 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         control.style.display = ""
       })
 
-      // Convert canvas to base64 image with maximum quality
-      let imageData = canvas.toDataURL("image/jpeg", 0.98) // Near-lossless quality for accuracy
+      // Convert canvas to base64 image with higher quality
+      let imageData = canvas.toDataURL("image/jpeg", 0.97) // Increased quality (was 0.95)
 
-      // Apply image enhancements with improved settings + metadata
-      logDebug(`Enhancing ${viewName} view with image processing v2.0...`)
+      // Apply image enhancements with improved settings
+      logDebug(`Enhancing ${viewName} view with image processing...`)
 
-      // Get current map metadata
-      const currentZoom = mapRef.current?.getZoom() || 20
-      const currentLat = selectedLocation?.lat || 0
-      const currentLng = selectedLocation?.lng || 0
-      const currentTilt = mapRef.current?.getTilt() || 0
-      const currentHeading = mapRef.current?.getHeading() || 0
-
-      // Apply main enhancements (edges, contrast, grid) with metadata
-      const enhancedResult = await enhanceImageForRoofAnalysis(imageData, {
+      // Apply main enhancements (edges, contrast, grid) with adjusted settings for better clarity
+      imageData = await enhanceImageForRoofAnalysis(imageData, {
         enhanceEdges: imageProcessingOptions.enhanceEdges,
-        enhanceContrast: imageProcessingOptions.enhanceContrast,
+        enhanceContrast: imageProcessingOptions.enhanceContrast, // This will often be false now
         addMeasurementGrid: imageProcessingOptions.addMeasurementGrid,
-        compensateShadows: true, // NEW: Shadow compensation
-        sharpenImage: true, // NEW: Image sharpening
         dimensions: {
           width: canvas.width,
           height: canvas.height
-        },
-        zoom: currentZoom,
-        latitude: currentLat
+        }
       })
-
-      // Extract enhanced image data and metadata
-      imageData = enhancedResult.imageData
-      const metadata = enhancedResult.metadata
-      const qualityScore = enhancedResult.qualityScore
-
-      logDebug(`Image quality score: ${qualityScore}/100`)
-      logDebug(
-        `Scale: ${metadata.metersPerPixel.toFixed(3)}m/pixel at zoom ${currentZoom}`
-      )
 
       // Apply color segmentation if enabled
       if (imageProcessingOptions.colorSegmentation) {
@@ -663,14 +462,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         imageData,
         viewName,
         timestamp: new Date().toISOString(),
-        enhanced: true,
-        metadata: {
-          ...metadata,
-          tilt: currentTilt,
-          heading: currentHeading,
-          lng: currentLng
-        },
-        qualityScore
+        enhanced: true
       }
     } catch (error) {
       console.error(`Error capturing ${viewName} view:`, error)
@@ -680,9 +472,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   }
 
   // Function to send images to LLM for analysis
-  const sendToLLMForAnalysis = async (satelliteViews, solarMetrics = null) => {
-    const startTime = Date.now() // Track response time
-
+  const sendToLLMForAnalysis = async satelliteViews => {
     try {
       // Filter out any null views from failed captures
       const validViews = satelliteViews.filter(view => view !== null)
@@ -701,38 +491,14 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         `Sending ${validViews.length} enhanced views to ${provider} model ${selectedModel} for analysis`
       )
 
-      // Build reference section if Solar API data is available (for comparison only)
-      let referenceSection = ""
-      if (solarMetrics) {
-        referenceSection = `
-  ═══════════════════════════════════════════════════════════════════
-  📊 SOLAR API REFERENCE DATA (For Comparison - DO NOT USE AS FINAL VALUES)
-  ═══════════════════════════════════════════════════════════════════
-
-  Google Solar API estimates (these may NOT be accurate - you must verify visually):
-  - Estimated Roof Area: ${solarMetrics.totalRoofAreaSqFt} sq ft (verify from images)
-  - Estimated Facet Count: ${solarMetrics.roofSegmentCount} segments (recount from images)
-  - Estimated Pitch: ${solarMetrics.predominantPitch} (verify from shadows and angles)
-
-  ⚠️ IMPORTANT: These Solar API values are ESTIMATES ONLY. You must:
-  1. Carefully count facets yourself from the multiple angle images
-  2. Use the scale bar and grid to measure actual roof area
-  3. Verify pitch from visible shadows and roof angles
-  4. Your visual analysis should OVERRIDE these estimates if you see discrepancies
-  ═══════════════════════════════════════════════════════════════════`
-      }
-
       // Create a more detailed prompt that explains the enhancements and measurement grid
-      const enhancedPrompt = `As an expert roofing analyst, I need your detailed assessment of a property at ${selectedAddress || `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`}. Focus on the property most centered in these images and compare all images to determine the most accurate details about the subject property.
-${referenceSection}
+      const enhancedPrompt = `As an expert roofing analyst, I need your detailed assessment of a property at ${selectedAddress || `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`}. Focus on the property most centered in these images and compare all images to determine the most accurate details about the subject property. We are pursuing highly accurate number of facets and square footage of the roof so that we can determine the number of squares needed to replace the subject roof.
 
-  IMPORTANT VISUAL ENHANCEMENT INFORMATION:
+  IMPORTANT MEASUREMENT INFORMATION:
   - The images have been enhanced with edge detection to highlight roof facets and boundaries
   - A measurement grid has been added for reference (approximately 10x10 grid)
-  - A scale bar shows the actual zoom level and meters per pixel
+  - A scale bar shows approximately 10 meters / 30 feet
   - North direction is indicated in the top right corner
-  - Shadow compensation has been applied to reveal features in shadowed areas
-  - Image sharpening has been applied for better detail visibility
 
   CRITICAL: You MUST respond with valid JSON in this exact format:
   {
@@ -753,193 +519,26 @@ ${referenceSection}
     "detailedAnalysis": "Your complete technical analysis with all measurements, observations, and recommendations"
   }
 
-  SYSTEMATIC MULTI-VIEW ANALYSIS PROTOCOL:
+  Please analyze the following aspects with the highest possible accuracy:
 
-  You have 6 images provided in this order:
-  1. Overhead Context (zoomed out for full property view)
-  2. Overhead Detail (zoomed in for precise measurements)
-  3. Angled View - North
-  4. Angled View - East
-  5. Angled View - South
-  6. Angled View - West
+  1. PRECISE ROOF MEASUREMENTS:
+     - Total roof area in square feet (be as precise as possible)
+     - Count all distinct roof facets/planes (be exact)
+     - Measure the pitch of each major facet (e.g. 4/12, 6/12, etc.)
+     - Identify and measure ridge lines, valleys, hips, and dormers
+     - Where possible, provide dimensions of each major section
 
-  ANALYSIS WORKFLOW - Follow this exact sequence:
+  2. MATERIAL ASSESSMENT:
+     - Identify probable roofing material and condition
+     - Note signs of aging, damage, or maintenance issues
+     - Evaluate solar potential based on orientation and shading
 
-  📋 PHASE 1 - Individual Image Analysis:
+  3. INSTALLATION CONSIDERATIONS:
+     - Identify access challenges or safety concerns
+     - Note complex features requiring special attention
+     - Estimate total ridge and valley lengths (in linear feet)
 
-  IMAGE 1 (Overhead Context - Wide View):
-  - Identify the complete building footprint and property boundaries
-  - Count all separate structures (main house, garage, shed, addition, etc.)
-  - Identify main roof sections and their basic geometry
-  - Look for the overall roof TYPE: Gable, Hip, Dutch Hip, Mansard, Gambrel, etc.
-  - Note any complex features like dormers, valleys, or multiple levels
-  - Initial facet estimate: Count ONLY the major distinct planes you can clearly see
-  - Write down: "From context view, I see approximately X major roof planes"
-
-  IMAGE 2 (Overhead Detail - Maximum Zoom):
-  ⚠️ THIS IS YOUR PRIMARY MEASUREMENT IMAGE - BE EXTREMELY CAREFUL HERE ⚠️
-
-  SYSTEMATIC FACET COUNTING METHOD:
-  Step 1: Start with the MAIN ROOF structure
-    - Identify if it's a simple gable (2 planes) or hip (4+ planes)
-    - Count each distinct flat surface as ONE facet
-    - Mark mentally or note: "Main roof has X planes"
-
-  Step 2: Count EACH DORMER separately
-    - A typical gable dormer = 3 facets (front + 2 sides)
-    - A shed dormer = 1 facet (flat front)
-    - A hip dormer = 3-4 facets
-    - Mark: "Found Y dormers with Z total facets"
-
-  Step 3: Look for GARAGE/ATTACHMENT roofs
-    - Count garage roof planes separately
-    - Check if garage is under main roof or separate
-    - Mark: "Garage adds W facets"
-
-  Step 4: Check for PORCHES/OVERHANGS
-    - Front porch roof, back deck cover, bay window roofs
-    - Mark: "Porches/overhangs add V facets"
-
-  Step 5: Look for VALLEYS between sections
-    - Valleys indicate where two roof planes meet
-    - Each valley connects exactly 2 facets
-
-  Step 6: VERIFY your count
-    - Add up all sections: X + Z + W + V = TOTAL
-    - Look at the image again - did you miss anything?
-    - Check the grid: use the measurement grid to systematically scan each section
-
-  ⚠️ USE THE BRIGHT YELLOW SCALE BAR for measurements:
-  - The scale bar shows 20 meters (65 feet)
-  - Count grid squares to estimate dimensions
-  - Each grid cell represents approximately [calculate from scale]
-
-  Final note for Image 2: "After systematic analysis, I count EXACTLY [number] distinct roof facets"
-
-  IMAGE 3 (Angled North View):
-  - Look for facets hidden from overhead view
-  - Observe roof pitch from the visible slope
-  - Check for features obscured by trees or shadows in overhead views
-  - Note: [Did you find any additional facets?]
-
-  IMAGE 4 (Angled East View):
-  - Cross-validate facets seen in previous views
-  - Look for facets on different sides of the building
-  - Verify pitch consistency across different roof sections
-  - Note: [Did you find any additional facets?]
-
-  IMAGE 5 (Angled South View):
-  - Cross-validate facets seen in previous views
-  - Look for facets on the south side of the building
-  - Check for any missed features
-  - Note: [Did you find any additional facets?]
-
-  IMAGE 6 (Angled West View):
-  - Final cross-validation of all facets from all angles
-  - Ensure you haven't double-counted any facets
-  - Verify your complete understanding of the roof structure
-  - Note: [Final facet count after all 6 views]
-
-  📊 PHASE 2 - Cross-Validation:
-  - Compare your facet counts from all 6 images
-  - If counts differ, investigate why (hidden facets? double counting? viewing angle?)
-  - Reconcile discrepancies by re-examining specific views
-  - Arrive at your final, confident facet count
-
-  📐 PHASE 3 - Measurements:
-  - Use the measurement scale from Image 2 (Detail zoom) for area calculations
-  - Count grid squares and multiply by scale to estimate square footage
-  - Measure ridge and valley lengths using the scale bar
-  - Estimate pitch from the angled views (Images 3-6)
-
-  📏 AREA MEASUREMENT METHODOLOGY:
-
-  METHOD 1 - Grid Square Counting (Primary Method):
-  1. Look at the BRIGHT YELLOW scale bar at the bottom of Image 2
-  2. Note that the scale bar = 20 meters (approximately 65 feet)
-  3. The green grid divides the image into 10x10 squares
-  4. Calculate: If image width is ~200m, each grid square ≈ 20m x 20m = 400 sq meters = 4,300 sq ft
-  5. Count how many grid squares the entire roof footprint covers
-  6. Multiply: (grid squares) × (area per square) = Total roof area
-  7. Convert to squares: Total sq ft ÷ 100 = Roofing squares
-
-  METHOD 2 - Direct Measurement:
-  1. Measure the longest roof dimension using the scale bar
-  2. Measure the widest roof dimension
-  3. Calculate approximate area: length × width
-  4. Adjust for roof pitch (steeper roofs = more area)
-  5. Add ~10-20% for pitch depending on steepness
-
-  METHOD 3 - Cross-Validation:
-  - Compare Method 1 and Method 2 results
-  - They should be within 15% of each other
-  - If different, re-examine your measurements
-  - Use the average of both methods for final estimate
-
-  ⚠️ REMEMBER TO ACCOUNT FOR PITCH:
-  - The overhead view shows FOOTPRINT, not actual roof surface area
-  - A 4/12 pitch adds ~5% area
-  - A 6/12 pitch adds ~12% area
-  - An 8/12 pitch adds ~20% area
-  - A 10/12 pitch adds ~30% area
-  - Use the angled views (Images 3-6) to estimate pitch
-
-  📐 PITCH DETECTION:
-  - Look at the angled views to see the slope of the roof
-  - Steeper slopes cast longer shadows and show more "side" of the roof
-  - Compare visible height vs width to estimate pitch ratio
-  - Common pitches: 4/12 (low), 6/12 (medium), 8/12 (medium-steep), 10/12+ (steep)
-  - Check shadow patterns - steeper roofs have more pronounced shadows
-
-  🏠 MATERIAL & CONDITION ASSESSMENT:
-  - Identify roofing material type (asphalt shingles, metal, tile, etc.)
-  - Assess visible condition (new, good, fair, poor, failing)
-  - Note any visible damage, wear patterns, or missing shingles
-  - Identify moss, algae, or biological growth
-  - Check for sagging, waviness, or structural concerns
-  - Look for proper flashing around chimneys, vents, skylights
-
-  🌲 ARCHITECTURAL FEATURES:
-  - Identify dormers, valleys, hips, ridges
-  - Note chimneys, vents, skylights, and penetrations
-  - Assess roof complexity (simple gable, complex multi-hip, etc.)
-  - Identify any unusual features or challenges
-  - Note tree coverage and shading patterns
-
-  ⚠️ CRITICAL ACCURACY REQUIREMENTS:
-
-  1. FACET COUNTING (Most Important):
-     - Use the systematic 6-step method described above
-     - Count EVERY distinct flat surface as one facet
-     - Don't guess - if you can't see it clearly in the detail view, check angled views
-     - A facet is a continuous flat surface - if there's a ridge, hip, or valley, it's a different facet
-     - Re-count at least twice to verify
-
-  2. AREA MEASUREMENT:
-     - Use BOTH grid counting AND direct measurement
-     - Results should match within 15%
-     - If they don't match, re-measure
-     - Account for pitch using the angled views
-     - Provide a range if uncertain: "2,400 - 2,700 sq ft"
-
-  3. CONFIDENCE LEVELS:
-     - High confidence: Clear visibility, distinct features, measurements cross-validate
-     - Medium confidence: Some shadows/trees, but main structure clear
-     - Low confidence: Heavy obstruction, unclear features, measurements don't align
-
-  4. CROSS-VALIDATION:
-     - Image 1 context should match Image 2 detail
-     - Facet count from overhead should match what you see in angled views
-     - If you count 8 facets overhead but only see 6 from angles, re-examine
-     - The number of valleys + ridges should match the facet geometry
-
-  5. IF IN DOUBT:
-     - Provide a range instead of a single number
-     - Explain what's unclear: "Unable to confirm if dormer has 2 or 3 facets due to shadows"
-     - Be conservative - it's better to undercount than overcount
-     - Use the detail image as the authoritative source
-
-  Take your time. Accuracy over speed. You're a roofing professional analyzing this for a real customer.
+  Use the measurement grid and scale bar to make the most accurate assessments possible. The grid cells are approximately equal in size, and the scale bar represents approximately 10 meters or 30 feet.
 
   REMEMBER: Respond ONLY with valid JSON. No markdown, no code blocks, just the JSON object.`
 
@@ -997,15 +596,8 @@ ${referenceSection}
         )
       }
 
-      // Send to appropriate chat API based on provider
-      const apiEndpoint =
-        provider === "anthropic"
-          ? "/api/chat/anthropic"
-          : provider === "xai"
-            ? "/api/chat/xai"
-            : "/api/chat/openai"
-      logDebug(`Sending request to ${apiEndpoint}`)
-      const response = await axios.post(apiEndpoint, payload)
+      // Send to OpenAI chat API (Anthropic models removed)
+      const response = await axios.post("/api/chat/openai", payload)
 
       logDebug("Analysis completed successfully")
 
@@ -1027,33 +619,21 @@ ${referenceSection}
 
             // Validate the structure
             if (parsed.structuredData && parsed.userSummary) {
-              // Extract detailed analysis from multiple possible locations
-              const detailedAnalysisText =
-                parsed.detailedAnalysis ||
-                parsed.structuredData?.detailedAnalysis ||
-                parsed.analysis ||
-                responseText
-
               analysisResult = {
-                analysis: detailedAnalysisText,
+                analysis: parsed.detailedAnalysis || responseText,
                 structuredData: {
                   ...parsed.structuredData,
-                  userSummary: parsed.userSummary,
-                  detailedAnalysis: detailedAnalysisText
+                  userSummary: parsed.userSummary
                 },
                 capturedImages: validViews,
                 satelliteViews: validViews,
                 debug: {
                   modelUsed: selectedModel,
-                  responseTime: Date.now() - startTime,
-                  imageCount: validViews.length,
-                  hasDetailedAnalysis: !!detailedAnalysisText
+                  responseTime: Date.now() - Date.now(),
+                  imageCount: validViews.length
                 }
               }
-              logDebug("Successfully parsed structured JSON response", {
-                hasDetailedAnalysis: !!detailedAnalysisText,
-                analysisLength: detailedAnalysisText?.length || 0
-              })
+              logDebug("Successfully parsed structured JSON response")
             } else {
               throw new Error("Invalid JSON structure")
             }
@@ -1163,7 +743,7 @@ ${referenceSection}
             satelliteViews: validViews,
             debug: {
               modelUsed: selectedModel,
-              responseTime: Date.now() - startTime,
+              responseTime: Date.now() - Date.now(),
               imageCount: validViews.length,
               parsingMethod: "text_extraction"
             }
@@ -1174,32 +754,6 @@ ${referenceSection}
       } else {
         // Response is already an object
         analysisResult = response.data
-
-        // Ensure debug info is included even when response is pre-structured
-        if (!analysisResult.debug) {
-          analysisResult.debug = {
-            modelUsed: selectedModel,
-            responseTime: Date.now() - startTime,
-            imageCount: validViews.length
-          }
-        }
-      }
-
-      // Ensure all required fields are present
-      // Try multiple sources for the detailed analysis text
-      if (!analysisResult.analysis) {
-        analysisResult.analysis =
-          analysisResult.structuredData?.detailedAnalysis ||
-          analysisResult.structuredData?.userSummary ||
-          "Analysis completed successfully. Review the structured data above for measurements."
-      }
-
-      // Also store in structuredData for consistency
-      if (
-        analysisResult.structuredData &&
-        !analysisResult.structuredData.detailedAnalysis
-      ) {
-        analysisResult.structuredData.detailedAnalysis = analysisResult.analysis
       }
 
       return analysisResult
@@ -1512,8 +1066,6 @@ ${referenceSection}
           availableModels={availableModels}
           onToggleDebugMode={toggleDebugMode}
           showSidebar={showSidebar}
-          livePreviewImages={livePreviewImages}
-          currentCaptureStage={currentCaptureStage}
         />
       </div>
 

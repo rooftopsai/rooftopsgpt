@@ -97,9 +97,9 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
       }
     }
 
-    // Default state
+    // Default state - account for sidebar width when open
     return {
-      width: "100%",
+      width: showSidebar ? `calc(100% - ${SIDEBAR_WIDTH}px)` : "100%",
       marginRight: "0",
       display: "flex"
     }
@@ -112,7 +112,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
       {/* Sidebar */}
       <div
         className={cn(
-          "z-20 shrink-0 transition-all duration-300",
+          "z-20 shrink-0 bg-white transition-all duration-300 dark:bg-gray-900",
           showSidebar
             ? "border-r border-blue-500/10 dark:border-blue-400/15"
             : ""
