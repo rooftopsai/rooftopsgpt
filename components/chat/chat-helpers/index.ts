@@ -35,7 +35,9 @@ export const validateChatSettings = (
   }
 
   if (!modelData) {
-    throw new Error("Model not found")
+    throw new Error(
+      `Model "${chatSettings.model}" not found. Please select a different model from the settings.`
+    )
   }
 
   if (!profile) {

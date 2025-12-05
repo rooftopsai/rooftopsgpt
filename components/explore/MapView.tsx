@@ -23,7 +23,8 @@ import {
   IconRuler,
   Icon3dRotate,
   IconMap,
-  IconCurrentLocation
+  IconCurrentLocation,
+  IconSparkles
 } from "@tabler/icons-react"
 import Script from "next/script"
 
@@ -1024,34 +1025,135 @@ const MapView: React.FC<MapViewProps> = ({
           ? `Capturing view from ${getDirectionName(captureAngle)} (${Math.round(captureProgress)}%)`
           : "Analyzing with AI...")
 
-    return (
-      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
-        <div className="flex w-full max-w-2xl flex-col items-center space-y-4 rounded-xl bg-gray-900/95 p-6 text-white shadow-2xl">
-          <IconLoader2 size={40} className="animate-spin text-blue-400" />
-          <div className="text-center text-xl font-semibold">{message}</div>
+    // Extract step number from message if it exists (e.g., "Step 1/4: Measurement Analysis")
+    const stepMatch = message.match(/Step (\d)\/4: (.+)/)
+    const currentStep = stepMatch ? parseInt(stepMatch[1]) : 0
+    const stepName = stepMatch ? stepMatch[2] : null
 
-          {/* Progress Bar */}
-          <div className="h-3 w-full overflow-hidden rounded-full bg-gray-700">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
-              style={{ width: `${captureProgress}%` }}
-            ></div>
+    // Define the 4 analysis steps
+    const analysisSteps = [
+      { number: 1, name: "Measurement Specialist", shortName: "Measurements" },
+      { number: 2, name: "Condition Inspector", shortName: "Condition" },
+      { number: 3, name: "Cost Estimator", shortName: "Costs" },
+      { number: 4, name: "Quality Controller", shortName: "Validation" }
+    ]
+
+    return (
+      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md">
+        <div className="flex w-full max-w-3xl flex-col items-center space-y-8 rounded-2xl border border-gray-800 bg-gray-950/95 p-10 shadow-2xl">
+          {/* Status Message */}
+          <div className="text-center">
+            <div className="text-sm font-medium uppercase tracking-widest text-gray-400">
+              Property Analysis in Progress
+            </div>
+            <div className="mt-3 text-2xl font-semibold text-white">
+              {currentStep > 0 ? analysisSteps[currentStep - 1]?.name : message}
+            </div>
           </div>
-          <div className="text-sm text-gray-400">
-            {Math.round(captureProgress)}% Complete
-          </div>
+
+          {/* Pizza Tracker Style Progress Steps */}
+          {currentStep > 0 && (
+            <div className="w-full">
+              <div className="relative flex items-start justify-between px-8">
+                {/* Connecting Lines (behind circles) */}
+                <div className="absolute inset-x-0 top-6 flex items-center justify-between px-8">
+                  {analysisSteps.map((step, index) => {
+                    if (index === analysisSteps.length - 1) return null
+                    const isComplete = step.number < currentStep
+
+                    return (
+                      <div
+                        key={`line-${step.number}`}
+                        className="flex flex-1 items-center"
+                      >
+                        <div className="mx-auto w-full px-6">
+                          <div className="h-0.5 w-full overflow-hidden rounded-full bg-gray-800">
+                            <div
+                              className={`h-full transition-all duration-500 ${
+                                isComplete ? "bg-emerald-500" : "bg-gray-800"
+                              }`}
+                              style={{ width: isComplete ? "100%" : "0%" }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Step Circles */}
+                {analysisSteps.map(step => {
+                  const isComplete = step.number < currentStep
+                  const isCurrent = step.number === currentStep
+                  const isPending = step.number > currentStep
+
+                  return (
+                    <div
+                      key={step.number}
+                      className="relative z-10 flex flex-1 flex-col items-center"
+                    >
+                      <div className="relative">
+                        {/* Animated spinner ring for current step */}
+                        {isCurrent && (
+                          <div className="absolute -inset-2 animate-spin rounded-full border-2 border-transparent border-r-blue-500 border-t-blue-500"></div>
+                        )}
+
+                        <div
+                          className={`flex size-14 items-center justify-center rounded-full border-2 text-lg font-semibold transition-all duration-300${
+                            isComplete
+                              ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                              : isCurrent
+                                ? "scale-110 border-blue-500 bg-blue-500 text-white shadow-xl shadow-blue-500/40"
+                                : "border-gray-700 bg-gray-900 text-gray-600"
+                          }`}
+                        >
+                          {isComplete ? "✓" : step.number}
+                        </div>
+                      </div>
+                      <div
+                        className={`mt-3 text-center text-sm font-medium transition-colors ${
+                          isCurrent
+                            ? "text-blue-400"
+                            : isPending
+                              ? "text-gray-600"
+                              : "text-emerald-400"
+                        }`}
+                      >
+                        {step.shortName}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Traditional Progress Bar (for capture phase before analysis) */}
+          {currentStep === 0 && (
+            <div className="w-full space-y-3">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 transition-all duration-300 ease-out"
+                  style={{ width: `${captureProgress}%` }}
+                ></div>
+              </div>
+              <div className="text-center text-sm text-gray-400">
+                {Math.round(captureProgress)}% Complete
+              </div>
+            </div>
+          )}
 
           {/* Live Preview Thumbnails */}
           {livePreviewImages.length > 0 && (
             <div className="w-full">
-              <div className="mb-2 text-sm font-medium text-gray-300">
+              <div className="mb-3 text-sm font-medium text-gray-400">
                 Captured Views ({livePreviewImages.length}/6)
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {livePreviewImages.map((img, idx) => (
                   <div
                     key={idx}
-                    className="group relative aspect-square overflow-hidden rounded-lg border-2 border-blue-500/50 bg-gray-800 shadow-lg"
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-lg"
                   >
                     <img
                       src={img.imageData || img.url || img}
@@ -1068,7 +1170,7 @@ const MapView: React.FC<MapViewProps> = ({
                   (_, idx) => (
                     <div
                       key={`placeholder-${idx}`}
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-600 bg-gray-800/50"
+                      className="aspect-square rounded-lg border border-dashed border-gray-700 bg-gray-900/50"
                     />
                   )
                 )}
@@ -1369,27 +1471,13 @@ const MapView: React.FC<MapViewProps> = ({
                 )}
               </Button>
 
-              {/* Bottom Row - Model Selector, Debug, and Tools (Smaller) */}
+              {/* Bottom Row - AI Model Badge, Debug, and Tools (Smaller) */}
               <div className="flex items-center gap-2 overflow-x-auto">
-                {/* Model Selector as Pill */}
-                {selectedModel && onModelChange && availableModels && (
-                  <Select value={selectedModel} onValueChange={onModelChange}>
-                    <SelectTrigger className="h-8 w-auto min-w-[100px] rounded-full border border-gray-300 bg-gray-50 px-3 text-xs dark:border-gray-600 dark:bg-gray-700">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableModels.map(model => (
-                        <SelectItem
-                          key={model.value}
-                          value={model.value}
-                          className="text-xs"
-                        >
-                          {model.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                {/* Multi-Agent AI Badge (Read-only - shows hardcoded model) */}
+                <div className="flex h-8 items-center gap-1.5 rounded-full border border-blue-300 bg-blue-50 px-3 text-xs font-medium text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                  <IconSparkles size={14} />
+                  <span>Multi-Agent AI (GPT-5.1)</span>
+                </div>
 
                 {/* Debug Button as Pill */}
                 {onToggleDebugMode && (

@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { IconLoader2, IconInfoCircle, IconMapPin } from "@tabler/icons-react"
 import html2canvas from "html2canvas"
 import axios from "axios"
@@ -94,14 +94,13 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
   // Set better default image processing options for improved clarity
   const [imageProcessingOptions, setImageProcessingOptions] = useState({
-    enhanceEdges: true, // Keep edge detection
-    enhanceContrast: true, // Disable contrast enhancement by default
+    enhanceEdges: false, // Disable edge detection
+    enhanceContrast: false, // Disable contrast enhancement
     addMeasurementGrid: true, // Keep measurement grid
     colorSegmentation: false,
     pitchEnhancement: false
   })
 
-  const { toast } = useToast()
   const { showSidebar, setShowSidebar } = useChatbotUI()
 
   // Mark when we're on the client
@@ -109,36 +108,34 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     setIsClient(true)
   }, [])
 
-  // Fetch subscription status and filter available models
-  useEffect(() => {
-    const fetchSubscriptionInfo = async () => {
-      try {
-        const response = await fetch("/api/subscription/check")
-        if (response.ok) {
-          const data = await response.json()
-          setSubscriptionInfo(data)
+  // Reusable function to fetch subscription info
+  const fetchSubscriptionInfo = useCallback(async () => {
+    try {
+      const response = await fetch("/api/subscription/check")
+      if (response.ok) {
+        const data = await response.json()
+        setSubscriptionInfo(data)
 
-          // Filter models based on allowed models for this plan
-          const allowed = availableModels.filter(model =>
-            data.allowedModels.includes(model.value)
-          )
-          setFilteredModels(allowed)
+        // Filter models based on allowed models for this plan
+        const allowed = availableModels.filter(model =>
+          data.allowedModels.includes(model.value)
+        )
+        setFilteredModels(allowed)
 
-          // If current selected model is not allowed, switch to first allowed model
-          if (
-            !data.allowedModels.includes(selectedModel) &&
-            allowed.length > 0
-          ) {
-            setSelectedModel(allowed[0].value)
-          }
+        // If current selected model is not allowed, switch to first allowed model
+        if (!data.allowedModels.includes(selectedModel) && allowed.length > 0) {
+          setSelectedModel(allowed[0].value)
         }
-      } catch (error) {
-        console.error("Error fetching subscription info:", error)
-        // Default to showing all models if error
-        setFilteredModels(availableModels)
       }
+    } catch (error) {
+      console.error("Error fetching subscription info:", error)
+      // Default to showing all models if error
+      setFilteredModels(availableModels)
     }
+  }, [selectedModel])
 
+  // Fetch subscription status and filter available models on mount
+  useEffect(() => {
     fetchSubscriptionInfo()
   }, [])
 
@@ -169,28 +166,24 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     setIsDebugMode(!isDebugMode)
     setDebugLogs([])
 
-    toast({
-      title: !isDebugMode ? "Debug Mode Enabled" : "Debug Mode Disabled",
-      description: !isDebugMode
-        ? "Detailed logging and API request/response information will be shown."
-        : "Debug information will be hidden.",
-      duration: 3000
-    })
-  }, [isDebugMode, toast])
+    toast.info(
+      !isDebugMode
+        ? "Debug Mode Enabled - Detailed logging and API request/response information will be shown."
+        : "Debug Mode Disabled - Debug information will be hidden."
+    )
+  }, [isDebugMode])
 
   // Toggle 3D mode
   const toggleIs3DMode = useCallback(() => {
     setIs3DMode(!is3DMode)
     logDebug(`3D mode ${!is3DMode ? "enabled" : "disabled"}`)
 
-    toast({
-      title: !is3DMode ? "3D Mode Enabled" : "3D Mode Disabled",
-      description: !is3DMode
-        ? "Will capture perspective views with 45° tilt for better roof analysis."
-        : "Will use standard overhead views for roof analysis.",
-      duration: 3000
-    })
-  }, [is3DMode, logDebug, toast])
+    toast.info(
+      !is3DMode
+        ? "3D Mode Enabled - Will capture perspective views with 45° tilt for better roof analysis."
+        : "3D Mode Disabled - Will use standard overhead views for roof analysis."
+    )
+  }, [is3DMode, logDebug])
 
   // Enhanced capture satellite views function with 3D mode option
   const captureSatelliteViews = async () => {
@@ -202,7 +195,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     setIsAnalyzing(true)
     setCaptureProgress(0)
     setLivePreviewImages([])
-    setCurrentCaptureStage("Initializing capture...")
+    setCurrentCaptureStage("Initializing satellite imagery capture system...")
 
     try {
       logDebug(
@@ -354,12 +347,12 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         0.85 // 85% coverage
       )
 
-      // Generate 2 meaningfully different zoom levels, each +1 closer than calculated
-      // Context view: Wider for neighborhood context
-      // Detail view: Close-up for roof detail
+      // Generate 2 meaningfully different zoom levels with significant difference
+      // Context view: Standard high zoom for overall roof structure
+      // Detail view: Maximum zoom (22) for precise facet counting and roof detail analysis
       const zoomLevels = [
-        Math.max(17, optimalOverheadZoom - 1), // Context (wider) but +1 closer
-        Math.min(22, optimalOverheadZoom + 2) // Detail (much closer) +1 closer
+        20, // Context (standard high zoom)
+        22 // Detail (maximum zoom - zoom WAY in for facet counting)
       ]
       const zoomLabels = ["Context", "Detail"]
 
@@ -421,13 +414,17 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         // Capture top view at this zoom level
         const topView = await captureMapView(
           mapContainerRef,
-          `top-zoom${zoomLevel}`
+          `top-zoom${zoomLevel}`,
+          {
+            aggressiveMode: zoomLabel === "Detail" // Enable aggressive processing for Detail view
+          }
         )
         if (topView) {
           topView.enhancementOptions = {
             enhanceEdges: imageProcessingOptions.enhanceEdges,
             enhanceContrast: imageProcessingOptions.enhanceContrast,
-            addMeasurementGrid: imageProcessingOptions.addMeasurementGrid
+            addMeasurementGrid: imageProcessingOptions.addMeasurementGrid,
+            aggressiveMode: zoomLabel === "Detail"
           }
           topView.zoomLevel = zoomLevel
           topView.zoomLabel = zoomLabel
@@ -446,7 +443,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         const angle = angles[i]
         setCaptureAngle(angle)
         setCurrentCaptureStage(
-          `Capturing view from ${getDirectionName(angle)}...`
+          `Capturing ${getDirectionName(angle).toUpperCase()} view (${angle}°)...`
         )
 
         // Calculate optimal zoom for this specific angle and tilt, then add +1 to get closer
@@ -538,10 +535,12 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
       logDebug(`Successfully captured ${views.length} views`)
       setCaptureProgress(90)
-      setCurrentCaptureStage("Analyzing images with AI...")
+      setCurrentCaptureStage(
+        "Imagery captured successfully! Preparing for AI analysis..."
+      )
 
-      // Send views to LLM for analysis (with Solar API ground truth if available)
-      const analysisResult = await sendToLLMForAnalysis(views, solarMetrics)
+      // Send views to Multi-Agent system for comprehensive analysis
+      const analysisResult = await sendToMultiAgentSystem(views, solarMetrics)
 
       // Store the captured views in the analysis result
       if (analysisResult) {
@@ -557,6 +556,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         try {
           await savePropertyReport(analysisResult, views, solarMetrics)
           logDebug("Property report saved to database")
+
+          // Refetch subscription info to update usage counts
+          await fetchSubscriptionInfo()
         } catch (error) {
           console.error("Error saving property report:", error)
           logDebug(`Failed to save report: ${error.message}`)
@@ -567,11 +569,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     } catch (error) {
       console.error("Error capturing satellite views:", error)
       logDebug(`Error during capture: ${error.message}`)
-      toast({
-        title: "Error",
-        description: "Failed to capture satellite imagery for analysis",
-        variant: "destructive"
-      })
+      toast.error("Failed to capture satellite imagery for analysis")
       return null
     } finally {
       // Always restore default map view when done
@@ -663,7 +661,8 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   // Fixed captureMapView function with duplicate pitch enhancement removed
   const captureMapView = async (
     containerRef: React.RefObject<HTMLDivElement>,
-    viewName: string
+    viewName: string,
+    enhancementOptions?: { aggressiveMode?: boolean }
   ) => {
     if (!containerRef.current) {
       console.error(`Cannot capture ${viewName} view - container ref is null`)
@@ -769,8 +768,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         enhanceEdges: imageProcessingOptions.enhanceEdges,
         enhanceContrast: imageProcessingOptions.enhanceContrast,
         addMeasurementGrid: imageProcessingOptions.addMeasurementGrid,
-        compensateShadows: true, // NEW: Shadow compensation
-        sharpenImage: true, // NEW: Image sharpening
+        compensateShadows: false, // Disable shadow compensation
+        sharpenImage: false, // Disable image sharpening
+        aggressiveMode: false, // Disable aggressive mode
         dimensions: {
           width: canvas.width,
           height: canvas.height
@@ -858,7 +858,333 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     }
   }
 
-  // Function to send images to LLM for analysis
+  // Function to send images to Multi-Agent system for comprehensive analysis
+  const sendToMultiAgentSystem = async (
+    satelliteViews,
+    solarMetrics = null
+  ) => {
+    const startTime = Date.now()
+
+    try {
+      // Filter out any null views from failed captures
+      const validViews = satelliteViews.filter(view => view !== null)
+
+      if (validViews.length === 0) {
+        throw new Error("No valid satellite images captured")
+      }
+
+      logDebug(`Sending ${validViews.length} images to Multi-Agent system`)
+      logDebug("Using GPT-5.1-2025-11-13 for all 4 agents")
+
+      // Update status: Starting multi-agent analysis
+      setCurrentCaptureStage("Initializing Multi-Agent Analysis System...")
+      await new Promise(resolve => setTimeout(resolve, 800))
+
+      // Simulate agent progress with visual feedback
+      const agentStatuses = [
+        {
+          step: 1,
+          name: "Measurement Specialist",
+          task: "Counting roof facets and calculating area",
+          duration: 1200
+        },
+        {
+          step: 2,
+          name: "Condition Inspector",
+          task: "Analyzing material type and condition",
+          duration: 1000
+        },
+        {
+          step: 3,
+          name: "Cost Estimator",
+          task: "Calculating material needs and costs",
+          duration: 1000
+        },
+        {
+          step: 4,
+          name: "Quality Controller",
+          task: "Validating and synthesizing results",
+          duration: 1000
+        }
+      ]
+
+      // Start the actual API call
+      const responsePromise = fetch("/api/property-reports/multi-agent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          capturedImages: validViews,
+          solarData: solarMetrics,
+          address:
+            selectedAddress ||
+            `${selectedLocation?.lat.toFixed(6)}, ${selectedLocation?.lng.toFixed(6)}`,
+          location: selectedLocation,
+          workspaceId: workspaceId
+        })
+      })
+
+      // Show agent progress while API call is processing
+      let currentAgentIndex = 0
+      const progressInterval = setInterval(() => {
+        if (currentAgentIndex < agentStatuses.length) {
+          const agent = agentStatuses[currentAgentIndex]
+          setCurrentCaptureStage(`Step ${agent.step}/4: ${agent.name}`)
+          currentAgentIndex++
+        }
+      }, 3000) // Update every 3 seconds
+
+      // Wait for the actual response
+      const response = await responsePromise
+      clearInterval(progressInterval)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("Multi-agent analysis failed:", errorText)
+        throw new Error(`Multi-agent analysis failed: ${response.statusText}`)
+      }
+
+      // Update status: Processing response
+      setCurrentCaptureStage(
+        "Compiling comprehensive analysis from all 4 agents..."
+      )
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      const result = await response.json()
+      const responseTime = Date.now() - startTime
+
+      logDebug(`Multi-agent analysis completed in ${responseTime}ms`)
+      logDebug(
+        `Agent timings: ${JSON.stringify(result.performance?.agentTimings)}`
+      )
+      logDebug(`Quality score: ${result.metadata?.qualityScore}/100`)
+      logDebug(`Overall confidence: ${result.overallConfidence?.combined}`)
+
+      // Update status: Finalizing
+      setCurrentCaptureStage(
+        `Analysis Complete - Quality Score: ${result.metadata?.qualityScore || "N/A"}/100`
+      )
+      await new Promise(resolve => setTimeout(resolve, 800))
+
+      // Format the result to match the expected structure
+      const analysisResult = {
+        // User-facing summary from Quality Controller
+        analysis:
+          result.finalReport?.recommendations?.primaryRecommendation ||
+          result.executiveSummary,
+        userSummary: result.executiveSummary,
+
+        // Raw analysis for the Details tab - will be assigned from detailedAnalysis below
+        rawAnalysis: null,
+
+        // Structured data from Quality Controller's final report
+        structuredData: {
+          // Measurements from Agent 1 (validated by Agent 4)
+          facetCount: result.finalReport?.measurements?.facets,
+          roofArea: result.finalReport?.measurements?.roofArea,
+          // Generate a reasonable range around the validated roof area (±5-10% for estimation variance)
+          roofAreaRange: (() => {
+            const area = result.finalReport?.measurements?.roofArea || 0
+            const minVariance = Math.round(area * 0.95) // -5%
+            const maxVariance = Math.round(area * 1.05) // +5%
+            return [minVariance, maxVariance]
+          })(),
+          squares: result.finalReport?.measurements?.squares,
+          pitch: result.finalReport?.measurements?.pitch,
+          ridgeLength: result.finalReport?.measurements?.ridgeLength,
+          valleyLength: result.finalReport?.measurements?.valleyLength,
+          complexity: result.finalReport?.measurements?.complexity,
+
+          // Condition from Agent 2 (validated by Agent 4)
+          material: result.finalReport?.condition?.material,
+          condition: result.finalReport?.condition?.overallCondition,
+          estimatedAge: result.finalReport?.condition?.age,
+          remainingLife: result.finalReport?.condition?.remainingLife,
+
+          // Cost estimate from Agent 3 (validated by Agent 4)
+          costEstimate: result.finalReport?.costEstimate,
+
+          // Confidence and quality metrics from Agent 4
+          confidence: result.overallConfidence?.combined,
+          measurementConfidence: result.overallConfidence?.measurements,
+          conditionConfidence: result.overallConfidence?.condition,
+          costConfidence: result.overallConfidence?.costs,
+
+          // Validation results
+          validation: result.validation,
+          flaggedIssues: result.flaggedIssues,
+
+          // Detailed analysis from all agents
+          detailedAnalysis: `
+MULTI-AGENT PROPERTY ANALYSIS REPORT
+Generated using 4 specialized AI agents powered by GPT-5.1
+
+${result.executiveSummary}
+
+═══════════════════════════════════════════════════════════════════
+📐 MEASUREMENTS (Agent 1: Measurement Specialist)
+═══════════════════════════════════════════════════════════════════
+
+${result.agents?.measurement?.methodology || ""}
+
+Validated Measurements:
+• Roof Area: ${result.finalReport?.measurements?.roofArea} sq ft (${result.finalReport?.measurements?.squares} squares)
+• Facet Count: ${result.finalReport?.measurements?.facets}
+• Pitch: ${result.finalReport?.measurements?.pitch}
+• Ridge Length: ${result.finalReport?.measurements?.ridgeLength} ft
+• Valley Length: ${result.finalReport?.measurements?.valleyLength} ft
+• Complexity: ${result.finalReport?.measurements?.complexity}
+• Confidence: ${result.overallConfidence?.measurements}
+
+${result.finalReport?.measurements?.notes || ""}
+
+═══════════════════════════════════════════════════════════════════
+🔍 CONDITION ASSESSMENT (Agent 2: Condition Inspector)
+═══════════════════════════════════════════════════════════════════
+
+${result.agents?.condition?.professionalAssessment || ""}
+
+Validated Condition:
+• Material: ${result.finalReport?.condition?.material}
+• Overall Condition: ${result.finalReport?.condition?.overallCondition}
+• Estimated Age: ${result.finalReport?.condition?.age} years
+• Remaining Life: ${result.finalReport?.condition?.remainingLife} years
+• Damage Present: ${result.finalReport?.condition?.damagePresent ? "Yes" : "No"}
+• Damage Severity: ${result.finalReport?.condition?.damageSeverity}
+• Urgency: ${result.finalReport?.condition?.urgency}
+• Confidence: ${result.overallConfidence?.condition}
+
+Maintenance Needs:
+${result.finalReport?.condition?.maintenanceNeeds?.map(need => `• ${need}`).join("\n") || "None identified"}
+
+${result.finalReport?.condition?.notes || ""}
+
+═══════════════════════════════════════════════════════════════════
+💰 COST ESTIMATE (Agent 3: Cost Estimator)
+═══════════════════════════════════════════════════════════════════
+
+Recommended Material: ${result.finalReport?.costEstimate?.recommendedMaterial}
+
+Estimated Cost Range: $${result.finalReport?.costEstimate?.estimatedCost?.low?.toLocaleString()} - $${result.finalReport?.costEstimate?.estimatedCost?.high?.toLocaleString()}
+Mid-Range Estimate: $${result.finalReport?.costEstimate?.estimatedCost?.mid?.toLocaleString()}
+
+Cost Breakdown:
+• Materials: $${result.finalReport?.costEstimate?.breakdown?.materials?.toLocaleString()}
+• Labor: $${result.finalReport?.costEstimate?.breakdown?.labor?.toLocaleString()}
+• Tear-Off/Disposal: $${result.finalReport?.costEstimate?.breakdown?.tearOff?.toLocaleString()}
+• Other: $${result.finalReport?.costEstimate?.breakdown?.other?.toLocaleString()}
+
+Alternative Options:
+${result.finalReport?.costEstimate?.alternativeOptions?.map(opt => `• ${opt.material}: ${opt.costRange} (${opt.expectedLife} years) ${opt.recommended ? "✓ Recommended" : ""}`).join("\n") || ""}
+
+Confidence: ${result.overallConfidence?.costs}
+
+${result.finalReport?.costEstimate?.notes || ""}
+
+═══════════════════════════════════════════════════════════════════
+✅ QUALITY VALIDATION (Agent 4: Quality Controller)
+═══════════════════════════════════════════════════════════════════
+
+Overall Quality Score: ${result.metadata?.qualityScore}/100
+Combined Confidence: ${result.overallConfidence?.combined}
+
+Validation Results:
+• Measurements: ${result.validation?.measurementValidation?.status}
+• Condition Alignment: ${result.validation?.conditionAlignment?.status}
+• Cost Alignment: ${result.validation?.costAlignment?.status}
+• Solar API Comparison: ${result.validation?.solarAPIComparison?.status}
+
+${
+  result.flaggedIssues && result.flaggedIssues.length > 0
+    ? `
+Flagged Issues:
+${result.flaggedIssues.map(issue => `• [${issue.severity.toUpperCase()}] ${issue.issue}\n  Recommendation: ${issue.recommendation}`).join("\n")}
+`
+    : "No significant issues flagged."
+}
+
+═══════════════════════════════════════════════════════════════════
+🎯 RECOMMENDATIONS
+═══════════════════════════════════════════════════════════════════
+
+Primary Recommendation: ${result.finalReport?.recommendations?.primaryRecommendation}
+Timeline: ${result.finalReport?.recommendations?.timeline}
+
+Priority Actions:
+${result.finalReport?.recommendations?.priorityActions?.map((action, i) => `${i + 1}. ${action}`).join("\n") || ""}
+
+Next Steps:
+${result.finalReport?.recommendations?.nextSteps?.map((step, i) => `${i + 1}. ${step}`).join("\n") || ""}
+
+${result.finalReport?.recommendations?.budgetGuidance || ""}
+
+═══════════════════════════════════════════════════════════════════
+📋 KEY FINDINGS
+═══════════════════════════════════════════════════════════════════
+
+${result.finalReport?.keyFindings?.map((finding, i) => `${i + 1}. ${finding}`).join("\n") || ""}
+
+═══════════════════════════════════════════════════════════════════
+⚠️ DISCLAIMERS
+═══════════════════════════════════════════════════════════════════
+
+${result.finalReport?.disclaimers?.map(disclaimer => `• ${disclaimer}`).join("\n") || ""}
+
+═══════════════════════════════════════════════════════════════════
+📊 ANALYSIS METADATA
+═══════════════════════════════════════════════════════════════════
+
+• Model: GPT-5.1-2025-11-13 (All 4 Agents)
+• Total Analysis Time: ${result.performance?.totalTime}ms
+• Agent 1 (Measurement): ${result.performance?.agentTimings?.measurement}ms
+• Agents 2 & 3 (Condition & Cost): ${result.performance?.agentTimings?.condition}ms
+• Agent 4 (Quality Control): ${result.performance?.agentTimings?.quality}ms
+• Images Analyzed: ${result.metadata?.imageCount}
+• Solar API Data: ${result.metadata?.hasSolarData ? "Yes" : "No"}
+• Quality Score: ${result.metadata?.qualityScore}/100
+• Timestamp: ${result.metadata?.timestamp}
+          `
+        },
+
+        // Store full multi-agent results for advanced users
+        multiAgentResults: {
+          measurement: result.agents?.measurement,
+          condition: result.agents?.condition,
+          cost: result.agents?.cost,
+          quality: result.agents?.quality
+        },
+
+        // Metadata
+        debug: {
+          modelUsed: "gpt-5.1-2025-11-13 (Multi-Agent)",
+          responseTime,
+          imageCount: validViews.length,
+          agentsUsed: 4,
+          agentTimings: result.performance?.agentTimings,
+          qualityScore: result.metadata?.qualityScore,
+          overallConfidence: result.overallConfidence,
+          validation: result.validation,
+          flaggedIssues: result.flaggedIssues
+        }
+      }
+
+      // Assign the detailed analysis to rawAnalysis for the Details tab
+      analysisResult.rawAnalysis =
+        analysisResult.structuredData.detailedAnalysis
+
+      return analysisResult
+    } catch (error) {
+      console.error("Error in multi-agent analysis:", error)
+      logDebug(`Multi-agent analysis error: ${error.message}`)
+      toast.error(
+        error.message || "Could not complete multi-agent roof analysis"
+      )
+      return null
+    }
+  }
+
+  // Legacy function to send images to single LLM for analysis (kept for backward compatibility)
   const sendToLLMForAnalysis = async (satelliteViews, solarMetrics = null) => {
     const startTime = Date.now() // Track response time
 
@@ -1414,11 +1740,7 @@ ${referenceSection}
     } catch (error) {
       console.error("Error in LLM analysis:", error)
       logDebug(`Analysis error: ${error.message}`)
-      toast({
-        title: "Analysis Failed",
-        description: error.message || "Could not complete roof analysis",
-        variant: "destructive"
-      })
+      toast.error(error.message || "Could not complete roof analysis")
       return null
     }
   }
@@ -1455,11 +1777,9 @@ ${referenceSection}
       // Store the analysis result
       setRoofAnalysis(analysis)
 
-      toast({
-        title: "Analysis Complete",
-        description:
-          "AI roof analysis has been completed successfully. Generating report..."
-      })
+      toast.success(
+        "AI roof analysis has been completed successfully. Generating report..."
+      )
 
       // Extract address from analysis text if necessary
       let addressToUse = selectedAddress
@@ -1642,21 +1962,17 @@ ${referenceSection}
 
       logDebug("Property report generated and displayed in map view")
 
-      toast({
-        title: "Report Generated",
-        description: `Property report for ${addressToUse || "selected location"} is ready.`
-      })
+      toast.success(
+        `Property report for ${addressToUse || "selected location"} is ready.`
+      )
     } catch (error) {
       console.error("Error in combined analysis and report:", error)
       logDebug(`Combined process error: ${error.message}`)
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to complete analysis and report generation",
-        variant: "destructive"
-      })
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to complete analysis and report generation"
+      )
     } finally {
       setIsLoading(false)
     }
@@ -1665,24 +1981,46 @@ ${referenceSection}
   // Handle analyze property click with validation
   const handleAnalyzePropertyClick = () => {
     if (!selectedLocation) {
-      toast({
-        title: "No Location Selected",
-        description:
-          "Please select a property location first by clicking on the map or searching for an address.",
-        variant: "destructive"
-      })
+      toast.error(
+        "Please select a property location first by clicking on the map or searching for an address."
+      )
       return
     }
 
     // Check subscription limits before starting analysis
     if (subscriptionInfo && !subscriptionInfo.propertyReports.canUse) {
       const { limit, currentUsage } = subscriptionInfo.propertyReports
-      toast({
-        title: "Report Limit Reached",
-        description: `You've used ${currentUsage} of ${limit} reports this month. Upgrade your plan to generate more reports.`,
-        variant: "destructive"
-      })
+      toast.error(
+        `You've used ${currentUsage} of ${limit} reports this month. Upgrade your plan to generate more reports.`
+      )
+      // Redirect to pricing after a short delay
+      setTimeout(() => {
+        window.location.href = "/pricing"
+      }, 2000)
       return
+    }
+
+    // Show proactive warning for free users with remaining reports
+    if (
+      subscriptionInfo &&
+      subscriptionInfo.propertyReports.canUse &&
+      subscriptionInfo.propertyReports.remainingUsage !== "unlimited"
+    ) {
+      const { remainingUsage, currentUsage, limit } =
+        subscriptionInfo.propertyReports
+
+      // Show warning toast if user has limited reports remaining
+      if (typeof remainingUsage === "number" && remainingUsage <= 3) {
+        if (remainingUsage === 1) {
+          toast.warning(
+            `This is your last free property report. Upgrade to Pro for unlimited reports.`
+          )
+        } else {
+          toast.info(
+            `You have ${remainingUsage} free property reports remaining this month (${currentUsage}/${limit} used).`
+          )
+        }
+      }
     }
 
     // Start the analysis process
@@ -1805,10 +2143,10 @@ ${referenceSection}
             </div>
           </div> */}
 
-      {/* Report Modal Overlay */}
+      {/* Report Display - Shows in main content area */}
       {(roofAnalysis || reportData) && (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-gray-900">
-          {/* Modal Header with Close Button */}
+        <div className="absolute inset-0 z-20 flex flex-col bg-white dark:bg-gray-900">
+          {/* Header with Close Button */}
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             {/* Rooftops AI Logo */}
             <img
@@ -1842,7 +2180,7 @@ ${referenceSection}
             </Button>
           </div>
 
-          {/* Modal Content - Scrollable */}
+          {/* Report Content - Scrollable */}
           <div className="flex-1 overflow-y-auto p-4">
             <CombinedReport
               analysisData={roofAnalysis}

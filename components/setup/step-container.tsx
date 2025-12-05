@@ -46,93 +46,98 @@ export const StepContainer: FC<StepContainerProps> = ({
   const showHeroSection = stepNum === 1
 
   return (
-    <Card
-      className="w-full max-w-[700px] border-none bg-transparent px-4 shadow-none sm:px-0"
-      onKeyDown={handleKeyDown}
-    >
-      {showHeroSection && (
-        <div className="bg-black px-6 py-8">
-          <div className="mx-auto max-w-2xl">
-            {/* Logo */}
-            <div className="mb-6">
-              <Brand theme="light" />
-            </div>
+    <div className="mx-auto w-full max-w-[700px] overflow-hidden rounded-lg bg-black">
+      <Card
+        className="w-full border-none bg-black shadow-none"
+        onKeyDown={handleKeyDown}
+      >
+        {showHeroSection && (
+          <div className="bg-black px-6 pb-2 pt-8">
+            <div className="mx-auto max-w-2xl">
+              {/* Logo */}
+              <div className="mb-6">
+                <Brand theme="light" />
+              </div>
 
-            {/* Main Heading */}
-            <h1 className="mb-8 text-center text-4xl font-bold tracking-tight text-white">
-              Welcome to the future of roofing
-            </h1>
+              {/* Main Heading */}
+              <h1 className="mb-8 text-center text-4xl font-bold tracking-tight text-white">
+                Welcome to the future of roofing
+              </h1>
 
-            {/* Features */}
-            <div className="mx-auto mb-8 max-w-md space-y-5 text-left">
-              <div className="flex items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
-                  <IconFileText className="size-6 text-white" strokeWidth={2} />
+              {/* Features */}
+              <div className="mx-auto mb-8 max-w-md space-y-5 text-left">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
+                    <IconFileText
+                      className="size-6 text-white"
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="mb-1 text-lg font-semibold text-white">
+                      Instant Roof Reports
+                    </h3>
+                    <p className="text-sm text-zinc-400">
+                      No more waiting days or hours for information your team
+                      needs now.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="mb-1 text-lg font-semibold text-white">
-                    Instant Roof Reports
-                  </h3>
-                  <p className="text-sm text-zinc-400">
-                    No more waiting days or hours for information your team
-                    needs now.
-                  </p>
+
+                <div className="flex items-start gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
+                    <IconMessageCircle
+                      className="size-6 text-white"
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="mb-1 text-lg font-semibold text-white">
+                      AI Chat Tailored for Roofers
+                    </h3>
+                    <p className="text-sm text-zinc-400">
+                      Refine strategy, analyze results, create documents.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
-                  <IconMessageCircle
-                    className="size-6 text-white"
-                    strokeWidth={2}
-                  />
-                </div>
-                <div>
-                  <h3 className="mb-1 text-lg font-semibold text-white">
-                    AI Chat Tailored for Roofers
-                  </h3>
-                  <p className="text-sm text-zinc-400">
-                    Refine strategy, analyze results, create documents.
-                  </p>
-                </div>
-              </div>
+              {/* Form Section Heading */}
+              <h2 className="mb-2 text-center text-2xl font-semibold text-white">
+                Let&apos;s create your profile
+              </h2>
             </div>
-
-            {/* Form Section Heading */}
-            <h2 className="mb-3 text-center text-2xl font-semibold text-white">
-              Let&apos;s create your profile
-            </h2>
           </div>
-        </div>
-      )}
+        )}
 
-      <CardContent className="space-y-4 bg-black px-6 pb-6">
-        {children}
-      </CardContent>
+        <CardContent className="bg-black px-6 pb-6">
+          <div className="mx-auto max-w-[28rem] space-y-4">{children}</div>
+        </CardContent>
 
-      <CardFooter className="bg-black px-6 pb-6 pt-4">
-        <div className="w-full space-y-3">
-          <Button
-            ref={buttonRef}
-            size="lg"
-            onClick={() => onShouldProceed(true)}
-            disabled={!showNextButton}
-            className="w-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Next
-          </Button>
-          {showBackButton && (
+        <CardFooter className="bg-black px-6 pb-6 pt-4">
+          <div className="mx-auto w-full max-w-[28rem] space-y-3">
             <Button
+              ref={buttonRef}
               size="lg"
-              variant="outline"
-              onClick={() => onShouldProceed(false)}
-              className="w-full border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-white"
+              onClick={() => onShouldProceed(true)}
+              disabled={!showNextButton}
+              className="w-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-600 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Back
+              Next
             </Button>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+            {showBackButton && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => onShouldProceed(false)}
+                className="w-full border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-white"
+              >
+                Back
+              </Button>
+            )}
+          </div>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

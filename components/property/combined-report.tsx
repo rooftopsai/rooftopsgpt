@@ -178,11 +178,16 @@ const CombinedReport: FC<CombinedReportProps> = ({
 
   // Extract data from analysis
   const {
-    detailedAnalysis: rawAnalysis = "",
+    rawAnalysis = "",
+    detailedAnalysis = "",
     structuredData,
     debug
   } = analysisData
   const userSummary = structuredData?.userSummary
+
+  // Use rawAnalysis if available, otherwise fall back to detailedAnalysis or structuredData.detailedAnalysis
+  const finalRawAnalysis =
+    rawAnalysis || detailedAnalysis || structuredData?.detailedAnalysis || ""
 
   // Generate concise AI summary from structured data
   const generateConciseSummary = (): string => {
@@ -435,7 +440,7 @@ const CombinedReport: FC<CombinedReportProps> = ({
   const roofSummary = loadRoofSummary()
 
   const aiSummary =
-    extractSummary(rawAnalysis) ||
+    extractSummary(finalRawAnalysis) ||
     `In summary, this is a ${structuredData?.complexity || "moderately complex"} residential roof with ${roofSummary.facetMin}-${roofSummary.facetMax} facets, hip and gable dormer geometry, and an estimated area of ${formatNumber(roofSummary.areaMin)}–${formatNumber(roofSummary.areaMax)} square feet. Installation will require navigating multiple valleys, ridges, and dormers with approximately ${roofSummary.ridMin}-${roofSummary.ridMax} ft of ridges/hips and ${roofSummary.valMin}-${roofSummary.valMax} ft of valleys.`
 
   // Extract captured images if available
@@ -445,6 +450,164 @@ const CombinedReport: FC<CombinedReportProps> = ({
     reportData?.jsonData?.enhancedAnalysis?.capturedImages ||
     reportData?.jsonData?.enhancedAnalysis?.satelliteViews ||
     []
+
+  // Format multi-agent analysis with better structure
+  const formatMultiAgentAnalysis = (rawText: string) => {
+    if (!rawText || rawText.trim() === "") {
+      return (
+        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+          No detailed analysis available.
+        </div>
+      )
+    }
+
+    // Remove emojis from the text
+    const textWithoutEmojis = rawText.replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
+
+    // Split by double newlines to get paragraphs
+    const lines = textWithoutEmojis.split("\n")
+    const sections: Array<{ title?: string; content: string[] }> = []
+    let currentSection: { title?: string; content: string[] } = { content: [] }
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+
+      // Skip separator lines and headers
+      if (!trimmed || /^═+$/.test(trimmed)) continue
+      if (/^MULTI-AGENT PROPERTY/i.test(trimmed)) continue
+      if (/^Generated using \d+ specialized/i.test(trimmed)) continue
+
+      // Detect section headers (Agent mentions or all-caps lines)
+      if (
+        /^[A-Z\s&]+(Agent\s+\d+:|MEASUREMENTS|CONDITION|COSTS|QUALITY|VALIDATION)/i.test(
+          trimmed
+        )
+      ) {
+        // Save previous section if it has content
+        if (currentSection.content.length > 0) {
+          sections.push(currentSection)
+        }
+        // Start new section with this as title
+        currentSection = {
+          title: trimmed.replace(/\(Agent\s+\d+:[^)]+\)/i, "").trim(),
+          content: []
+        }
+      } else {
+        // Add to current section content
+        currentSection.content.push(trimmed)
+      }
+    }
+
+    // Push the last section
+    if (currentSection.content.length > 0) {
+      sections.push(currentSection)
+    }
+
+    // If no sections were created, just treat entire text as paragraphs
+    if (sections.length === 0) {
+      const paragraphs = textWithoutEmojis
+        .split(/\n\n+/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0 && !/^═+$/.test(p))
+
+      return (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+          {paragraphs.map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-6">
+        {sections.map((section, index) => (
+          <div key={index} className="space-y-3">
+            {section.title && (
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-gray-100">
+                {section.title}
+              </h4>
+            )}
+            <div className="space-y-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+              {section.content.map((paragraph, pIndex) => (
+                <p key={pIndex}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Format section content with bullet points, bold headers, etc.
+  const formatSectionContent = (content: string) => {
+    const lines = content.split("\n").filter(line => line.trim())
+
+    return (
+      <div className="space-y-2 text-sm">
+        {lines
+          .map((line, idx) => {
+            const trimmed = line.trim()
+
+            // Skip separator lines
+            if (/^═+$/.test(trimmed)) return null
+
+            // Bold headers (lines ending with colon or in ALL CAPS)
+            if (/^[A-Z\s]+:$/.test(trimmed) || /^[A-Z\s]{10,}$/.test(trimmed)) {
+              return (
+                <div
+                  key={idx}
+                  className="mt-3 font-semibold text-gray-900 first:mt-0 dark:text-gray-100"
+                >
+                  {trimmed}
+                </div>
+              )
+            }
+
+            // Bullet points (lines starting with •, -, ✓, etc.)
+            if (/^[•\-✓✗⚠]/.test(trimmed)) {
+              return (
+                <div
+                  key={idx}
+                  className="flex gap-2 text-gray-700 dark:text-gray-300"
+                >
+                  <span className="shrink-0 text-gray-400 dark:text-gray-500">
+                    {trimmed[0]}
+                  </span>
+                  <span>{trimmed.slice(1).trim()}</span>
+                </div>
+              )
+            }
+
+            // Key-value pairs (lines with colon in middle)
+            const kvMatch = trimmed.match(/^([^:]+):\s*(.+)$/)
+            if (kvMatch) {
+              return (
+                <div key={idx} className="flex gap-2">
+                  <span className="shrink-0 font-medium text-gray-900 dark:text-gray-100">
+                    {kvMatch[1]}:
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {kvMatch[2]}
+                  </span>
+                </div>
+              )
+            }
+
+            // Regular paragraph
+            return (
+              <p
+                key={idx}
+                className="leading-relaxed text-gray-700 dark:text-gray-300"
+              >
+                {trimmed}
+              </p>
+            )
+          })
+          .filter(Boolean)}
+      </div>
+    )
+  }
 
   // Helper function to get color based on confidence
   const getConfidenceColor = (confidence: string | null) => {
@@ -497,7 +660,7 @@ const CombinedReport: FC<CombinedReportProps> = ({
     if (eagleViewAddress) return eagleViewAddress
 
     // If not found in reportData, extract it from the analysis text
-    if (analysisData && analysisData.rawAnalysis) {
+    if (analysisData && finalRawAnalysis) {
       // Look for patterns like "property at [ADDRESS]" or "roof at [ADDRESS]"
       const addressPatterns = [
         /property at\s*([^.:\n]+)/i,
@@ -507,7 +670,7 @@ const CombinedReport: FC<CombinedReportProps> = ({
       ]
 
       for (const pattern of addressPatterns) {
-        const match = analysisData.rawAnalysis.match(pattern)
+        const match = finalRawAnalysis.match(pattern)
         if (match && match[1]) {
           const extractedAddress = match[1].trim()
           // Make sure it looks like an address (has numbers)
@@ -1286,7 +1449,7 @@ Be realistic and professional. Show actual calculations.`
         <Accordion
           type="multiple"
           defaultValue={
-            isMobile ? [] : ["overview", "solar", "details", "recommendations"]
+            isMobile ? [] : ["overview", "solar", "details", "cost-estimation"]
           }
           className="w-full"
         >
@@ -1612,11 +1775,9 @@ Be realistic and professional. Show actual calculations.`
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 py-3">
-              {/* Truncated and formatted analysis (max 200 words) */}
-              <div className="prose prose-sm dark:prose-invert max-w-none rounded-lg bg-white p-4 dark:bg-gray-800">
-                <div className="whitespace-pre-line leading-relaxed">
-                  {truncateAnalysis(rawAnalysis, 200)}
-                </div>
+              {/* Formatted multi-agent analysis */}
+              <div className="space-y-6">
+                {formatMultiAgentAnalysis(finalRawAnalysis)}
               </div>
 
               {/* Model info - always visible */}
@@ -1642,143 +1803,6 @@ Be realistic and professional. Show actual calculations.`
                       </div>
                     </>
                   )}
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Recommendations Section */}
-          <AccordionItem
-            value="recommendations"
-            className="mb-3 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
-          >
-            <AccordionTrigger className="bg-gray-100 px-4 py-3 hover:bg-gray-50 dark:bg-gray-900/30 dark:hover:bg-gray-900/50">
-              <div className="flex items-center">
-                <IconBulb
-                  size={18}
-                  className="mr-2 text-blue-500 dark:text-blue-400"
-                />
-                <span className="text-base font-medium">Recommendations</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 py-3">
-              <div className="space-y-4">
-                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                  <h3 className="mb-2 text-base font-medium text-gray-800 dark:text-gray-100">
-                    Roofing Recommendations
-                  </h3>
-                  <div className="space-y-3">
-                    {propertyDetails.yearBuilt !== "Unknown" &&
-                      !isNaN(Number(propertyDetails.yearBuilt)) && (
-                        <div className="flex items-start gap-2">
-                          <div className="mt-0.5 size-5 shrink-0 text-blue-500 dark:text-blue-400">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800 dark:text-gray-100">
-                              {new Date().getFullYear() -
-                                Number(propertyDetails.yearBuilt) >
-                              20
-                                ? "Consider Full Replacement"
-                                : new Date().getFullYear() -
-                                      Number(propertyDetails.yearBuilt) >
-                                    15
-                                  ? "Inspection Recommended"
-                                  : new Date().getFullYear() -
-                                        Number(propertyDetails.yearBuilt) >
-                                      10
-                                    ? "Preventative Maintenance"
-                                    : "Regular Maintenance"}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {new Date().getFullYear() -
-                                Number(propertyDetails.yearBuilt) >
-                              20
-                                ? "Based on the property age, your roof may be approaching the end of its serviceable life."
-                                : new Date().getFullYear() -
-                                      Number(propertyDetails.yearBuilt) >
-                                    15
-                                  ? "Your roof is reaching the age where problems typically develop. A thorough inspection is advised."
-                                  : new Date().getFullYear() -
-                                        Number(propertyDetails.yearBuilt) >
-                                      10
-                                    ? "At this age, preventative maintenance can extend roof life and prevent costly repairs."
-                                    : "Your roof is relatively new. Regular maintenance will help protect your investment."}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                    <div className="flex items-start gap-2">
-                      <div className="mt-0.5 size-5 shrink-0 text-blue-500 dark:text-blue-400">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {structuredData?.complexity === "complex"
-                            ? "Complex Design Considerations"
-                            : structuredData?.complexity === "simple"
-                              ? "Simple Design Advantages"
-                              : "Moderate Complexity Assessment"}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {structuredData?.complexity === "complex"
-                            ? "Your roof has a complex design with multiple facets and features. This requires specialized installation techniques and careful attention to waterproofing at joints and intersections."
-                            : structuredData?.complexity === "simple"
-                              ? "Your roof has a simple design which typically means lower installation costs and fewer potential failure points for water intrusion."
-                              : "Your roof has moderate complexity with some architectural features that require attention during maintenance and replacement."}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/30">
-                  <h3 className="mb-2 text-base font-medium text-gray-800 dark:text-gray-100">
-                    Next Steps
-                  </h3>
-                  <ol className="list-inside list-decimal space-y-2 pl-2 text-gray-700 dark:text-gray-300">
-                    <li>
-                      Schedule a professional inspection for a detailed roof
-                      assessment
-                    </li>
-                    <li>
-                      Request a customized quote for your specific roofing needs
-                    </li>
-                    <li>
-                      Explore financing options and flexible payment plans
-                    </li>
-                    <li>
-                      Consider combining roof repairs with solar installation
-                      for maximum savings
-                    </li>
-                  </ol>
-
-                  <div className="mt-4 border-t border-blue-200 pt-3 text-center dark:border-blue-800">
-                    <button className="rounded bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700">
-                      Request Professional Inspection
-                    </button>
-                  </div>
                 </div>
               </div>
             </AccordionContent>

@@ -146,7 +146,7 @@ export default async function Login({
     }
 
     return redirect(
-      "/login?message=Account created successfully! You can now sign in with your email and password.&type=success"
+      "/login?message=Account created successfully! Check your email for a sign in link.&type=success"
     )
 
     // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
@@ -322,7 +322,7 @@ export default async function Login({
                 Email
               </Label>
               <Input
-                className="!placeholder:text-zinc-400 dark:!placeholder:text-zinc-400 rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 !text-white transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:!text-white dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="!placeholder:text-zinc-300 dark:!placeholder:text-zinc-300 rounded-lg border-zinc-700 bg-black px-4 py-3 !text-white transition-colors focus:border-cyan-500 dark:border-zinc-600 dark:bg-black dark:!text-white dark:focus:border-cyan-500"
                 name="email"
                 placeholder="you@example.com"
                 required
@@ -335,7 +335,7 @@ export default async function Login({
                 Password
               </Label>
               <Input
-                className="!placeholder:text-zinc-400 dark:!placeholder:text-zinc-400 rounded-lg border-zinc-700 bg-zinc-900/50 px-4 py-3 !text-white transition-colors focus:border-zinc-500 focus:bg-zinc-900 dark:border-zinc-600 dark:bg-zinc-800/50 dark:!text-white dark:focus:border-zinc-500 dark:focus:bg-zinc-800"
+                className="!placeholder:text-zinc-300 dark:!placeholder:text-zinc-300 rounded-lg border-zinc-700 bg-black px-4 py-3 !text-white transition-colors focus:border-cyan-500 dark:border-zinc-600 dark:bg-black dark:!text-white dark:focus:border-cyan-500"
                 type="password"
                 name="password"
                 placeholder="••••••••"

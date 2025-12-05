@@ -89,7 +89,7 @@ export const ProfileStep: FC<ProfileStepProps> = ({
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="hidden space-y-2">
         <Label className="text-sm font-semibold text-white">Username</Label>
 
         <Input
@@ -107,17 +107,12 @@ export const ProfileStep: FC<ProfileStepProps> = ({
         </Label>
 
         <Input
-          className="h-12 rounded-lg border-zinc-700 bg-zinc-900 text-base !text-white placeholder:!text-zinc-500"
+          className="h-12 rounded-lg border-zinc-700 bg-white text-base !text-black placeholder:!text-zinc-500"
           placeholder="Your Name"
           value={displayName}
           onChange={e => onDisplayNameChange(e.target.value)}
           maxLength={PROFILE_DISPLAY_NAME_MAX}
           required
-        />
-
-        <LimitDisplay
-          used={displayName.length}
-          limit={PROFILE_DISPLAY_NAME_MAX}
         />
       </div>
     </>

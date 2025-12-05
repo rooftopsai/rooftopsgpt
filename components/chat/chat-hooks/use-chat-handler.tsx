@@ -12,6 +12,7 @@ import { Tables } from "@/supabase/types"
 import { ChatMessage, ChatPayload, LLMID, ModelProvider } from "@/types"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect, useRef } from "react"
+import { toast } from "sonner"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
 import { PropertyMessageHandler } from "@/lib/property/property-message-handler"
 import {
@@ -143,6 +144,7 @@ export const useChatHandler = () => {
     setUserInput,
     setNewMessageImages,
     profile,
+    userSubscription,
     setIsGenerating,
     setChatMessages,
     setFirstTokenReceived,
@@ -151,6 +153,7 @@ export const useChatHandler = () => {
     setSelectedChat,
     setChats,
     setSelectedTools,
+    availableHostedModels,
     availableLocalModels,
     availableOpenRouterModels,
     abortController,
@@ -335,7 +338,7 @@ export const useChatHandler = () => {
       const newAbort = new AbortController()
       setAbortController(newAbort)
 
-      const modelData = [
+      const allAvailableModels = [
         ...models.map(m => ({
           modelId: m.model_id as LLMID,
           modelName: m.name,
@@ -345,9 +348,28 @@ export const useChatHandler = () => {
           imageInput: false
         })),
         ...LLM_LIST,
-        ...availableLocalModels,
-        ...availableOpenRouterModels
-      ].find(llm => llm.modelId === chatSettings?.model)
+        ...(availableHostedModels || []),
+        ...(availableLocalModels || []),
+        ...(availableOpenRouterModels || [])
+      ]
+
+      let modelData = allAvailableModels.find(
+        llm => llm.modelId === chatSettings?.model
+      )
+
+      // If model not found, try to fallback to gpt-4o
+      if (!modelData && chatSettings) {
+        const fallbackModel = allAvailableModels.find(
+          llm => llm.modelId === "gpt-4o"
+        )
+        if (fallbackModel) {
+          console.warn(
+            `Model ${chatSettings.model} not found, falling back to gpt-4o`
+          )
+          setChatSettings({ ...chatSettings, model: "gpt-4o" as LLMID })
+          modelData = fallbackModel
+        }
+      }
 
       validateChatSettings(
         chatSettings,
@@ -356,6 +378,30 @@ export const useChatHandler = () => {
         selectedWorkspace,
         messageContent
       )
+
+      // Check if user has access to the selected model based on their subscription
+      if (chatSettings?.model) {
+        const { isModelAllowed } = await import("@/lib/subscription-utils")
+
+        // Determine plan type (default to free if no subscription)
+        const planType =
+          userSubscription && userSubscription.status === "active"
+            ? (userSubscription.plan_type as "free" | "premium" | "business") ||
+              "free"
+            : "free"
+
+        if (!isModelAllowed(planType, chatSettings.model)) {
+          // Stop generation and redirect to pricing page
+          setIsGenerating(false)
+          toast.error(
+            "This model requires a Business plan. Redirecting to pricing..."
+          )
+          setTimeout(() => {
+            router.push("/pricing")
+          }, 1500)
+          return
+        }
+      }
 
       let currentChat = selectedChat ? { ...selectedChat } : null
       const b64s = newMessageImages.map(img => img.base64)

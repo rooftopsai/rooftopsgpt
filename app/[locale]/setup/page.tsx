@@ -42,7 +42,7 @@ export default function SetupPage() {
 
   // Profile Step
   const [displayName, setDisplayName] = useState("")
-  const [username, setUsername] = useState(profile?.username || "")
+  const [username, setUsername] = useState("")
   const [usernameAvailable, setUsernameAvailable] = useState(true)
 
   // API Step

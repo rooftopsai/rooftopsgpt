@@ -3,7 +3,7 @@
 import { useChatbotUI } from "@/context/context"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { LLMID } from "@/types"
-import { IconChevronDown } from "@tabler/icons-react"
+import { IconChevronDown, IconLock } from "@tabler/icons-react"
 import { FC } from "react"
 import { ModelIcon } from "../models/model-icon"
 import { Button } from "../ui/button"
@@ -20,6 +20,8 @@ import {
   TooltipTrigger
 } from "../ui/tooltip"
 import { cn } from "@/lib/utils"
+import { getAllowedModels } from "@/lib/subscription-utils"
+import { useRouter } from "next/navigation"
 
 // Only show these models that are integrated and working
 const AVAILABLE_MODELS = [
@@ -34,17 +36,43 @@ interface ModelSelectorProps {
 }
 
 export const ModelSelector: FC<ModelSelectorProps> = ({ className }) => {
-  const { chatSettings, setChatSettings } = useChatbotUI()
+  const { chatSettings, setChatSettings, userSubscription, selectedWorkspace } =
+    useChatbotUI()
+
+  const router = useRouter()
+
+  // Determine user's plan type
+  const planType =
+    userSubscription && userSubscription.status === "active"
+      ? (userSubscription.plan_type as "free" | "premium" | "business") ||
+        "free"
+      : "free"
+
+  // Get allowed models for this plan
+  const allowedModelIds = getAllowedModels(planType)
 
   const currentModel = LLM_LIST.find(llm => llm.modelId === chatSettings?.model)
 
-  const handleModelSelect = (modelId: LLMID) => {
+  const handleModelSelect = (modelId: LLMID, isAllowed: boolean) => {
     if (!chatSettings) return
+
+    if (!isAllowed) {
+      // Redirect to pricing page
+      router.push("/pricing")
+      return
+    }
 
     setChatSettings({
       ...chatSettings,
       model: modelId
     })
+  }
+
+  // Always render with a fallback if currentModel is not found
+  const displayModel = currentModel || {
+    modelId: "gpt-4o",
+    modelName: "GPT-4o",
+    provider: "openai" as const
   }
 
   return (
@@ -61,45 +89,57 @@ export const ModelSelector: FC<ModelSelectorProps> = ({ className }) => {
                   className
                 )}
               >
-                {currentModel && (
-                  <>
-                    <ModelIcon
-                      provider={currentModel.provider}
-                      width={16}
-                      height={16}
-                    />
-                    <span className="max-w-[120px] truncate">
-                      {currentModel.modelName}
-                    </span>
-                    <IconChevronDown size={14} />
-                  </>
-                )}
+                <ModelIcon
+                  provider={displayModel.provider}
+                  width={16}
+                  height={16}
+                />
+                <span className="max-w-[120px] truncate">
+                  {displayModel.modelName}
+                </span>
+                <IconChevronDown size={14} />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
 
           <DropdownMenuContent align="start" className="w-[250px]">
             {LLM_LIST.filter(llm => AVAILABLE_MODELS.includes(llm.modelId)).map(
-              model => (
-                <DropdownMenuItem
-                  key={model.modelId}
-                  onClick={() => handleModelSelect(model.modelId as LLMID)}
-                  className="flex items-center gap-2"
-                >
-                  <ModelIcon provider={model.provider} width={18} height={18} />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{model.modelName}</div>
-                    {model.description && (
-                      <div className="text-muted-foreground text-xs">
-                        {model.description}
+              model => {
+                const isAllowed = allowedModelIds.includes(
+                  model.modelId as string
+                )
+                return (
+                  <DropdownMenuItem
+                    key={model.modelId}
+                    onClick={() =>
+                      handleModelSelect(model.modelId as LLMID, isAllowed)
+                    }
+                    className="flex items-center gap-2"
+                  >
+                    <ModelIcon
+                      provider={model.provider}
+                      width={18}
+                      height={18}
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">
+                        {model.modelName}
                       </div>
+                      {model.description && (
+                        <div className="text-muted-foreground text-xs">
+                          {model.description}
+                        </div>
+                      )}
+                    </div>
+                    {chatSettings?.model === model.modelId && (
+                      <div className="text-primary text-xs">✓</div>
                     )}
-                  </div>
-                  {chatSettings?.model === model.modelId && (
-                    <div className="text-primary text-xs">✓</div>
-                  )}
-                </DropdownMenuItem>
-              )
+                    {!isAllowed && (
+                      <IconLock className="text-muted-foreground size-4" />
+                    )}
+                  </DropdownMenuItem>
+                )
+              }
             )}
           </DropdownMenuContent>
         </DropdownMenu>

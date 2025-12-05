@@ -26,6 +26,7 @@ export interface ProcessingOptions {
   dimensions?: { width: number; height: number }
   zoom?: number
   latitude?: number
+  aggressiveMode?: boolean // For Detail view - extra enhancement for facet detection
 }
 
 export interface EnhancedImageResult {
@@ -363,7 +364,10 @@ const calculateAdaptiveContrast = (data: Uint8ClampedArray): number => {
 }
 
 // Shadow detection and compensation
-const compensateShadows = (data: Uint8ClampedArray): void => {
+const compensateShadows = (
+  data: Uint8ClampedArray,
+  aggressive: boolean = false
+): void => {
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i]
     const g = data[i + 1]
@@ -374,14 +378,26 @@ const compensateShadows = (data: Uint8ClampedArray): void => {
     const minChannel = Math.min(r, g, b)
     const saturation = maxChannel - minChannel
 
-    // Dark + low saturation = likely shadow
-    if (brightness < 90 && saturation < 40) {
-      // Calculate lift factor (darker shadows get more lift)
-      const liftFactor = 1.3 + (90 - brightness) / 200
+    if (aggressive) {
+      // Aggressive mode: Boost ALL darker areas more aggressively
+      if (brightness < 120 && saturation < 50) {
+        // More aggressive lift for better facet visibility
+        const liftFactor = 1.5 + (120 - brightness) / 150
 
-      data[i] = Math.min(255, r * liftFactor)
-      data[i + 1] = Math.min(255, g * liftFactor)
-      data[i + 2] = Math.min(255, b * liftFactor)
+        data[i] = Math.min(255, r * liftFactor)
+        data[i + 1] = Math.min(255, g * liftFactor)
+        data[i + 2] = Math.min(255, b * liftFactor)
+      }
+    } else {
+      // Standard mode: Dark + low saturation = likely shadow
+      if (brightness < 90 && saturation < 40) {
+        // Calculate lift factor (darker shadows get more lift)
+        const liftFactor = 1.3 + (90 - brightness) / 200
+
+        data[i] = Math.min(255, r * liftFactor)
+        data[i + 1] = Math.min(255, g * liftFactor)
+        data[i + 2] = Math.min(255, b * liftFactor)
+      }
     }
   }
 }
@@ -715,45 +731,104 @@ export const enhanceImageForRoofAnalysis = async (
   // Store a copy of the original for reference
   const originalData = new Uint8ClampedArray(data)
 
+  // Determine if we're in aggressive mode (for Detail view facet detection)
+  const isAggressive = settings.aggressiveMode === true
+
   // Step 1: Shadow compensation (if enabled)
   if (settings.compensateShadows) {
-    compensateShadows(data)
-    console.log("Shadow compensation applied")
+    compensateShadows(data, isAggressive)
+    console.log(
+      `Shadow compensation applied${isAggressive ? " (AGGRESSIVE MODE)" : ""}`
+    )
   }
 
-  // Step 2: Sharpening (if enabled) - Increased for better accuracy
+  // Step 2: Sharpening (if enabled) - Aggressive mode uses stronger sharpening
   if (settings.sharpenImage) {
-    applyUnsharpMask(data, canvas.width, canvas.height, 0.8) // Increased from 0.6 to 0.8
-    console.log("Image sharpening applied (strength: 0.8)")
+    const sharpenAmount = isAggressive ? 1.2 : 0.8
+    applyUnsharpMask(data, canvas.width, canvas.height, sharpenAmount)
+    console.log(`Image sharpening applied (strength: ${sharpenAmount})`)
   }
 
-  // Step 3: Adaptive contrast enhancement
+  // Step 3: Adaptive contrast enhancement - Aggressive mode uses stronger contrast
   if (settings.enhanceContrast) {
     const contrastValue = calculateAdaptiveContrast(data)
-    console.log(`Applying adaptive contrast: ${contrastValue}`)
-    applyContrastEnhancement(data, contrastValue * 1.1) // Slightly boost contrast
+    const contrastMultiplier = isAggressive ? 1.4 : 1.1
+    console.log(
+      `Applying adaptive contrast: ${contrastValue} × ${contrastMultiplier}`
+    )
+    applyContrastEnhancement(data, contrastValue * contrastMultiplier)
   }
 
-  // Step 4: Enhanced edge detection with Canny algorithm - Stronger for better facet detection
+  // Step 4: Enhanced edge detection with Canny algorithm
   if (settings.enhanceEdges) {
+    // Aggressive mode uses more sensitive thresholds and stronger blending
+    const lowThreshold = isAggressive ? 20 : 25
+    const highThreshold = isAggressive ? 100 : 90
+    const edgeIntensity = isAggressive ? 0.6 : 0.4
+
     const edgeData = applyCannyEdgeDetection(
       data,
       canvas.width,
       canvas.height,
-      25,
-      90
-    ) // More sensitive thresholds
+      lowThreshold,
+      highThreshold
+    )
 
-    // Blend edges with stronger intensity for clearer facet boundaries
+    // Blend edges with intensity for clearer facet boundaries
     for (let i = 0; i < data.length; i += 4) {
-      const edgeIntensity = edgeData[i] / 255
-      data[i] = Math.min(255, data[i] + edgeData[i] * 0.4) // Increased from 0.3 to 0.4
-      data[i + 1] = Math.min(255, data[i + 1] + edgeData[i] * 0.4)
-      data[i + 2] = Math.min(255, data[i + 2] + edgeData[i] * 0.4)
+      data[i] = Math.min(255, data[i] + edgeData[i] * edgeIntensity)
+      data[i + 1] = Math.min(255, data[i + 1] + edgeData[i] * edgeIntensity)
+      data[i + 2] = Math.min(255, data[i + 2] + edgeData[i] * edgeIntensity)
     }
     console.log(
-      "Canny edge detection applied (thresholds: 25-90, intensity: 0.4)"
+      `Canny edge detection applied (thresholds: ${lowThreshold}-${highThreshold}, intensity: ${edgeIntensity}${isAggressive ? " - AGGRESSIVE" : ""})`
     )
+  }
+
+  // Step 5: Additional aggressive processing for facet detection
+  if (isAggressive) {
+    console.log(
+      "Applying additional aggressive enhancements for facet detection..."
+    )
+
+    // Apply local contrast enhancement to emphasize texture differences
+    for (let y = 2; y < canvas.height - 2; y++) {
+      for (let x = 2; x < canvas.width - 2; x++) {
+        const idx = (y * canvas.width + x) * 4
+
+        // Calculate local average in 5x5 window
+        let localSum = 0
+        let count = 0
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            const localIdx = ((y + dy) * canvas.width + (x + dx)) * 4
+            const localBrightness =
+              (data[localIdx] + data[localIdx + 1] + data[localIdx + 2]) / 3
+            localSum += localBrightness
+            count++
+          }
+        }
+        const localAvg = localSum / count
+
+        // Calculate center brightness
+        const centerBrightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3
+
+        // Enhance difference from local average to emphasize ridges/valleys
+        const diff = centerBrightness - localAvg
+        const enhanceFactor = 1.0 + (Math.abs(diff) / 100) * 0.5
+
+        data[idx] = Math.max(0, Math.min(255, data[idx] * enhanceFactor))
+        data[idx + 1] = Math.max(
+          0,
+          Math.min(255, data[idx + 1] * enhanceFactor)
+        )
+        data[idx + 2] = Math.max(
+          0,
+          Math.min(255, data[idx + 2] * enhanceFactor)
+        )
+      }
+    }
+    console.log("Local contrast enhancement applied for ridge/valley emphasis")
   }
 
   // Put the processed image data back

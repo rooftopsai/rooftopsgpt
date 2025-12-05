@@ -148,6 +148,149 @@ svg {
   stroke-width: 1.5;
 }
 
+/* Custom Toast Styles - Modern & Centered */
+[data-sonner-toaster] {
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-width: 560px !important;
+  width: calc(100% - 32px) !important;
+}
+
+@media (min-width: 640px) {
+  [data-sonner-toaster] {
+    max-width: 560px !important;
+  }
+}
+
+[data-sonner-toaster] {
+  font-family: inherit;
+}
+
+[data-sonner-toast] {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  animation: toast-slide-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards !important;
+  min-height: 64px !important;
+  padding: 16px 20px !important;
+}
+
+/* Custom layout: Icon on left, content in center, close on right */
+[data-sonner-toast][data-styled="true"] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+}
+
+/* Icon styling */
+[data-sonner-toast][data-styled="true"] [data-icon] {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Content area */
+[data-sonner-toast][data-styled="true"] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  flex: 1 !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-title] {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  color: inherit !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-description] {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  opacity: 0.85 !important;
+  text-align: left !important;
+  color: inherit !important;
+}
+
+/* Close button */
+[data-sonner-toast] [data-close-button] {
+  position: relative !important;
+  right: 0 !important;
+  top: 0 !important;
+  margin-left: auto !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+  opacity: 0.7 !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  opacity: 1 !important;
+}
+
+.dark [data-sonner-toast] [data-close-button]:hover {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  opacity: 1 !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-button] {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+[data-sonner-toast][data-styled="true"] [data-button]:hover {
+  transform: translateY(-1px);
+}
+
+[data-sonner-toast][data-styled="true"] [data-cancel-button] {
+  transition: all 0.15s ease;
+}
+
+[data-sonner-toast][data-removing="true"] {
+  animation: toast-slide-out 0.25s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+}
+
 /* Specifically target Tabler icons for even thinner strokes */
 [class*="tabler-icon"],
 [class*="IconTabler"] {

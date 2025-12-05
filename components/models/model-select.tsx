@@ -1,6 +1,6 @@
 import { useChatbotUI } from "@/context/context"
 import { LLM, LLMID, ModelProvider } from "@/types"
-import { IconCheck, IconChevronDown } from "@tabler/icons-react"
+import { IconCheck, IconChevronDown, IconLock } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
 import {
@@ -12,6 +12,8 @@ import { Input } from "../ui/input"
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { ModelIcon } from "./model-icon"
 import { ModelOption } from "./model-option"
+import { getAllowedModels, isModelAllowed } from "@/lib/subscription-utils"
+import { useRouter } from "next/navigation"
 
 interface ModelSelectProps {
   selectedModelId: string
@@ -27,15 +29,28 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     models,
     availableHostedModels,
     availableLocalModels,
-    availableOpenRouterModels
+    availableOpenRouterModels,
+    userSubscription,
+    selectedWorkspace
   } = useChatbotUI()
 
+  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [tab, setTab] = useState<"hosted" | "local">("hosted")
+
+  // Determine user's plan type
+  const planType =
+    userSubscription && userSubscription.status === "active"
+      ? (userSubscription.plan_type as "free" | "premium" | "business") ||
+        "free"
+      : "free"
+
+  // Get allowed models for this plan
+  const allowedModelIds = getAllowedModels(planType)
 
   useEffect(() => {
     if (isOpen) {
@@ -45,7 +60,13 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     }
   }, [isOpen])
 
-  const handleSelectModel = (modelId: LLMID) => {
+  const handleSelectModel = (modelId: LLMID, isAllowed: boolean) => {
+    if (!isAllowed) {
+      // Redirect to pricing page
+      setIsOpen(false)
+      router.push("/pricing")
+      return
+    }
     onSelectModel(modelId)
     setIsOpen(false)
   }
@@ -175,6 +196,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
                 <div className="mb-4">
                   {filteredModels.map(model => {
+                    const isAllowed = allowedModelIds.includes(
+                      model.modelId as string
+                    )
                     return (
                       <div
                         key={model.modelId}
@@ -184,11 +208,20 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                           <IconCheck className="ml-2" size={32} />
                         )}
 
-                        <ModelOption
-                          key={model.modelId}
-                          model={model}
-                          onSelect={() => handleSelectModel(model.modelId)}
-                        />
+                        <div className="relative flex-1">
+                          <ModelOption
+                            key={model.modelId}
+                            model={model}
+                            onSelect={() =>
+                              handleSelectModel(model.modelId, isAllowed)
+                            }
+                          />
+                          {!isAllowed && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                              <IconLock className="text-muted-foreground size-4" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )
                   })}

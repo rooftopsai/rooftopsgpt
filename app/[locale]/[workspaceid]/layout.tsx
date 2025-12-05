@@ -108,28 +108,39 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
     setCollections(collectionsData.collections)
     setFiles(filesData.files)
 
-    // Load user subscription directly from database (in parallel with workspace data)
+    // Load user subscription from API endpoint (more secure than direct DB access)
+    let userPlanType: "free" | "premium" | "business" = "free"
     try {
-      const session = (await supabase.auth.getSession()).data.session
-      if (session?.user?.id) {
-        const { data: subscription, error } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .single()
-
-        if (!error && subscription) {
+      const response = await fetch("/api/subscription")
+      if (response.ok) {
+        const { subscription } = await response.json()
+        if (subscription) {
           setUserSubscription(subscription)
+          // Determine plan type for model validation
+          if (subscription.status === "active") {
+            userPlanType =
+              (subscription.plan_type as "free" | "premium" | "business") ||
+              "free"
+          }
         }
       }
     } catch (error) {
       console.error("Error loading subscription:", error)
     }
 
+    // Get the requested/default model
+    const requestedModel = (searchParams.get("model") ||
+      (workspace as any).default_model ||
+      "gpt-4o") as any
+
+    // Validate model against subscription - if not allowed, use gpt-4o
+    const { isModelAllowed } = await import("@/lib/subscription-utils")
+    const finalModel = isModelAllowed(userPlanType, requestedModel)
+      ? requestedModel
+      : "gpt-4o"
+
     setChatSettings({
-      model: (searchParams.get("model") ||
-        (workspace as any).default_model ||
-        "gpt-5-mini") as any,
+      model: finalModel,
       prompt: (workspace as any).default_prompt || "",
       temperature: (workspace as any).default_temperature ?? 0.5,
       contextLength: (workspace as any).default_context_length ?? 4096,
