@@ -2,6 +2,7 @@ import { useChatbotUI } from "@/context/context"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
+import { updateProfile } from "@/db/profile"
 import {
   IconArrowUp,
   IconBolt,
@@ -11,6 +12,7 @@ import {
   IconPlayerStopFilled,
   IconSend,
   IconWaveSine,
+  IconWorld,
   IconX
 } from "@tabler/icons-react"
 import Image from "next/image"
@@ -85,6 +87,21 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
     toast.success("File removed")
   }
 
+  const handleToggleWebSearch = async () => {
+    if (!profile) return
+
+    try {
+      const updatedProfile = await updateProfile(profile.id, {
+        web_search_enabled: false
+      })
+      setProfile(updatedProfile)
+      toast.success("Web search disabled")
+    } catch (error) {
+      console.error("Failed to disable web search:", error)
+      toast.error("Failed to disable web search")
+    }
+  }
+
   const {
     isAssistantPickerOpen,
     focusAssistant,
@@ -109,7 +126,9 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
     setSelectedTools,
     assistantImages,
     setChatMessages,
-    setIsGenerating
+    setIsGenerating,
+    profile,
+    setProfile
   } = useChatbotUI()
 
   const {
@@ -390,6 +409,31 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
 
         {/* Main input container */}
         <div className="bg-background flex w-full flex-col rounded-2xl border shadow-lg">
+          {/* Web Search Indicator */}
+          {profile?.web_search_enabled && (
+            <div className="border-border flex items-center justify-between border-b px-3 py-2">
+              <div className="flex items-center gap-2">
+                <IconWorld
+                  size={16}
+                  className="text-blue-600 dark:text-blue-400"
+                />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Web Search
+                </span>
+              </div>
+              <button
+                onClick={handleToggleWebSearch}
+                className="rounded-full p-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="Disable web search"
+              >
+                <IconX
+                  size={16}
+                  className="text-muted-foreground hover:text-foreground"
+                />
+              </button>
+            </div>
+          )}
+
           {/* Text input row */}
           <div className="relative flex items-center">
             <TextareaAutosize
