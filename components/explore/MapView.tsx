@@ -81,6 +81,10 @@ interface MapViewProps {
   currentCaptureStage?: string
   // Info window ref
   setInfoWindowRef?: (infoWindow: google.maps.InfoWindow | null) => void
+  // Report mode props
+  reportMode?: "instant" | "agent"
+  onReportModeChange?: (mode: "instant" | "agent") => void
+  canUseAgentMode?: boolean
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -111,7 +115,10 @@ const MapView: React.FC<MapViewProps> = ({
   onModelChange,
   availableModels,
   onToggleDebugMode,
-  showSidebar = false
+  showSidebar = false,
+  reportMode = "instant",
+  onReportModeChange,
+  canUseAgentMode = false
 }) => {
   const [isClient, setIsClient] = useState(false)
   const [mapInitialized, setMapInitialized] = useState(false)
@@ -1380,6 +1387,51 @@ const MapView: React.FC<MapViewProps> = ({
 
         {/* Map Container */}
         <div className="relative flex-1">
+          {/* Report Mode Toggle - Centered at Top */}
+          {onReportModeChange && (
+            <div className="absolute left-1/2 top-4 z-30 -translate-x-1/2">
+              <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex items-center gap-1 p-1">
+                  <button
+                    onClick={() => onReportModeChange("instant")}
+                    className={`relative flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                      reportMode === "instant"
+                        ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
+                        : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                    }`}
+                  >
+                    <IconSparkles size={16} />
+                    Instant Mode
+                  </button>
+                  <button
+                    onClick={() => onReportModeChange("agent")}
+                    disabled={!canUseAgentMode}
+                    className={`relative flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
+                      reportMode === "agent"
+                        ? "bg-gradient-to-r from-cyan-500 to-green-500 text-white shadow-sm"
+                        : canUseAgentMode
+                          ? "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                          : "cursor-not-allowed text-gray-400 opacity-50 dark:text-gray-600"
+                    }`}
+                    title={
+                      !canUseAgentMode
+                        ? "Agent Mode requires Premium or Business subscription"
+                        : ""
+                    }
+                  >
+                    <Icon3dRotate size={16} />
+                    Agent Mode
+                    {!canUseAgentMode && (
+                      <span className="ml-1 rounded bg-gradient-to-r from-cyan-500 to-green-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+                        Premium
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {isSearching && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-60">
               <div className="flex items-center space-x-3 rounded-lg bg-gray-800 p-4 text-white">

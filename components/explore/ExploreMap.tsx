@@ -84,6 +84,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const [currentCaptureStage, setCurrentCaptureStage] = useState("")
   const [filteredModels, setFilteredModels] = useState(availableModels)
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null)
+  const [reportMode, setReportMode] = useState<"instant" | "agent">("instant")
 
   // This is a direct reference to the map container div from the MapView component
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -184,6 +185,63 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         : "3D Mode Disabled - Will use standard overhead views for roof analysis."
     )
   }, [is3DMode, logDebug])
+
+  // Check if user can use Agent Mode (Premium or Business only)
+  const canUseAgentMode = useCallback(() => {
+    if (!subscriptionInfo) return false
+    const plan = subscriptionInfo.subscription?.plan_type || "free"
+    return plan === "premium" || plan === "business"
+  }, [subscriptionInfo])
+
+  // Toggle report mode with subscription check
+  const handleReportModeChange = useCallback(
+    (newMode: "instant" | "agent") => {
+      if (newMode === "agent" && !canUseAgentMode()) {
+        toast.error(
+          <div className="flex flex-col gap-2">
+            <div className="font-semibold">Agent Mode is Premium Only</div>
+            <div className="text-xs">
+              Agent Mode requires Premium or Business subscription for advanced
+              AI-powered analysis. Upgrade to unlock:
+            </div>
+            <ul className="ml-4 list-disc text-xs">
+              <li>4 AI specialist agents</li>
+              <li>Condition assessment</li>
+              <li>Material identification</li>
+              <li>Accurate cost estimates</li>
+              <li>Quality validation</li>
+            </ul>
+            <button
+              onClick={() => {
+                window.location.href = "/upgrade"
+              }}
+              className="mt-2 rounded-md bg-gradient-to-r from-cyan-500 to-green-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:from-cyan-600 hover:to-green-600"
+            >
+              Upgrade Now
+            </button>
+          </div>,
+          {
+            duration: 8000
+          }
+        )
+        return
+      }
+
+      setReportMode(newMode)
+      logDebug(`Report mode changed to: ${newMode}`)
+
+      if (newMode === "instant") {
+        toast.info(
+          "Instant Mode: Fast reports using Solar API data only. Limited accuracy on condition and costs."
+        )
+      } else {
+        toast.success(
+          "Agent Mode: Comprehensive analysis with 4 AI specialists for maximum accuracy."
+        )
+      }
+    },
+    [canUseAgentMode, logDebug]
+  )
 
   // Enhanced capture satellite views function with 3D mode option
   const captureSatelliteViews = async () => {
@@ -1802,10 +1860,130 @@ ${referenceSection}
     }
   }
 
+  // Generate instant mode report using only Solar API data
+  const generateInstantReport = async () => {
+    if (!selectedLocation) return
+
+    setIsLoading(true)
+    setIsAnalyzing(true)
+    setCurrentCaptureStage("Fetching Solar API data...")
+    setCaptureProgress(20)
+
+    try {
+      logDebug("Starting instant mode report generation")
+
+      // Fetch solar data first
+      const solarResponse = await fetch("/api/solar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng
+        })
+      })
+
+      if (!solarResponse.ok) {
+        throw new Error("Failed to fetch Solar API data")
+      }
+
+      const solarData = await solarResponse.json()
+      logDebug("Solar API data fetched successfully")
+
+      setCurrentCaptureStage("Generating instant report...")
+      setCaptureProgress(60)
+
+      // Generate instant report
+      const instantResponse = await fetch("/api/property-reports/instant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          solarData,
+          address:
+            selectedAddress ||
+            `${selectedLocation.lat}, ${selectedLocation.lng}`,
+          location: selectedLocation
+        })
+      })
+
+      if (!instantResponse.ok) {
+        const errorData = await instantResponse.json()
+        throw new Error(errorData.error || "Failed to generate instant report")
+      }
+
+      const instantReport = await instantResponse.json()
+      logDebug("Instant report generated successfully")
+
+      setCurrentCaptureStage("Complete!")
+      setCaptureProgress(100)
+
+      // Format for display
+      const analysis = {
+        analysis: instantReport.userSummary,
+        userSummary: instantReport.userSummary,
+        rawAnalysis: instantReport.structuredData.detailedAnalysis,
+        structuredData: instantReport.structuredData,
+        mode: "instant"
+      }
+
+      setRoofAnalysis(analysis)
+
+      // Prepare report data with solar metrics
+      const reportData = {
+        lat: selectedLocation.lat,
+        lng: selectedLocation.lng,
+        address: selectedAddress || "Property Address",
+        workspaceId,
+        enhancedAnalysis: analysis,
+        solar: instantReport.solarMetrics
+          ? {
+              potential: {
+                maxPanels: instantReport.solarMetrics.roofSegmentCount,
+                yearlyEnergy: 0,
+                sunshineHours: 0,
+                suitabilityScore: "See Agent Mode for solar analysis"
+              }
+            }
+          : null,
+        mode: "instant"
+      }
+
+      setReportData({ jsonData: reportData })
+
+      toast.success("Instant report generated successfully!")
+      logDebug("Instant mode report displayed")
+    } catch (error: any) {
+      console.error("Error generating instant report:", error)
+      logDebug(`Instant report error: ${error.message}`)
+
+      toast.error(
+        <div className="flex flex-col gap-2">
+          <div className="font-semibold">Instant Report Failed</div>
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            {error.message || "An unexpected error occurred"}
+          </div>
+        </div>,
+        {
+          duration: 5000
+        }
+      )
+    } finally {
+      setIsLoading(false)
+      setIsAnalyzing(false)
+      setCaptureProgress(0)
+      setCurrentCaptureStage("")
+    }
+  }
+
   // Complete reworked function to prevent tab switching and keep everything in one view
   const analyzeAndGenerateReport = async () => {
     if (!selectedLocation) return
 
+    // Check which mode to use
+    if (reportMode === "instant") {
+      return generateInstantReport()
+    }
+
+    // Agent mode - existing flow
     setIsLoading(true)
 
     try {
@@ -2138,6 +2316,9 @@ ${referenceSection}
           showSidebar={showSidebar}
           livePreviewImages={livePreviewImages}
           currentCaptureStage={currentCaptureStage}
+          reportMode={reportMode}
+          onReportModeChange={handleReportModeChange}
+          canUseAgentMode={canUseAgentMode()}
         />
       </div>
 
