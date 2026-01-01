@@ -114,7 +114,7 @@ export default function UpgradePage() {
                     <Check className="size-3 text-green-600" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-gray-700">
-                    1,000 chat messages per month
+                    20 property reports per month
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -122,7 +122,7 @@ export default function UpgradePage() {
                     <Check className="size-3 text-green-600" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-gray-700">
-                    20 property reports per month
+                    1,000 chat messages per month
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -195,7 +195,7 @@ export default function UpgradePage() {
                     <Check className="size-3 text-green-600" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-gray-700">
-                    5,000 chat messages per month
+                    100 property reports per month
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -203,7 +203,7 @@ export default function UpgradePage() {
                     <Check className="size-3 text-green-600" strokeWidth={3} />
                   </div>
                   <span className="text-sm text-gray-700">
-                    100 property reports per month
+                    5,000 chat messages per month
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
