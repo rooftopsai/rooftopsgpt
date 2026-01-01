@@ -57,8 +57,8 @@ export default function UpgradePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen justify-start bg-white p-4 pt-12">
+      <div className="mx-auto w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-3 text-3xl font-bold text-gray-900">
@@ -141,14 +141,6 @@ export default function UpgradePage() {
                     Advanced AI models
                   </span>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <Check className="size-3 text-green-600" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-gray-700">
-                    Priority support
-                  </span>
-                </div>
               </div>
 
               {/* Pricing Options */}
@@ -174,7 +166,7 @@ export default function UpgradePage() {
                     )
                   }
                   disabled={loading}
-                  className="relative flex w-full items-center justify-between rounded-lg border-2 border-blue-600 bg-blue-600 px-6 py-4 text-base font-semibold text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+                  className="relative flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 px-6 py-4 text-base font-semibold text-white transition-all hover:from-cyan-600 hover:to-green-600 disabled:opacity-50"
                 >
                   <div className="absolute -top-2.5 right-4 rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white">
                     Save $48
@@ -227,30 +219,6 @@ export default function UpgradePage() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <Check className="size-3 text-green-600" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-gray-700">
-                    Team collaboration tools
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <Check className="size-3 text-green-600" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-gray-700">
-                    Unlimited document generations
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                    <Check className="size-3 text-green-600" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-gray-700">
-                    Dedicated support
-                  </span>
-                </div>
               </div>
 
               {/* Pricing Options */}
@@ -276,7 +244,7 @@ export default function UpgradePage() {
                     )
                   }
                   disabled={loading}
-                  className="relative flex w-full items-center justify-between rounded-lg border-2 border-blue-600 bg-blue-600 px-6 py-4 text-base font-semibold text-white transition-all hover:bg-blue-700 disabled:opacity-50"
+                  className="relative flex w-full items-center justify-between rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 px-6 py-4 text-base font-semibold text-white transition-all hover:from-cyan-600 hover:to-green-600 disabled:opacity-50"
                 >
                   <div className="absolute -top-2.5 right-4 rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white">
                     Save $180
