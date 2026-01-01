@@ -1862,12 +1862,12 @@ ${referenceSection}
 
   // Generate instant mode report using only Solar API data
   const generateInstantReport = async () => {
-    if (!selectedLocation) return
+    if (!selectedLocation || !mapContainerRef.current) return
 
     setIsLoading(true)
     setIsAnalyzing(true)
     setCurrentCaptureStage("Fetching Solar API data...")
-    setCaptureProgress(20)
+    setCaptureProgress(10)
 
     try {
       logDebug("Starting instant mode report generation")
@@ -1889,8 +1889,62 @@ ${referenceSection}
       const solarData = await solarResponse.json()
       logDebug("Solar API data fetched successfully")
 
+      setCurrentCaptureStage("Capturing property images...")
+      setCaptureProgress(30)
+
+      // Capture one overhead satellite image
+      const capturedImages: any[] = []
+
+      if (mapRef.current) {
+        try {
+          // Center map and set optimal zoom for overhead view
+          mapRef.current.setCenter({
+            lat: selectedLocation.lat,
+            lng: selectedLocation.lng
+          })
+          mapRef.current.setZoom(21)
+          mapRef.current.setTilt(0)
+          mapRef.current.setHeading(0)
+
+          // Wait for map to render
+          await new Promise(resolve => setTimeout(resolve, 1500))
+
+          // Capture overhead view
+          const overheadView = await captureMapView(
+            mapContainerRef,
+            "overhead-instant",
+            { aggressiveMode: false }
+          )
+
+          if (overheadView) {
+            overheadView.viewName = "Overhead Satellite View"
+            overheadView.zoomLevel = 21
+            capturedImages.push(overheadView)
+            logDebug("Overhead view captured for instant mode")
+          }
+        } catch (e) {
+          console.error("Error capturing overhead view:", e)
+          logDebug(`Failed to capture overhead view: ${e.message}`)
+        }
+      }
+
+      setCaptureProgress(50)
+
+      // Generate Google Street View URL
+      const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${selectedLocation.lat},${selectedLocation.lng}&fov=80&heading=0&pitch=10&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+
+      // Add street view as an image reference
+      capturedImages.push({
+        viewName: "Street View",
+        url: streetViewUrl,
+        type: "streetview",
+        timestamp: new Date().toISOString()
+      })
+
+      logDebug("Street view URL generated")
+
       setCurrentCaptureStage("Generating instant report...")
-      setCaptureProgress(60)
+      setCaptureProgress(70)
 
       // Generate instant report
       const instantResponse = await fetch("/api/property-reports/instant", {
@@ -1922,28 +1976,23 @@ ${referenceSection}
         userSummary: instantReport.userSummary,
         rawAnalysis: instantReport.structuredData.detailedAnalysis,
         structuredData: instantReport.structuredData,
+        capturedImages, // Add captured images
+        satelliteViews: capturedImages, // Also set as satelliteViews for compatibility
         mode: "instant"
       }
 
       setRoofAnalysis(analysis)
 
-      // Prepare report data with solar metrics
+      // Prepare report data with proper solar data
       const reportData = {
         lat: selectedLocation.lat,
         lng: selectedLocation.lng,
         address: selectedAddress || "Property Address",
         workspaceId,
         enhancedAnalysis: analysis,
-        solar: instantReport.solarMetrics
-          ? {
-              potential: {
-                maxPanels: instantReport.solarMetrics.roofSegmentCount,
-                yearlyEnergy: 0,
-                sunshineHours: 0,
-                suitabilityScore: "See Agent Mode for solar analysis"
-              }
-            }
-          : null,
+        solar: instantReport.solar || null,
+        solarMetrics: instantReport.solarMetrics || null,
+        capturedImages, // Include images in report data
         mode: "instant"
       }
 

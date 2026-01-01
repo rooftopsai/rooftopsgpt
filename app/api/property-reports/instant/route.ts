@@ -198,6 +198,15 @@ Report generated in ${Date.now() - startTime}ms using Instant Mode
 For comprehensive analysis, switch to Agent Mode (Premium/Business subscribers)
 `.trim()
 
+    // Extract solar potential data
+    const solarPotential = solarData.solarPotential || {}
+    const maxPanelsCount = solarPotential.maxArrayPanelsCount || 0
+    const yearlyEnergyDcKwh = solarPotential.maxArrayAreaMeters2
+      ? (solarPotential.maxArrayAreaMeters2 * 160 * 0.2) / 1000 // Rough estimate: 160W/m² * 20% efficiency
+      : 0
+    const maxSunshineHours = solarPotential.maxSunshineHoursPerYear || 0
+    const panelCapacityWatts = solarPotential.panelCapacityWatts || 400
+
     // Compile final instant report
     const instantReport = {
       success: true,
@@ -237,11 +246,27 @@ For comprehensive analysis, switch to Agent Mode (Premium/Business subscribers)
         costConfidence: "N/A - Upgrade to Agent Mode",
 
         // Detailed analysis
-        detailedAnalysis
+        detailedAnalysis,
+
+        // Roof segments for detailed display
+        segments: solarMetrics.segments
       },
 
       // Solar metrics for reference
       solarMetrics,
+
+      // Solar potential data
+      solar: {
+        potential: {
+          maxPanels: maxPanelsCount,
+          yearlyEnergy: Math.round(yearlyEnergyDcKwh),
+          sunshineHours: Math.round(maxSunshineHours),
+          panelCapacityWatts,
+          maxArrayAreaMeters2: solarPotential.maxArrayAreaMeters2 || 0,
+          suitabilityScore: maxPanelsCount > 0 ? "Available" : "Limited"
+        },
+        financials: null // Not calculated in instant mode
+      },
 
       // Metadata
       metadata: {

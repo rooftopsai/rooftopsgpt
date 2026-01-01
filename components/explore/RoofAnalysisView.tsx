@@ -124,11 +124,36 @@ const RoofAnalysisResults: React.FC<RoofAnalysisResultsProps> = ({
               <div className="flex flex-col rounded-lg bg-gray-800 p-3">
                 <span className="mb-1 flex items-center text-xs font-medium text-blue-400">
                   <IconSquare size={14} className="mr-1" />
+                  Roof Area
+                </span>
+                <span className="text-2xl font-bold">
+                  {structuredData?.roofArea
+                    ? `${structuredData.roofArea.toLocaleString()}`
+                    : "N/A"}
+                </span>
+                <span className="text-xs text-gray-400">sq ft</span>
+              </div>
+
+              <div className="flex flex-col rounded-lg bg-gray-800 p-3">
+                <span className="mb-1 flex items-center text-xs font-medium text-blue-400">
+                  <IconSquare size={14} className="mr-1" />
                   Facet Count
                 </span>
                 <span className="text-2xl font-bold">
                   {structuredData?.facetCount || "N/A"}
                 </span>
+                <span className="text-xs text-gray-400">sections</span>
+              </div>
+
+              <div className="flex flex-col rounded-lg bg-gray-800 p-3">
+                <span className="mb-1 flex items-center text-xs font-medium text-blue-400">
+                  <IconTriangle size={14} className="mr-1" />
+                  Pitch
+                </span>
+                <span className="text-2xl font-bold">
+                  {structuredData?.pitch || "N/A"}
+                </span>
+                <span className="text-xs text-gray-400">ratio</span>
               </div>
 
               <div className="flex flex-col rounded-lg bg-gray-800 p-3">
@@ -140,30 +165,6 @@ const RoofAnalysisResults: React.FC<RoofAnalysisResultsProps> = ({
                   className={`text-2xl font-bold capitalize ${getComplexityColor(structuredData?.complexity)}`}
                 >
                   {structuredData?.complexity || "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col rounded-lg bg-gray-800 p-3">
-                <span className="mb-1 flex items-center text-xs font-medium text-blue-400">
-                  <IconRuler size={14} className="mr-1 rotate-45" />
-                  Ridge Length
-                </span>
-                <span className="text-2xl font-bold">
-                  {structuredData?.ridgeLength
-                    ? `${structuredData.ridgeLength} ft`
-                    : "N/A"}
-                </span>
-              </div>
-
-              <div className="flex flex-col rounded-lg bg-gray-800 p-3">
-                <span className="mb-1 flex items-center text-xs font-medium text-blue-400">
-                  <IconRuler size={14} className="mr-1 -rotate-45" />
-                  Valley Length
-                </span>
-                <span className="text-2xl font-bold">
-                  {structuredData?.valleyLength
-                    ? `${structuredData.valleyLength} ft`
-                    : "N/A"}
                 </span>
               </div>
             </div>
@@ -222,14 +223,82 @@ const RoofAnalysisResults: React.FC<RoofAnalysisResultsProps> = ({
           </TabsContent>
 
           <TabsContent value="details" className="mt-2">
-            <div className="rounded-lg bg-gray-800 p-4">
-              <h3 className="mb-2 text-sm font-medium text-blue-400">
-                Detailed Analysis
-              </h3>
-              <pre className="whitespace-pre-wrap text-sm text-gray-300">
-                {rawAnalysis || "No detailed analysis available."}
-              </pre>
-            </div>
+            {/* Show roof segments in card format if available */}
+            {structuredData?.segments &&
+            Array.isArray(structuredData.segments) &&
+            structuredData.segments.length > 0 ? (
+              <div className="space-y-4">
+                <div className="rounded-lg bg-gray-800 p-4">
+                  <h3 className="mb-3 text-sm font-medium text-blue-400">
+                    Roof Section Measurements
+                  </h3>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {structuredData.segments.map(
+                      (segment: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="rounded-lg border border-gray-700 bg-gray-900 p-3 transition-all hover:border-blue-500"
+                        >
+                          <div className="mb-2 flex items-center justify-between">
+                            <h4 className="font-semibold text-white">
+                              Section {idx + 1}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className="border-blue-500 text-blue-400"
+                            >
+                              {segment.pitchRatio}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1.5 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Area:</span>
+                              <span className="font-medium text-gray-200">
+                                {segment.areaSqFt} sq ft
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Pitch:</span>
+                              <span className="font-medium text-gray-200">
+                                {segment.pitchDegrees.toFixed(1)}°
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">
+                                Orientation:
+                              </span>
+                              <span className="font-medium text-gray-200">
+                                {segment.azimuthDegrees}° (
+                                {getCardinalDirection(segment.azimuthDegrees)})
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {/* Detailed text analysis below cards */}
+                <div className="rounded-lg bg-gray-800 p-4">
+                  <h3 className="mb-2 text-sm font-medium text-blue-400">
+                    Detailed Analysis
+                  </h3>
+                  <pre className="whitespace-pre-wrap text-sm text-gray-300">
+                    {rawAnalysis || "No detailed analysis available."}
+                  </pre>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-gray-800 p-4">
+                <h3 className="mb-2 text-sm font-medium text-blue-400">
+                  Detailed Analysis
+                </h3>
+                <pre className="whitespace-pre-wrap text-sm text-gray-300">
+                  {rawAnalysis || "No detailed analysis available."}
+                </pre>
+              </div>
+            )}
           </TabsContent>
 
           {/* New Images Tab */}
@@ -449,6 +518,13 @@ const extractSummary = (analysisText: string): string | null => {
   }
 
   return null
+}
+
+// Helper function to convert azimuth degrees to cardinal direction
+const getCardinalDirection = (azimuth: number): string => {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+  const index = Math.round(azimuth / 45) % 8
+  return directions[index]
 }
 
 export default RoofAnalysisResults
