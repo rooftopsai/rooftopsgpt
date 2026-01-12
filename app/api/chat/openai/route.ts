@@ -8,10 +8,8 @@ import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completion
 import { createClient } from "@supabase/supabase-js"
 import { ROOFING_EXPERT_SYSTEM_PROMPT } from "@/lib/system-prompts"
 import { GLOBAL_API_KEYS } from "@/lib/api-keys"
-import {
-  requireFeatureAccess,
-  trackAndCheckFeature
-} from "@/lib/subscription-helpers"
+import { checkChatLimit } from "@/lib/entitlements"
+import { incrementChatUsage } from "@/db/user-usage"
 
 export const runtime: ServerRuntime = "edge"
 
@@ -61,21 +59,32 @@ export async function POST(request: Request) {
   try {
     const profile = await getServerProfile()
 
-    // Check subscription limits before processing
-    const accessCheck = await requireFeatureAccess(
-      profile.user_id,
-      "chat_messages"
-    )
-    if (!accessCheck.allowed) {
+    // Check chat limits and determine which model to use
+    const limitCheck = await checkChatLimit(profile.user_id)
+    if (!limitCheck.allowed) {
       return new Response(
         JSON.stringify({
-          error: accessCheck.error,
-          limit: accessCheck.limit,
-          currentUsage: accessCheck.currentUsage,
+          error: "CHAT_LIMIT_REACHED",
+          message:
+            "You've reached your chat limit for this period. Upgrade for more messages!",
+          remaining: limitCheck.remaining,
+          limit: limitCheck.limit,
           upgradeRequired: true
         }),
-        { status: 402 } // 402 Payment Required
+        { status: 403 } // 403 Forbidden
       )
+    }
+
+    // Use the model recommended by the entitlement check
+    // This handles automatic switching from GPT-4.5-mini to GPT-4o when premium messages are exhausted
+    const recommendedModel = limitCheck.model
+    console.log(
+      `[OpenAI Route] Using model: ${recommendedModel} (requested: ${chatSettings.model}, switched: ${limitCheck.switchedToFreeModel || false})`
+    )
+
+    // Override the model if it was switched to free tier model
+    if (limitCheck.switchedToFreeModel) {
+      chatSettings.model = recommendedModel
     }
 
     // Use global API keys instead of user-provided keys
@@ -334,9 +343,10 @@ export async function POST(request: Request) {
 
     const stream = OpenAIStream(response as any)
 
-    // Track usage after successful API call (don't await to not block response)
-    trackAndCheckFeature(profile.user_id, "chat_messages", 1).catch(err =>
-      console.error("Failed to track usage:", err)
+    // Track usage after successful API call
+    // Use the recommended model to track correct usage type
+    incrementChatUsage(profile.user_id, recommendedModel as any).catch(err =>
+      console.error("Failed to track chat usage:", err)
     )
 
     // If we have document sources, prepend metadata to the stream

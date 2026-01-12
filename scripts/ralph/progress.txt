@@ -148,3 +148,61 @@ Started: Mon Jan 12 00:17:36 CST 2026
 - Responsive design matching existing UI
 
 ---
+
+### US-5: Report Generation with Limit Check ✅
+**Status**: COMPLETE
+**Commit**: a5d1dd8
+
+**What was implemented**:
+- Updated `/app/api/property-reports/route.ts` to use new tier-based entitlement checks
+- Replaced old `requireFeatureAccess` with `checkReportLimit` from `/lib/entitlements.ts`
+- Replaced old `trackAndCheckFeature` with `incrementReportUsage` from `/db/user-usage.ts`
+- Added usage info to response (remaining reports, limit)
+- Created `/components/modals/upgrade-modal.tsx` component
+- Upgrade modal shows tier comparison when limit reached
+- Returns proper error code (REPORT_LIMIT_REACHED) when limit exceeded
+
+**Features**:
+- Before generating report: Check authentication → Check report limit → Generate or show error
+- After successful generation: Increment usage counter
+- API returns remaining count: "X reports remaining this month"
+- Free users: After 1st report, shows upgrade modal on subsequent attempts
+- Upgrade modal dynamically adapts to different limit reasons (report_limit, chat_limit, web_search_limit, agent_access)
+
+**Error Responses**:
+- 401: Unauthorized (not logged in)
+- 403: REPORT_LIMIT_REACHED with message, remaining, and limit info
+- Frontend can catch this error and show signup or upgrade modal accordingly
+
+---
+
+### US-6: Upgrade Modal Component ✅
+**Status**: COMPLETE (Implemented in US-5)
+**Reference**: components/modals/upgrade-modal.tsx from US-5
+
+**Note**: All requirements for US-6 were already completed in US-5:
+- Modal created following Radix Dialog patterns ✅
+- Props include `reason` with all required types ✅
+- Dynamic messaging based on reason (report_limit, chat_limit, web_search_limit, agent_access) ✅
+- Shows pricing comparison: Free ($0), Premium ($29), Business ($99) ✅
+- CTAs: "Upgrade to Premium" and "Upgrade to Business" buttons ✅
+- Navigates to /pricing page with tier parameter ✅
+- Responsive design with mobile stacking ✅
+
+---
+
+## Summary for Iteration 1
+
+**Stories Completed**: 6 user stories (US-0 through US-6)
+**Commits**: 6 commits
+**Time**: Efficient progress with some stories naturally completing earlier due to related work
+
+**Key Achievements**:
+- Complete tier system foundation (database, entitlements, usage tracking)
+- Authentication modals (signup and upgrade)
+- Report generation with limits fully enforced
+- All backend infrastructure ready for frontend integration
+
+**Next**: Moving to US-7 (Chat Limit Enforcement) and beyond
+
+---
