@@ -1,3 +1,40 @@
 # Ralph Progress Log
 Started: Mon Jan 12 00:17:36 CST 2026
 ---
+
+## Iteration 1
+
+### US-0: Codebase Discovery and Pattern Analysis ✅
+**Status**: COMPLETE
+**Commit**: be72708
+
+**What was implemented**:
+- Thoroughly examined the rooftopsgpt codebase
+- Identified tech stack: Next.js 14 App Router, Supabase, Radix UI, Tailwind CSS
+- Documented file structure: /components, /lib, /db, /app/api, /types
+- Identified existing patterns for modals, auth, database, API responses
+- Created CODEBASE-PATTERNS.md with comprehensive documentation
+
+**Key Discoveries**:
+- Subscriptions table already exists with Stripe integration
+- Feature_usage table already exists for tracking usage
+- Stripe webhook and checkout already configured
+- Modal pattern uses Radix Dialog with custom styling
+- Auth uses Supabase Auth with @supabase/ssr
+- Toast system uses Sonner
+- Existing subscription limits differ from PRD requirements
+
+**Adaptations Made**:
+- Will need to modify existing subscription limits to match PRD (US-1)
+- Will use existing subscriptions/feature_usage tables instead of creating new ones
+- Will follow existing Radix Dialog pattern for modals
+- Will use existing Stripe integration
+
+**Learnings for Future Stories**:
+- Always check /db directory for existing database query patterns
+- Use /lib/supabase/server.ts for server-side auth
+- Follow existing modal patterns in /components/ui/dialog.tsx
+- Use toast from 'sonner' for notifications
+- API routes should use NextResponse.json
+
+---
