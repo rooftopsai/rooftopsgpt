@@ -368,10 +368,10 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       )
 
       // Generate 2 meaningfully different zoom levels with significant difference
-      // Context view: Standard high zoom for overall roof structure
+      // Context view: High zoom focused tightly on target roof
       // Detail view: Maximum zoom (22) for precise facet counting and roof detail analysis
       const zoomLevels = [
-        20, // Context (standard high zoom)
+        21, // Context (high zoom - tight on target roof)
         22 // Detail (maximum zoom - zoom WAY in for facet counting)
       ]
       const zoomLabels = ["Context", "Detail"]
@@ -476,7 +476,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           viewportHeight,
           0.95 // 95% coverage - tight crop on roof only, eliminate neighboring context
         )
-        const angleZoom = Math.min(22, calculatedZoom + 2) // Add +2 to zoom in even closer
+        const angleZoom = Math.min(22, calculatedZoom + 3) // Add +3 to zoom in much closer on target roof
 
         logDebug(
           `Capturing view at ${angle}° heading with optimized zoom ${angleZoom} (tilt: ${tiltAngle}°)`
