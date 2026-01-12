@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-12
 **Status**: ✅ PRODUCTION READY (Core System Complete)
-**Progress**: 27/36 User Stories (75%)
+**Progress**: 28/36 User Stories (78%)
 
 ---
 
@@ -86,17 +86,19 @@
 
 ---
 
-### Bug Fixes (US-27)
+### Bug Fixes (US-27 & US-28)
 - ✅ Property report image loading with graceful fallbacks
 - ✅ SVG placeholder for failed images
 - ✅ Error state tracking to prevent retry loops
+- ✅ Roof tab AI summary display with condition assessment
+- ✅ Replaced Solar API segments with agent-generated findings
+- ✅ Key findings, condition, and recommendations now visible
 
 ---
 
-## 🔧 REMAINING WORK (US-28 to US-36)
+## 🔧 REMAINING WORK (US-29 to US-36)
 
-### Bug Fixes (US-28 to US-30)
-- ⏳ Roof tab AI summary display (pre-existing)
+### Bug Fixes (US-29 & US-30)
 - ⏳ AI chat error handling (pre-existing)
 - ⏳ Solar tab data parsing (pre-existing)
 
@@ -275,8 +277,8 @@ SUPABASE_SERVICE_ROLE_KEY=...
 ## 🐛 KNOWN ISSUES (Pre-existing, not tier-related)
 
 1. ✅ ~~Property report images may not load~~ - FIXED in US-27 with fallback placeholders
-2. AI chat returns generic errors (needs better error handling)
-3. Roof tab shows segments instead of AI summary (needs data mapping)
+2. ✅ ~~Roof tab shows segments instead of AI summary~~ - FIXED in US-28 with agent-generated findings
+3. AI chat returns generic errors (needs better error handling)
 4. Solar tab doesn't parse API response (needs data extraction)
 
 **Note**: These are existing issues in the codebase unrelated to the tier system implementation.
@@ -285,15 +287,15 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 📊 SUCCESS METRICS
 
-- ✅ 75% of user stories complete (27/36)
-- ✅ 35 commits across implementation
-- ✅ ~57+ files modified
+- ✅ 78% of user stories complete (28/36)
+- ✅ 37 commits across implementation
+- ✅ ~58+ files modified
 - ✅ 12 new components created
 - ✅ 5 new API endpoints
 - ✅ 2 new database tables (+ 1 field migration)
 - ✅ All builds compile successfully
 - ✅ Zero blocking issues for production
-- ✅ 1 pre-existing bug fixed (image loading)
+- ✅ 2 pre-existing bugs fixed (image loading, roof tab display)
 
 ---
 

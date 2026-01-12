@@ -1049,3 +1049,75 @@ Started: Mon Jan 12 00:17:36 CST 2026
 **Progress**: 27/36 user stories (75%)
 
 ---
+
+
+## Iteration 15
+
+### US-28: Replace Roof Segments with AI Summary ✅
+**Status**: COMPLETE
+**Commit**: b31ecf2
+
+**Root Cause**:
+- Roof tab displayed Solar API segment details in a facet details table
+- Solar API segments (roof planes for solar calculation) don't match agent-analyzed facets
+- Segment data (sunlight hours, orientation, % of roof) irrelevant for roofing assessment
+- Missing AI-generated condition assessment, findings, and recommendations from agents
+
+**What was implemented**:
+- Updated `/components/property/property-report.tsx`
+  - Removed facet details table (57 lines of code)
+  - Replaced with AI-generated summary sections (204 lines of code)
+  - Implemented conditional rendering with `hasAISummary` check
+  - Uses `safeExtract()` helper to access nested data structures
+
+- **New Section 1: AI Analysis Summary** (blue background box)
+  - Displays `executiveSummary` from Quality Controller agent
+  - Fallback to `userSummary` for instant reports
+  - 2-3 sentence summary of roof analysis
+
+- **New Section 2: Key Findings** (white card with border)
+  - Bullet list with checkmark icons
+  - Displays 3-5 most important findings from `finalReport.keyFindings`
+  - From Quality Controller agent synthesis
+
+- **New Section 3: Condition Assessment** (white card with border)
+  - Overall condition status
+  - Material type identified by Condition Inspector agent
+  - Estimated age and remaining life
+  - Detailed findings text
+  - Recommendations in yellow box (warning styling)
+
+- **New Section 4: Validated Measurements** (white card with border)
+  - Displays `propertyOverview` from Quality Controller
+  - Shows: roofArea, roofingSquares, facetCount, pitch, complexity
+  - Only from multi-agent reports with validation
+
+**Data Source Hierarchy**:
+1. `data.executiveSummary` or `data.finalReport.executiveSummary`
+2. `data.finalReport.keyFindings` or `data.agents.quality.data.finalReport.keyFindings`
+3. `data.finalReport.propertyOverview` or `data.agents.quality.data.finalReport.propertyOverview`
+4. `data.agents.condition.data.condition` (material, age, findings, recommendations)
+5. `data.userSummary` (fallback for instant reports)
+
+**Preserved Elements**:
+- "Roof Specifications" section unchanged
+- Total Area, Number of Facets, Roof Pitch, Estimated Age still displayed
+- All valuable roof data maintained
+
+**Conditional Rendering**:
+- Checks if AI summary data exists before rendering
+- Each section independently checks for its data
+- Graceful fallback: if no AI data, shows nothing (won't break layout)
+- Supports both multi-agent reports (full data) and instant reports (limited data)
+
+**User Experience**:
+- Clear, actionable summary instead of technical segment data
+- Highlighted recommendations in yellow for visibility
+- Structured presentation: summary → findings → condition → measurements
+- Better understanding of roof condition and required actions
+- Professional report appearance with consistent styling
+
+**Build Status**: ✅ Successful
+**Progress**: 28/36 user stories (78%)
+
+---
