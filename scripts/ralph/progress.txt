@@ -232,3 +232,25 @@ Started: Mon Jan 12 00:17:36 CST 2026
 - 403: CHAT_LIMIT_REACHED with message, remaining, limit, and upgradeRequired flag
 
 ---
+
+### US-8: Web Search Access Control ✅
+**Status**: COMPLETE
+**Commit**: ae86103
+
+**What was implemented**:
+- Updated `/app/api/chat/openai/route.ts` to add web search entitlement checks
+- Added `checkWebSearchLimit` check before performing Brave API searches
+- Web search now respects tier limits:
+  - Free tier: No web search access (0 searches)
+  - Premium tier: 50 web searches/month
+  - Business tier: 250 web searches/month
+- Added usage tracking with `incrementWebSearchUsage` after successful searches
+- Added logging to show web search access status and remaining count
+
+**Key Features**:
+- Web search only executes if user has tier access AND profile setting enabled
+- Tracks usage count per successful search
+- Gracefully skips web search if limit reached (doesn't break chat)
+- Logs remaining searches for debugging
+
+---
