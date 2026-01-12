@@ -26,7 +26,7 @@ import { useChatbotUI } from "@/context/context"
 
 // Import our components
 import MapView from "./MapView"
-import CombinedReport from "@/components/property/combined-report"
+import PropertyReportViewer from "@/components/property/property-report-viewer"
 import {
   Select,
   SelectContent,
@@ -102,12 +102,28 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     pitchEnhancement: false
   })
 
-  const { showSidebar, setShowSidebar } = useChatbotUI()
+  const { showSidebar, setShowSidebar, setHasActiveExploreReport } =
+    useChatbotUI()
 
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Update hasActiveExploreReport when reports are displayed or hidden
+  useEffect(() => {
+    if (!setHasActiveExploreReport) return
+
+    const hasReport = !!(roofAnalysis || reportData)
+    setHasActiveExploreReport(hasReport)
+
+    // Clean up when component unmounts
+    return () => {
+      if (setHasActiveExploreReport) {
+        setHasActiveExploreReport(false)
+      }
+    }
+  }, [roofAnalysis, reportData, setHasActiveExploreReport])
 
   // Reusable function to fetch subscription info
   const fetchSubscriptionInfo = useCallback(async () => {
@@ -189,7 +205,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   // Check if user can use Agent Mode (Premium or Business only)
   const canUseAgentMode = useCallback(() => {
     if (!subscriptionInfo) return false
-    const plan = subscriptionInfo.subscription?.plan_type || "free"
+    const plan = subscriptionInfo.planType || "free"
     return plan === "premium" || plan === "business"
   }, [subscriptionInfo])
 
@@ -1907,7 +1923,7 @@ ${referenceSection}
       setCaptureProgress(50)
 
       // Generate Google Street View URL
-      const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${selectedLocation.lat},${selectedLocation.lng}&fov=80&heading=0&pitch=10&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${selectedLocation.lat},${selectedLocation.lng}&fov=80&heading=0&pitch=10&key=${process.env.NEXT_PUBLIC_GOOGLEMAPS_API_KEY}`
 
       // Add street view as an image reference
       capturedImages.push({
@@ -2344,6 +2360,7 @@ ${referenceSection}
           reportMode={reportMode}
           onReportModeChange={handleReportModeChange}
           canUseAgentMode={canUseAgentMode()}
+          hasActiveReport={!!(roofAnalysis || reportData)}
         />
       </div>
 
@@ -2418,48 +2435,18 @@ ${referenceSection}
 
       {/* Report Display - Shows in main content area */}
       {(roofAnalysis || reportData) && (
-        <div className="absolute inset-0 z-20 flex flex-col bg-white dark:bg-gray-900">
-          {/* Header with Close Button */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-            {/* Rooftops AI Logo */}
-            <img
-              src="https://uploads-ssl.webflow.com/64e9150f53771ac56ef528b7/64ee16bb300d3e08d25a03ac_rooftops-logo-gr-black.png"
-              alt="Rooftops AI"
-              className="h-7 w-auto dark:invert"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setRoofAnalysis(null)
-                setReportData(null)
-              }}
-              className="size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </Button>
-          </div>
-
-          {/* Report Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <CombinedReport
-              analysisData={roofAnalysis}
-              reportData={reportData}
-            />
-          </div>
+        <div className="absolute inset-0 z-20">
+          <PropertyReportViewer
+            reportData={roofAnalysis || reportData}
+            solarData={reportData?.solar || reportData?.solarMetrics}
+            images={
+              roofAnalysis?.satelliteViews || reportData?.capturedImages || []
+            }
+            onClose={() => {
+              setRoofAnalysis(null)
+              setReportData(null)
+            }}
+          />
         </div>
       )}
 

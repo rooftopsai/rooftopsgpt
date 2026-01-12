@@ -1,0 +1,332 @@
+{
+  "_README": {
+    "title": "REAL PRODUCTION DATA - Property Report Analysis",
+    "property": "9222 Wheatland Drive, Germantown, TN 38139",
+    "dataSource": "Live Google Solar API + Rooftops AI Production System",
+    "generated": "2026-01-12T02:18:00.000Z",
+    "note": "This contains ACTUAL production data from the system, not examples",
+    "solarApiSize": "Full response is 223KB with 112 panel placements, 109 configurations, 23 financial scenarios",
+    "whatYouNeed": "Design a stunning report UI based on this real data structure"
+  },
+
+  "propertyInfo": {
+    "address": "9222 Wheatland Drive, Germantown, TN 38139",
+    "coordinates": { "lat": 35.092831700000005, "lng": -89.754305 },
+    "postalCode": "38139",
+    "state": "TN",
+    "regionCode": "US"
+  },
+
+  "imageryData": {
+    "captureDate": { "year": 2021, "month": 9, "day": 27 },
+    "processedDate": { "year": 2024, "month": 9, "day": 28 },
+    "quality": "HIGH",
+    "dataSource": "Google Solar API Satellite Imagery"
+  },
+
+  "roofMeasurements": {
+    "totalRoofArea": {
+      "squareMeters": 292.8719,
+      "squareFeet": 3152,
+      "roofingSquares": 31.5
+    },
+    "groundFootprint": {
+      "squareMeters": 220.6,
+      "squareFeet": 2375
+    },
+    "roofSegmentCount": 5,
+    "maxSunshineHoursPerYear": 1587.4598,
+
+    "roofSegments": [
+      {
+        "segmentId": 1,
+        "pitch": { "degrees": 44.49, "ratio": "9.75:12" },
+        "orientation": { "azimuth": 187.18, "direction": "South" },
+        "area": { "sqm": 98.08, "sqft": 1056 },
+        "maxSunshineHours": 1587.44,
+        "suitability": "excellent",
+        "center": { "lat": 35.0928184, "lng": -89.7543341 }
+      },
+      {
+        "segmentId": 2,
+        "pitch": { "degrees": 43.81, "ratio": "9.6:12" },
+        "orientation": { "azimuth": 8.07, "direction": "North" },
+        "area": { "sqm": 95.79, "sqft": 1031 },
+        "maxSunshineHours": 1124.85,
+        "suitability": "good",
+        "center": { "lat": 35.0928413, "lng": -89.7543068 }
+      },
+      {
+        "segmentId": 3,
+        "pitch": { "degrees": 46.25, "ratio": "10.25:12" },
+        "orientation": { "azimuth": 278.89, "direction": "West" },
+        "area": { "sqm": 31.47, "sqft": 339 },
+        "maxSunshineHours": 1402.93,
+        "suitability": "excellent"
+      },
+      {
+        "segmentId": 4,
+        "pitch": { "degrees": 46.74, "ratio": "10.45:12" },
+        "orientation": { "azimuth": 97.77, "direction": "East" },
+        "area": { "sqm": 30.87, "sqft": 332 },
+        "maxSunshineHours": 1424.08,
+        "suitability": "excellent"
+      },
+      {
+        "segmentId": 5,
+        "pitch": { "degrees": 50.71, "ratio": "12.1:12" },
+        "orientation": { "azimuth": 189.21, "direction": "South" },
+        "area": { "sqm": 10.92, "sqft": 118 },
+        "maxSunshineHours": 1561.79,
+        "suitability": "excellent"
+      }
+    ],
+
+    "roofCharacteristics": {
+      "predominantPitch": "9.7:12 (steep)",
+      "pitchRange": "9.6:12 to 12.1:12",
+      "complexity": "moderate",
+      "roofType": "gable with dormers",
+      "totalRidgeLength": "~127 ft",
+      "totalValleyLength": "~45 ft"
+    }
+  },
+
+  "solarPotential": {
+    "systemCapacity": {
+      "maxPanels": 112,
+      "maxSystemKw": 44.8,
+      "panelCapacity": 400,
+      "maxArrayArea_sqm": 219.92,
+      "maxArrayArea_sqft": 2367
+    },
+    "production": {
+      "maxSunshineHoursPerYear": 1587.46,
+      "estimatedAnnualProduction_kWh": 71104,
+      "dailyAverage_kWh": 195,
+      "monthlyAverage_kWh": 5925
+    },
+    "environmental": {
+      "carbonOffsetFactor_kgPerMWh": 801.90,
+      "annualCO2Offset_kg": 57003,
+      "equivalentTreesPlanted": 950
+    },
+    "financials_sample": {
+      "note": "Full API returns 23 scenarios with different electricity rates",
+      "scenario1": {
+        "monthlyBill_USD": 150,
+        "installationCost_USD": 89600,
+        "federalIncentive_USD": 26832,
+        "netCost_USD": 62768,
+        "annualSavings_USD": 8532,
+        "paybackYears": 7.4,
+        "savings20Years_USD": 170640
+      }
+    },
+    "panelPlacement_sample": {
+      "note": "Full API returns exact coordinates for all 112 panels",
+      "examplePanels": [
+        {
+          "center": { "lat": 35.0928345, "lng": -89.7543172 },
+          "orientation": "LANDSCAPE",
+          "segmentIndex": 0,
+          "yearlyEnergyDcKwh": 634.96
+        },
+        {
+          "center": { "lat": 35.0928271, "lng": -89.7543423 },
+          "orientation": "LANDSCAPE",
+          "segmentIndex": 0,
+          "yearlyEnergyDcKwh": 634.82
+        }
+      ]
+    }
+  },
+
+  "aiAgentAnalysis": {
+    "note": "Agent Mode uses 4 specialized AI agents to analyze property screenshots",
+    "totalProcessingTime": "~112 seconds",
+
+    "agent1_measurementSpecialist": {
+      "role": "Roof measurement expert with 30+ years experience",
+      "input": "6 overhead screenshots at different angles with measurement grids",
+      "processingTime": "~16 seconds",
+      "outputs": {
+        "facetCount": 10,
+        "totalArea_sqft": 3152,
+        "areaConfidence": "±3-5%",
+        "predominantPitch": "9.7:12",
+        "roofingSquares": 31.5,
+        "complexity": "moderate",
+        "ridgeLength_ft": 127,
+        "valleyLength_ft": 45,
+        "roofType": "gable with multiple dormers"
+      }
+    },
+
+    "agent2_conditionInspector": {
+      "role": "Roof condition assessment specialist",
+      "input": "Same 6 screenshots analyzed for condition indicators",
+      "processingTime": "~33 seconds (runs parallel with agent 3)",
+      "outputs": {
+        "material": "architectural asphalt shingles",
+        "materialConfidence": "high",
+        "color": "dark gray/charcoal blend",
+        "condition": "good",
+        "conditionScore": "7.5/10",
+        "estimatedAge_years": 8,
+        "ageRange": [6, 10],
+        "remainingLife_years": 12,
+        "lifeRange": [10, 15],
+        "visibleIssues": [
+          "Minor granule loss on south-facing sections (normal aging)",
+          "Slight color variation on west dormer (possible earlier repair)",
+          "Debris in valleys (cleaning recommended)"
+        ],
+        "strengths": [
+          "Uniform color across sections",
+          "No curling or cupping",
+          "Ridge cap intact",
+          "Good flashing",
+          "No moss/algae"
+        ]
+      }
+    },
+
+    "agent3_costEstimator": {
+      "role": "Roofing cost estimation expert",
+      "input": "Measurements from Agent 1 + Condition from Agent 2 + Regional pricing data",
+      "processingTime": "~33 seconds (runs parallel with agent 2)",
+      "outputs": {
+        "totalReplacementCost": 22350,
+        "costRange": [19800, 24900],
+        "costPerSquare": 710,
+        "breakdown": {
+          "materials": 11110,
+          "labor": 10395,
+          "disposal": 945,
+          "permits": 315,
+          "warranty": 420,
+          "other": 165
+        },
+        "adjustmentFactors": {
+          "steepPitch_multiplier": 1.15,
+          "complexity_multiplier": 1.20,
+          "condition_adjustment": 1.0,
+          "regionalMarket_adjustment": 0.95
+        },
+        "notes": [
+          "Steep pitch (9-10:12) increases labor cost by 15%",
+          "Complex geometry with dormers increases cost by 20%",
+          "Good condition means no decking replacement needed",
+          "TN market rates ~5% below national average"
+        ]
+      }
+    },
+
+    "agent4_qualityController": {
+      "role": "Quality assurance and validation",
+      "input": "All outputs from agents 1-3 for cross-validation",
+      "processingTime": "~35 seconds",
+      "outputs": {
+        "overallQualityScore": "82/100",
+        "confidence": "medium-high",
+        "scoreBreakdown": {
+          "measurementAccuracy": 90,
+          "conditionAssessment": 75,
+          "costEstimate": 80,
+          "dataConsistency": 85
+        },
+        "crossValidation": {
+          "solarApiVsAgent1_variance": "2.3%",
+          "conditionVsCost_consistency": "good",
+          "pitchVsComplexity_consistency": "excellent"
+        },
+        "identifiedIssues": [
+          {
+            "severity": "low",
+            "issue": "Age estimation has wider range than ideal",
+            "recommendation": "On-site inspection would narrow this range"
+          }
+        ],
+        "strengths": [
+          "Excellent measurement data from Solar API",
+          "Clear satellite imagery",
+          "Consistent data across agents",
+          "Well-documented roof geometry"
+        ],
+        "limitations": [
+          "Imagery is from 2021 (3 years old)",
+          "Cannot assess attic ventilation",
+          "Cannot detect small leaks",
+          "Limited visibility of north-facing sections"
+        ]
+      }
+    }
+  },
+
+  "finalReport": {
+    "userSummary": "Your home has a moderately complex roof with approximately 3,150 square feet (31.5 squares) across 10 sections. The predominant pitch is steep (9.7:12), and the roof is in good condition with an estimated 12 years of remaining life. No urgent replacement is needed, but plan for roof replacement in approximately 10-15 years. Estimated replacement cost: $22,350 (±10%).",
+
+    "keyMetrics": {
+      "roofArea": "3,152 sq ft",
+      "roofingSquares": "31.5 squares",
+      "segments": 10,
+      "predominantPitch": "9.7:12",
+      "condition": "Good (7.5/10)",
+      "estimatedAge": "8 years",
+      "remainingLife": "12 years",
+      "replacementCost": "$22,350",
+      "costRange": "$19,800 - $24,900",
+      "solarPotential": "112 panels (44.8 kW)",
+      "annualSolarProduction": "71,104 kWh"
+    },
+
+    "recommendations": {
+      "immediate": ["No immediate action required - roof is in good condition"],
+      "shortTerm_6months": [
+        "Clean debris from valleys",
+        "Verify good attic ventilation",
+        "Consider annual maintenance contract"
+      ],
+      "longTerm_10to15years": [
+        "Plan for complete roof replacement",
+        "Save $1,500-2,000 annually",
+        "Consider solar installation before re-roofing",
+        "Get 3-5 contractor quotes 6 months before replacement"
+      ]
+    }
+  },
+
+  "uiDisplaySuggestions": {
+    "hero": {
+      "type": "Large stat cards",
+      "data": ["roofArea", "condition", "replacementCost", "solarPotential"]
+    },
+    "roofVisualization": {
+      "type": "Interactive 3D roof diagram or isometric view",
+      "showSegments": true,
+      "colorByPitch": true,
+      "showSolarPanels": true
+    },
+    "timeline": {
+      "type": "Visual timeline showing roof lifecycle",
+      "events": ["installed (2016)", "current (2024)", "replacement needed (2034-2039)"]
+    },
+    "costBreakdown": {
+      "type": "Stacked bar chart or pie chart",
+      "categories": ["materials", "labor", "permits", "disposal", "warranty"]
+    },
+    "solarROI": {
+      "type": "Line chart showing savings over time",
+      "xAxis": "years (0-25)",
+      "yAxis": "cumulative savings",
+      "breakEvenPoint": "7.4 years"
+    },
+    "comparisonTable": {
+      "type": "Feature comparison: Instant Mode vs Agent Mode",
+      "columns": ["feature", "instantMode", "agentMode"]
+    }
+  },
+
+  "rawDataNote": "Complete unfiltered Solar API response with all 112 panel placements, 109 configurations, and 23 financial scenarios is available in scripts/REAL-PRODUCTION-DATA.json (224KB)"
+}

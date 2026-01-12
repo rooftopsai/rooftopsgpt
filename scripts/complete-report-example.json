@@ -1,0 +1,432 @@
+{
+  "metadata": {
+    "address": "9222 Wheatland Drive Germantown, TN 38139",
+    "timestamp": "2026-01-12T02:11:39.308Z",
+    "reportMode": "agent",
+    "processingTime": "112500ms",
+    "dataSourcesUsed": [
+      "Google Solar API (satellite imagery)",
+      "AI Agent Analysis (4 specialized agents)",
+      "LLM Report Generation (Claude Sonnet 4)"
+    ]
+  },
+
+  "addressData": {
+    "inputAddress": "9222 Wheatland Drive Germantown, TN 38139",
+    "formattedAddress": "9222 Wheatland Drive, Germantown, TN 38139, USA",
+    "coordinates": {
+      "lat": 35.092831700000005,
+      "lng": -89.754305
+    },
+    "postalCode": "38139",
+    "administrativeArea": "TN",
+    "regionCode": "US"
+  },
+
+  "solarApiData": {
+    "imageryMetadata": {
+      "captureDate": "2021-09-27",
+      "imageryQuality": "HIGH",
+      "dataSource": "Google Solar API"
+    },
+    "roofDimensions": {
+      "totalRoofArea_sqm": 292.8719,
+      "totalRoofArea_sqft": 3152,
+      "groundFootprint_sqm": 220.6,
+      "groundFootprint_sqft": 2375,
+      "roofingSquares": 31.5
+    },
+    "roofSegments": [
+      {
+        "segmentId": 1,
+        "pitchDegrees": 44.49,
+        "pitchRatio": "9.75:12",
+        "azimuthDegrees": 187.18,
+        "compassDirection": "S",
+        "area_sqm": 98.08,
+        "area_sqft": 1056,
+        "groundArea_sqm": 69.96,
+        "maxSunshineHours": 1587.44,
+        "center": { "lat": 35.0928184, "lng": -89.7543341 }
+      },
+      {
+        "segmentId": 2,
+        "pitchDegrees": 43.81,
+        "pitchRatio": "9.6:12",
+        "azimuthDegrees": 8.07,
+        "compassDirection": "N",
+        "area_sqm": 95.79,
+        "area_sqft": 1031,
+        "groundArea_sqm": 67.5,
+        "maxSunshineHours": 1124.85,
+        "center": { "lat": 35.0928413, "lng": -89.7543068 }
+      },
+      {
+        "segmentId": 3,
+        "pitchDegrees": 46.25,
+        "pitchRatio": "10.25:12",
+        "azimuthDegrees": 278.89,
+        "compassDirection": "W",
+        "area_sqm": 31.47,
+        "area_sqft": 339,
+        "groundArea_sqm": 21.75,
+        "maxSunshineHours": 1402.93
+      },
+      {
+        "segmentId": 4,
+        "pitchDegrees": 46.74,
+        "pitchRatio": "10.45:12",
+        "azimuthDegrees": 97.77,
+        "compassDirection": "E",
+        "area_sqm": 30.87,
+        "area_sqft": 332,
+        "groundArea_sqm": 21.07,
+        "maxSunshineHours": 1424.08
+      },
+      {
+        "segmentId": 5,
+        "pitchDegrees": 50.71,
+        "pitchRatio": "12.1:12",
+        "azimuthDegrees": 189.21,
+        "compassDirection": "S",
+        "area_sqm": 10.92,
+        "area_sqft": 118,
+        "groundArea_sqm": 6.92,
+        "maxSunshineHours": 1561.79
+      },
+      {
+        "segmentId": 6,
+        "pitchDegrees": 51.75,
+        "pitchRatio": "12.5:12",
+        "azimuthDegrees": 9.389814,
+        "compassDirection": "N",
+        "area_sqm": 11.06,
+        "area_sqft": 119,
+        "groundArea_sqm": 6.81,
+        "maxSunshineHours": 1091.12
+      },
+      {
+        "segmentId": 7,
+        "pitchDegrees": 25.46,
+        "pitchRatio": "4.75:12",
+        "azimuthDegrees": 281.28,
+        "compassDirection": "W",
+        "area_sqm": 5.23,
+        "area_sqft": 56,
+        "groundArea_sqm": 4.73,
+        "maxSunshineHours": 1413.88
+      },
+      {
+        "segmentId": 8,
+        "pitchDegrees": 18.91,
+        "pitchRatio": "3.4:12",
+        "azimuthDegrees": 98.10,
+        "compassDirection": "E",
+        "area_sqm": 5.14,
+        "area_sqft": 55,
+        "groundArea_sqm": 4.86,
+        "maxSunshineHours": 1431.04
+      },
+      {
+        "segmentId": 9,
+        "pitchDegrees": 7.23,
+        "pitchRatio": "1.5:12",
+        "azimuthDegrees": 280.25,
+        "compassDirection": "W",
+        "area_sqm": 2.73,
+        "area_sqft": 29,
+        "groundArea_sqm": 2.70,
+        "maxSunshineHours": 1396.15
+      },
+      {
+        "segmentId": 10,
+        "pitchDegrees": 10.78,
+        "pitchRatio": "2.3:12",
+        "azimuthDegrees": 97.76,
+        "compassDirection": "E",
+        "area_sqm": 1.54,
+        "area_sqft": 17,
+        "groundArea_sqm": 1.51,
+        "maxSunshineHours": 1427.73
+      }
+    ],
+    "solarPotential": {
+      "maxArrayPanelsCount": 112,
+      "maxArrayArea_sqm": 219.92,
+      "maxArrayArea_sqft": 2367,
+      "panelCapacity_watts": 400,
+      "maxSystemCapacity_kw": 44.8,
+      "maxSunshineHoursPerYear": 1587.46,
+      "estimatedAnnualProduction_kWh": 71104,
+      "carbonOffsetFactor_kgPerMWh": 801.90
+    },
+    "financialAnalysis": {
+      "estimatedAnnualSavings": 8532,
+      "estimatedInstallationCost": 89600,
+      "incentivesAvailable": {
+        "federalTaxCredit": 26832,
+        "netInstallationCost": 62768
+      },
+      "paybackPeriod_years": 7.4,
+      "25yearSavings": 213300
+    }
+  },
+
+  "aiAgentAnalysis": {
+    "agent1_measurementSpecialist": {
+      "agentName": "Measurement Specialist",
+      "modelUsed": "Claude Sonnet 4",
+      "processingTime": "16352ms",
+      "imagesAnalyzed": 6,
+      "analysis": {
+        "facetCount": 10,
+        "totalRoofArea_sqft": 3152,
+        "roofAreaRange": [2995, 3309],
+        "roofingSquares": 31.5,
+        "predominantPitch": "9.7:12 (steep)",
+        "pitchRange": "1.5:12 to 12.5:12",
+        "complexity": "moderate",
+        "ridgeLength_ft": 127,
+        "valleyLength_ft": 45,
+        "measurements": {
+          "northFacingArea": 1150,
+          "southFacingArea": 1174,
+          "eastFacingArea": 389,
+          "westFacingArea": 395,
+          "perimeterLength_ft": 268
+        },
+        "roofType": "gable with multiple dormers",
+        "observations": [
+          "Primary roof sections are steep (9-10:12 pitch) with good symmetry",
+          "Multiple smaller dormer sections with varying pitches (1.5:12 to 12.5:12)",
+          "Complex geometry with 10 distinct roof planes",
+          "Well-defined ridge lines and valleys",
+          "No visible flat or very low-slope sections on main roof"
+        ],
+        "confidence": {
+          "overall": "high",
+          "areaAccuracy": "±3-5%",
+          "pitchAccuracy": "±1 degree",
+          "countAccuracy": "exact"
+        }
+      }
+    },
+
+    "agent2_conditionInspector": {
+      "agentName": "Condition Inspector",
+      "modelUsed": "Claude Sonnet 4",
+      "processingTime": "33236ms",
+      "imagesAnalyzed": 6,
+      "analysis": {
+        "material": "asphalt_shingles",
+        "materialConfidence": "high",
+        "materialType": "architectural (dimensional) shingles",
+        "colorPattern": "dark gray/charcoal blend",
+        "condition": "good",
+        "conditionScore": 7.5,
+        "estimatedAge_years": 8,
+        "estimatedAgeRange": [6, 10],
+        "remainingLife_years": 12,
+        "remainingLifeRange": [10, 15],
+        "totalExpectedLifespan": 25,
+        "visibleConditions": {
+          "positiveObservations": [
+            "Uniform color across all roof sections",
+            "No visible curling or cupping of shingles",
+            "Ridge cap appears intact and well-maintained",
+            "Flashing around chimneys and penetrations appears good",
+            "No visible moss or algae growth",
+            "Gutters appear clear and functional"
+          ],
+          "concernsIdentified": [
+            "Some minor granule loss visible on south-facing sections (normal aging)",
+            "One area on west dormer shows slight color variation (possible earlier repair)",
+            "Small amount of debris accumulated in valleys"
+          ],
+          "recommendedActions": [
+            "Valley cleaning recommended within 6 months",
+            "Monitor south-facing sections for accelerated granule loss",
+            "Plan for replacement in 10-15 years",
+            "Annual inspections recommended",
+            "Check attic ventilation to extend shingle life"
+          ]
+        },
+        "confidence": {
+          "materialIdentification": "high",
+          "conditionAssessment": "medium-high",
+          "ageEstimation": "medium",
+          "note": "Satellite imagery provides good overview but on-site inspection recommended for detailed condition assessment"
+        }
+      }
+    },
+
+    "agent3_costEstimator": {
+      "agentName": "Cost Estimator",
+      "modelUsed": "Claude Sonnet 4",
+      "processingTime": "33236ms",
+      "dataInputs": [
+        "Roof measurements from Agent 1",
+        "Condition data from Agent 2",
+        "Regional pricing data (TN market)",
+        "Material specifications"
+      ],
+      "initialEstimate": {
+        "totalCost": 19500,
+        "costPerSquare": 619,
+        "materialCost": 7875,
+        "laborCost": 9450,
+        "disposalAndPermits": 2175
+      },
+      "refinedEstimate": {
+        "totalCost": 22350,
+        "costRange": [19800, 24900],
+        "costPerSquare": 710,
+        "breakdown": {
+          "materials": {
+            "architecturalShingles": 8050,
+            "underlayment": 945,
+            "ridgeCap": 630,
+            "valleyFlashing": 540,
+            "dripEdge": 315,
+            "ventilation": 420,
+            "fasteners": 210
+          },
+          "labor": {
+            "removal": 2835,
+            "installation": 6615,
+            "complexityPremium": 945,
+            "note": "20% complexity premium for multiple dormers and valleys"
+          },
+          "other": {
+            "disposal": 945,
+            "permits": 315,
+            "inspections": 210,
+            "warranty": 420
+          }
+        },
+        "adjustmentFactors": {
+          "steepnessMultiplier": 1.15,
+          "complexityMultiplier": 1.20,
+          "roofCondition": 1.0,
+          "regionalMarket": 0.95,
+          "note": "TN market rates approximately 5% below national average"
+        },
+        "estimateConfidence": "medium-high",
+        "validityPeriod": "90 days",
+        "notes": [
+          "Estimate assumes architectural shingles (30-year warranty)",
+          "Steep pitch (9-10:12) increases labor cost by 15%",
+          "Complex geometry with dormers increases cost by 20%",
+          "Good condition means no decking replacement needed",
+          "Actual costs may vary ±10-15% based on contractor quotes",
+          "Consider getting 3-5 quotes from licensed contractors"
+        ]
+      }
+    },
+
+    "agent4_qualityController": {
+      "agentName": "Quality Controller",
+      "modelUsed": "Claude Sonnet 4",
+      "processingTime": "35334ms",
+      "validation": {
+        "overallConfidence": "medium-high",
+        "qualityScore": 82,
+        "scoreBreakdown": {
+          "measurementAccuracy": 90,
+          "conditionAssessment": 75,
+          "costEstimate": 80,
+          "dataConsistency": 85
+        },
+        "crossValidation": {
+          "solarApiVsAgent1": {
+            "roofAreaMatch": "excellent",
+            "variance": "2.3%",
+            "note": "Agent measurements within expected tolerance"
+          },
+          "conditionVsCost": {
+            "consistency": "good",
+            "note": "Cost estimate appropriately reflects good condition (no decking replacement)"
+          },
+          "pitchVsComplexity": {
+            "consistency": "excellent",
+            "note": "Steep pitch and dormer count justify complexity premium"
+          }
+        },
+        "identifiedIssues": [
+          {
+            "severity": "low",
+            "issue": "Age estimation has wider range than ideal",
+            "impact": "Remaining life estimate has ±5 year variance",
+            "recommendation": "On-site inspection would narrow this range"
+          },
+          {
+            "severity": "low",
+            "issue": "Limited detail on flashing condition",
+            "impact": "May need flashing replacement not included in base cost",
+            "recommendation": "Budget additional $500-1000 for potential flashing work"
+          }
+        ],
+        "strengths": [
+          "Excellent measurement data from Solar API",
+          "Clear satellite imagery with good roof visibility",
+          "Consistent data across multiple agents",
+          "Well-documented roof geometry and pitch"
+        ],
+        "limitations": [
+          "Satellite imagery is from 2021 (3 years old)",
+          "Cannot assess attic ventilation or decking condition",
+          "Limited visibility of north-facing sections in some angles",
+          "Cannot detect small leaks or interior damage"
+        ],
+        "recommendations": [
+          "Schedule on-site inspection with licensed roofer",
+          "Verify measurements with actual roof access",
+          "Check attic for proper ventilation and insulation",
+          "Inspect flashing and penetrations up close",
+          "Get 3-5 contractor quotes for final pricing"
+        ],
+        "overallAssessment": "This is a reliable preliminary assessment suitable for planning and budgeting. The property has a moderately complex roof in good condition, not requiring immediate replacement. Solar API measurements are accurate, condition assessment is reasonable based on visible indicators, and cost estimate is within expected range for the TN market. Recommend professional on-site inspection before making final decisions."
+      }
+    }
+  },
+
+  "finalReport": {
+    "userSummary": "Your home has a moderately complex roof with approximately 3,150 square feet (31.5 squares) across 10 sections. The predominant pitch is steep (9.7:12), and the roof is in good condition with an estimated 12 years of remaining life. No urgent replacement is needed, but plan for roof replacement in approximately 10-15 years. Estimated replacement cost: $22,350 (±10%).",
+
+    "executiveSummary": "EXECUTIVE SUMMARY\n\nProperty: 9222 Wheatland Drive, Germantown, TN 38139\nAnalysis Date: January 12, 2026\nData Sources: Google Solar API (2021 imagery) + AI Agent Analysis\n\n=== ROOF MEASUREMENTS ===\n• Total Roof Area: 3,152 sq ft (31.5 roofing squares)\n• Ground Footprint: 2,375 sq ft\n• Roof Segments: 10 distinct facets\n• Predominant Pitch: 9.7:12 (steep)\n• Complexity: Moderate (gable with multiple dormers)\n• Ridge Length: ~127 ft\n• Valley Length: ~45 ft\n\n=== CONDITION ASSESSMENT ===\n• Material: Architectural asphalt shingles (dimensional)\n• Color: Dark gray/charcoal blend\n• Current Condition: Good (7.5/10)\n• Estimated Age: 8 years (range: 6-10 years)\n• Remaining Life: 12 years (range: 10-15 years)\n• Expected Lifespan: 25 years total\n\n=== KEY OBSERVATIONS ===\nPositives:\n✓ Uniform color across all sections\n✓ No visible curling or cupping\n✓ Ridge cap intact and well-maintained\n✓ Good flashing around penetrations\n✓ No moss or algae growth\n\nMinor Concerns:\n• Some granule loss on south-facing sections (normal aging)\n• Slight color variation on west dormer (possible repair)\n• Debris in valleys (cleaning recommended)\n\n=== COST ESTIMATE ===\n• Total Replacement Cost: $22,350\n• Cost Range: $19,800 - $24,900\n• Cost per Square: $710\n• Breakdown:\n  - Materials: $11,110\n  - Labor: $10,395 (includes complexity premium)\n  - Other: $1,890 (disposal, permits, warranty)\n\n=== SOLAR POTENTIAL ===\n• Max Panel Capacity: 112 panels (44.8 kW system)\n• Max Array Area: 2,367 sq ft\n• Annual Sunshine Hours: 1,587 hours\n• Estimated Annual Production: 71,104 kWh\n• Estimated Annual Savings: $8,532\n• Installation Cost: $89,600\n• Federal Tax Credit: $26,832\n• Net Cost: $62,768\n• Payback Period: 7.4 years\n• 25-Year Savings: $213,300\n\n=== RECOMMENDATIONS ===\n1. Valley cleaning within 6 months\n2. Annual roof inspections\n3. Check attic ventilation\n4. Plan for replacement in 10-15 years\n5. Get 3-5 contractor quotes when ready\n6. Consider solar installation (excellent potential)\n7. Schedule on-site inspection for detailed assessment\n\n=== CONFIDENCE & LIMITATIONS ===\nOverall Quality Score: 82/100\n• Measurements: High confidence (±3-5%)\n• Condition: Medium-high confidence\n• Cost: Medium-high confidence (±10-15%)\n\nLimitations:\n• Imagery from 2021 (3 years old)\n• Cannot assess attic ventilation or decking\n• Cannot detect small leaks or interior damage\n• On-site inspection recommended for final decisions\n\nThis analysis provides a reliable preliminary assessment for planning and budgeting purposes.",
+
+    "actionPlan": {
+      "immediate": [
+        "No immediate action required - roof is in good condition"
+      ],
+      "shortTerm_6months": [
+        "Clean debris from valleys",
+        "Verify good attic ventilation",
+        "Consider annual maintenance contract"
+      ],
+      "midTerm_1to3years": [
+        "Continue annual inspections",
+        "Monitor granule loss on south-facing sections",
+        "Budget for potential minor repairs"
+      ],
+      "longTerm_10to15years": [
+        "Plan for complete roof replacement",
+        "Save $1,500-2,000 annually for replacement",
+        "Consider solar panel installation before re-roofing",
+        "Research roofing materials and contractors",
+        "Obtain 3-5 detailed quotes 6 months before replacement"
+      ]
+    }
+  },
+
+  "rawDataReferences": {
+    "note": "Complete raw data is too large to include inline. Key data points have been extracted above.",
+    "availableRawData": [
+      "Full Solar API response (223KB JSON)",
+      "All roof segment details with sun exposure data",
+      "Complete solar panel layout options",
+      "Detailed financial projections for solar",
+      "Hour-by-hour sunshine data for each roof segment"
+    ]
+  }
+}

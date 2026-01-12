@@ -85,6 +85,8 @@ interface MapViewProps {
   reportMode?: "instant" | "agent"
   onReportModeChange?: (mode: "instant" | "agent") => void
   canUseAgentMode?: boolean
+  // Hide toggle when report is displayed
+  hasActiveReport?: boolean
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -118,7 +120,8 @@ const MapView: React.FC<MapViewProps> = ({
   showSidebar = false,
   reportMode = "instant",
   onReportModeChange,
-  canUseAgentMode = false
+  canUseAgentMode = false,
+  hasActiveReport = false
 }) => {
   const [isClient, setIsClient] = useState(false)
   const [mapInitialized, setMapInitialized] = useState(false)
@@ -1058,36 +1061,10 @@ const MapView: React.FC<MapViewProps> = ({
             </div>
           </div>
 
-          {/* Pizza Tracker Style Progress Steps */}
+          {/* Agent Progress Steps - Evenly Spaced */}
           {currentStep > 0 && (
-            <div className="w-full">
-              <div className="relative flex items-start justify-between px-8">
-                {/* Connecting Lines (behind circles) */}
-                <div className="absolute inset-x-0 top-6 flex items-center justify-between px-8">
-                  {analysisSteps.map((step, index) => {
-                    if (index === analysisSteps.length - 1) return null
-                    const isComplete = step.number < currentStep
-
-                    return (
-                      <div
-                        key={`line-${step.number}`}
-                        className="flex flex-1 items-center"
-                      >
-                        <div className="mx-auto w-full px-6">
-                          <div className="h-0.5 w-full overflow-hidden rounded-full bg-gray-800">
-                            <div
-                              className={`h-full transition-all duration-500 ${
-                                isComplete ? "bg-emerald-500" : "bg-gray-800"
-                              }`}
-                              style={{ width: isComplete ? "100%" : "0%" }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
+            <div className="w-full px-4 md:px-8">
+              <div className="flex items-start justify-evenly gap-4">
                 {/* Step Circles */}
                 {analysisSteps.map(step => {
                   const isComplete = step.number < currentStep
@@ -1097,7 +1074,7 @@ const MapView: React.FC<MapViewProps> = ({
                   return (
                     <div
                       key={step.number}
-                      className="relative z-10 flex flex-1 flex-col items-center"
+                      className="flex flex-col items-center"
                     >
                       <div className="relative">
                         {/* Animated spinner ring for current step */}
@@ -1106,7 +1083,7 @@ const MapView: React.FC<MapViewProps> = ({
                         )}
 
                         <div
-                          className={`flex size-14 items-center justify-center rounded-full border-2 text-lg font-semibold transition-all duration-300${
+                          className={`flex size-14 items-center justify-center rounded-full border-2 text-lg font-semibold transition-all duration-300 ${
                             isComplete
                               ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                               : isCurrent
@@ -1118,7 +1095,7 @@ const MapView: React.FC<MapViewProps> = ({
                         </div>
                       </div>
                       <div
-                        className={`mt-3 text-center text-sm font-medium transition-colors ${
+                        className={`mt-3 text-center text-xs font-medium transition-colors md:text-sm ${
                           isCurrent
                             ? "text-blue-400"
                             : isPending
@@ -1387,8 +1364,8 @@ const MapView: React.FC<MapViewProps> = ({
 
         {/* Map Container */}
         <div className="relative flex-1">
-          {/* Report Mode Toggle - Centered at Top */}
-          {onReportModeChange && (
+          {/* Report Mode Toggle - Centered at Top - Only show when no report is displayed */}
+          {onReportModeChange && !hasActiveReport && (
             <div className="absolute left-1/2 top-4 z-30 -translate-x-1/2">
               <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                 <div className="flex items-center gap-1 p-1">

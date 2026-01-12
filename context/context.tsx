@@ -177,6 +177,10 @@ interface ChatbotUIContextValue {
   setIsDocMode: Dispatch<SetStateAction<boolean>>
   documentContent: string
   setDocumentContent: Dispatch<SetStateAction<string>>
+
+  // EXPLORE REPORT STORE
+  hasActiveExploreReport: boolean
+  setHasActiveExploreReport: Dispatch<SetStateAction<boolean>>
 }
 
 interface ChatbotUIProviderProps {
@@ -278,6 +282,10 @@ export function ChatbotUIProvider({ children }: ChatbotUIProviderProps) {
   // DOCUMENT MODE STORE - explicitly defined and initialized
   const [isDocMode, setIsDocMode] = useState<boolean>(false)
   const [documentContent, setDocumentContent] = useState<string>("")
+
+  // EXPLORE REPORT STORE
+  const [hasActiveExploreReport, setHasActiveExploreReport] =
+    useState<boolean>(false)
 
   // Debug logs
   // console.log(`Document mode state in provider ${instanceIdRef.current}:`, {
@@ -422,7 +430,11 @@ export function ChatbotUIProvider({ children }: ChatbotUIProviderProps) {
       isDocMode,
       setIsDocMode,
       documentContent,
-      setDocumentContent
+      setDocumentContent,
+
+      // EXPLORE REPORT STORE
+      hasActiveExploreReport,
+      setHasActiveExploreReport
     }),
     [
       // Dependencies for useMemo - list all state variables
@@ -479,7 +491,8 @@ export function ChatbotUIProvider({ children }: ChatbotUIProviderProps) {
       toolInUse,
       // IMPORTANT: Include document mode state
       isDocMode,
-      documentContent
+      documentContent,
+      hasActiveExploreReport
     ]
   )
 
@@ -507,6 +520,12 @@ export function useChatbotUI() {
       },
       setDocumentContent: (...args: any) => {
         console.error("setDocumentContent called outside provider", args)
+      },
+
+      // EXPLORE REPORT STORE
+      hasActiveExploreReport: false,
+      setHasActiveExploreReport: (...args: any) => {
+        console.error("setHasActiveExploreReport called outside provider", args)
       },
 
       // Basic fallbacks for commonly used props

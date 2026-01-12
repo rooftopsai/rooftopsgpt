@@ -36,6 +36,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   const { handleSelectDeviceFile } = useSelectFileHandler()
   const { isDocMode } = useDocumentStore()
+  const { hasActiveExploreReport } = useChatbotUI()
 
   const [contentType, setContentType] = useState<ContentType>(
     tabValue as ContentType
@@ -83,6 +84,15 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   // Calculate main content width when document panel is open
   const getMainContentWidth = () => {
+    // When explore report is active, use full width (sidebar is hidden)
+    if (hasActiveExploreReport) {
+      return {
+        width: "100%",
+        marginRight: "0",
+        display: "flex"
+      }
+    }
+
     // On mobile with document open, hide content
     if (isDocMode && isMobile) {
       return {
@@ -122,8 +132,8 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     <div className="relative flex size-full overflow-hidden">
       <CommandK />
 
-      {/* Sidebar - hidden on mobile when collapsed */}
-      {(!isMobile || showSidebar) && (
+      {/* Sidebar - hidden on mobile when collapsed or when explore report is active */}
+      {(!isMobile || showSidebar) && !hasActiveExploreReport && (
         <div
           className={cn(
             "z-20 shrink-0 transition-all duration-300",

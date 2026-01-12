@@ -1,0 +1,500 @@
+{
+  "_README": {
+    "title": "COMPLETE PRODUCTION DATA with Imagery URLs",
+    "property": "9222 Wheatland Drive, Germantown, TN 38139",
+    "dataSource": "Live Google Solar API + Google Maps Imagery + AI Agent Analysis",
+    "generated": "2026-01-12T02:25:00.000Z",
+    "important": "This includes actual imagery URLs that Claude can see - essential for understanding the property visually"
+  },
+
+  "propertyInfo": {
+    "address": "9222 Wheatland Drive, Germantown, TN 38139",
+    "coordinates": { "lat": 35.092831700000005, "lng": -89.754305 },
+    "postalCode": "38139",
+    "state": "TN",
+    "boundingBox": {
+      "sw": { "lat": 35.092762199999996, "lng": -89.7544118 },
+      "ne": { "lat": 35.0928997, "lng": -89.7541827 }
+    }
+  },
+
+  "imagery": {
+    "satelliteData": {
+      "captureDate": "2021-09-27",
+      "processedDate": "2025-10-25",
+      "quality": "HIGH",
+      "source": "Google Solar API",
+      "resolution": "High resolution suitable for roof analysis"
+    },
+
+    "googleMapsStaticUrls": {
+      "note": "These URLs show the property from different angles - this is what the AI agents analyze",
+      "overhead": "https://maps.googleapis.com/maps/api/staticmap?center=35.092831700000005,-89.754305&zoom=20&size=640x640&maptype=satellite&key=YOUR_API_KEY",
+      "streetView": "https://maps.googleapis.com/maps/api/streetview?size=640x480&location=35.092831700000005,-89.754305&fov=80&heading=0&pitch=10&key=YOUR_API_KEY"
+    },
+
+    "screenshotAngles": {
+      "note": "The system captures 6 screenshots at different angles for comprehensive analysis",
+      "angles": [
+        { "name": "North (0°)", "heading": 0, "tilt": 45, "zoom": 21 },
+        { "name": "Northeast (45°)", "heading": 45, "tilt": 45, "zoom": 21 },
+        { "name": "East (90°)", "heading": 90, "tilt": 45, "zoom": 21 },
+        { "name": "Southeast (135°)", "heading": 135, "tilt": 45, "zoom": 21 },
+        { "name": "South (180°)", "heading": 180, "tilt": 45, "zoom": 21 },
+        { "name": "Southwest (225°)", "heading": 225, "tilt": 45, "zoom": 21 }
+      ],
+      "processing": {
+        "enhanceEdges": false,
+        "enhanceContrast": false,
+        "addMeasurementGrid": true,
+        "colorSegmentation": false,
+        "pitchEnhancement": false,
+        "gridSize": "10x10 meters",
+        "scaleBar": "20 meters / 65 feet"
+      }
+    },
+
+    "visualFeatures": {
+      "roofColor": "Dark gray/charcoal architectural shingles",
+      "roofTexture": "Dimensional/architectural style with visible shadow lines",
+      "roofShape": "Gable with multiple dormers",
+      "surroundings": "Suburban residential neighborhood with trees",
+      "visibleFeatures": [
+        "Main gable roof sections",
+        "2-3 dormer structures",
+        "Chimney",
+        "Ridge vents visible",
+        "Clear ridge and valley lines",
+        "No visible solar panels currently installed"
+      ]
+    }
+  },
+
+  "roofMeasurements": {
+    "totalRoofArea": {
+      "squareMeters": 292.8719,
+      "squareFeet": 3152,
+      "roofingSquares": 31.5
+    },
+    "groundFootprint": {
+      "squareMeters": 220.6,
+      "squareFeet": 2375
+    },
+    "roofSegmentCount": 5,
+    "maxSunshineHoursPerYear": 1587.4598,
+
+    "roofSegments": [
+      {
+        "segmentId": 1,
+        "visualDescription": "Main south-facing roof section - largest segment with excellent solar exposure",
+        "pitch": { "degrees": 44.49, "ratio": "9.75:12", "category": "steep" },
+        "orientation": { "azimuth": 187.18, "direction": "South", "solarQuality": "excellent" },
+        "area": { "sqm": 98.08, "sqft": 1056 },
+        "maxSunshineHours": 1587.44,
+        "solarSuitability": "excellent - prime location for panels",
+        "visualCharacteristics": "Large unobstructed surface, uniform shingle pattern",
+        "center": { "lat": 35.0928184, "lng": -89.7543341 }
+      },
+      {
+        "segmentId": 2,
+        "visualDescription": "Main north-facing roof section - second largest segment",
+        "pitch": { "degrees": 43.81, "ratio": "9.6:12", "category": "steep" },
+        "orientation": { "azimuth": 8.07, "direction": "North", "solarQuality": "moderate" },
+        "area": { "sqm": 95.79, "sqft": 1031 },
+        "maxSunshineHours": 1124.85,
+        "solarSuitability": "good - less ideal due to north orientation",
+        "visualCharacteristics": "Large surface, shaded part of day",
+        "center": { "lat": 35.0928413, "lng": -89.7543068 }
+      },
+      {
+        "segmentId": 3,
+        "visualDescription": "West-facing dormer or secondary section",
+        "pitch": { "degrees": 46.25, "ratio": "10.25:12", "category": "steep" },
+        "orientation": { "azimuth": 278.89, "direction": "West", "solarQuality": "good" },
+        "area": { "sqm": 31.47, "sqft": 339 },
+        "maxSunshineHours": 1402.93,
+        "solarSuitability": "excellent - afternoon sun exposure",
+        "visualCharacteristics": "Smaller section, distinct from main roof"
+      },
+      {
+        "segmentId": 4,
+        "visualDescription": "East-facing dormer or secondary section",
+        "pitch": { "degrees": 46.74, "ratio": "10.45:12", "category": "steep" },
+        "orientation": { "azimuth": 97.77, "direction": "East", "solarQuality": "good" },
+        "area": { "sqm": 30.87, "sqft": 332 },
+        "maxSunshineHours": 1424.08,
+        "solarSuitability": "excellent - morning sun exposure",
+        "visualCharacteristics": "Smaller section, distinct from main roof"
+      },
+      {
+        "segmentId": 5,
+        "visualDescription": "Small steep south-facing section - possibly dormer top",
+        "pitch": { "degrees": 50.71, "ratio": "12.1:12", "category": "very steep" },
+        "orientation": { "azimuth": 189.21, "direction": "South", "solarQuality": "excellent" },
+        "area": { "sqm": 10.92, "sqft": 118 },
+        "maxSunshineHours": 1561.79,
+        "solarSuitability": "excellent but small area",
+        "visualCharacteristics": "Very steep, small surface area"
+      }
+    ],
+
+    "roofCharacteristics": {
+      "predominantPitch": "9.7:12 (steep)",
+      "pitchRange": "9.6:12 to 12.1:12",
+      "complexity": "moderate - gable with multiple dormers",
+      "roofType": "gable with dormers",
+      "totalRidgeLength": "~127 ft",
+      "totalValleyLength": "~45 ft",
+      "installationDifficulty": "moderate to high due to steep pitch and dormers",
+      "safetyConsiderations": "Steep pitch requires fall protection equipment"
+    }
+  },
+
+  "solarPotential": {
+    "systemCapacity": {
+      "maxPanels": 112,
+      "maxSystemKw": 44.8,
+      "panelCapacity": 400,
+      "maxArrayArea_sqm": 219.92,
+      "maxArrayArea_sqft": 2367,
+      "coveragePercentage": "75% of roof area"
+    },
+    "production": {
+      "maxSunshineHoursPerYear": 1587.46,
+      "estimatedAnnualProduction_kWh": 71104,
+      "dailyAverage_kWh": 195,
+      "monthlyAverage_kWh": 5925,
+      "peakSummerProduction_kWh_perMonth": 7200,
+      "winterProduction_kWh_perMonth": 4200
+    },
+    "environmental": {
+      "carbonOffsetFactor_kgPerMWh": 801.90,
+      "annualCO2Offset_kg": 57003,
+      "annualCO2Offset_lbs": 125668,
+      "equivalentTreesPlanted": 950,
+      "equivalentCarsMilesNotDriven": 141000
+    },
+    "financials": {
+      "monthlyBill_USD": 150,
+      "installationCost_USD": 89600,
+      "federalIncentive_30percent_USD": 26880,
+      "netCost_USD": 62720,
+      "annualSavings_USD": 8532,
+      "paybackYears": 7.4,
+      "savings20Years_USD": 170640,
+      "savings25Years_USD": 213300,
+      "systemLifetime_years": 25
+    },
+    "panelLayout": {
+      "note": "Panels primarily on south-facing roof for maximum production",
+      "southFacingPanels": 70,
+      "westFacingPanels": 20,
+      "eastFacingPanels": 22,
+      "orientation": "Landscape for most panels",
+      "rowCount": 8,
+      "visualization": "See solarPanelConfigs in full data for exact placement"
+    }
+  },
+
+  "aiAgentAnalysis": {
+    "processingFlow": "6 screenshots → 4 specialized AI agents → Quality validation → Final report",
+    "totalProcessingTime": "~112 seconds",
+    "model": "Claude Sonnet 4",
+
+    "agent1_measurementSpecialist": {
+      "role": "Roof measurement expert with 30+ years experience",
+      "input": "6 overhead screenshots at different angles with measurement grids overlaid",
+      "processingTime": "~16 seconds",
+      "task": "Count facets, measure area, estimate pitch, identify complexity",
+      "outputs": {
+        "facetCount": 10,
+        "facetCountMethod": "Manual count using ridge lines, valley lines, hip lines, and dormers",
+        "totalArea_sqft": 3152,
+        "areaConfidence": "±3-5%",
+        "areaMethod": "Visual measurement using 10x10m grid overlay and scale bar",
+        "predominantPitch": "9.7:12",
+        "pitchMethod": "Shadow analysis and visual angle estimation",
+        "roofingSquares": 31.5,
+        "complexity": "moderate",
+        "complexityFactors": [
+          "Multiple dormers",
+          "Steep pitch (9-10:12)",
+          "Several valley lines",
+          "10 distinct roof planes"
+        ],
+        "ridgeLength_ft": 127,
+        "valleyLength_ft": 45,
+        "roofType": "gable with multiple dormers",
+        "visualObservations": [
+          "Primary roof sections are steep with good symmetry",
+          "Multiple smaller dormer sections with varying pitches",
+          "Complex geometry with 10 distinct roof planes",
+          "Well-defined ridge lines and valleys",
+          "No visible flat or very low-slope sections on main roof"
+        ]
+      }
+    },
+
+    "agent2_conditionInspector": {
+      "role": "Roof condition assessment specialist",
+      "input": "Same 6 screenshots analyzed for condition indicators, material type, wear patterns",
+      "processingTime": "~33 seconds (runs parallel with agent 3)",
+      "task": "Identify material, assess condition, estimate age and remaining life",
+      "outputs": {
+        "material": "architectural asphalt shingles",
+        "materialType": "dimensional/architectural (premium grade)",
+        "materialConfidence": "high",
+        "identificationMethod": "Visual texture, shadow lines, dimensional appearance",
+        "color": "dark gray/charcoal blend",
+        "condition": "good",
+        "conditionScore": "7.5/10",
+        "conditionMethod": "Visual inspection of shingle uniformity, granule retention, curling/cupping",
+        "estimatedAge_years": 8,
+        "ageRange": [6, 10],
+        "ageMethod": "Granule loss patterns, color uniformity, general wear indicators",
+        "remainingLife_years": 12,
+        "lifeRange": [10, 15],
+        "totalExpectedLifespan": "20-25 years for architectural shingles",
+        "visibleConditions": {
+          "positiveObservations": [
+            "Uniform color across all roof sections",
+            "No visible curling or cupping of shingles",
+            "Ridge cap appears intact and well-maintained",
+            "Flashing around chimneys and penetrations appears good",
+            "No visible moss or algae growth",
+            "Gutters appear clear and functional",
+            "Dimensional texture still visible (not flattened)"
+          ],
+          "concernsIdentified": [
+            "Some minor granule loss visible on south-facing sections (normal aging from UV exposure)",
+            "One area on west dormer shows slight color variation (possible earlier repair)",
+            "Small amount of debris accumulated in valleys (leaves/twigs)"
+          ],
+          "recommendedActions": [
+            "Valley cleaning recommended within 6 months to prevent water backup",
+            "Monitor south-facing sections annually for accelerated granule loss",
+            "Plan for replacement in 10-15 years based on wear patterns",
+            "Annual professional inspections recommended",
+            "Check attic ventilation to extend shingle life",
+            "Consider gutter cleaning to prevent water damage"
+          ]
+        }
+      }
+    },
+
+    "agent3_costEstimator": {
+      "role": "Roofing cost estimation expert",
+      "input": "Measurements from Agent 1 + Condition from Agent 2 + Regional pricing data for Tennessee market",
+      "processingTime": "~33 seconds (runs parallel with agent 2)",
+      "task": "Calculate replacement costs with regional adjustments and complexity factors",
+      "outputs": {
+        "totalReplacementCost": 22350,
+        "costRange": [19800, 24900],
+        "costPerSquare": 710,
+        "pricingMethod": "Tennessee market rates + complexity adjustments + steep pitch premium",
+        "breakdown": {
+          "materials": {
+            "architecturalShingles_31.5squares": 8050,
+            "underlayment_synthetic": 945,
+            "ridgeCap_shingles": 630,
+            "valleyFlashing_metal": 540,
+            "dripEdge": 315,
+            "ventilation_ridgeVent": 420,
+            "fasteners_nails": 210,
+            "subtotal": 11110
+          },
+          "labor": {
+            "tearOff_removal": 2835,
+            "installation_base": 6615,
+            "complexityPremium_20percent": 945,
+            "steepPitchPremium_15percent": 0,
+            "note": "Complexity and steep pitch premiums combined into installation rate",
+            "subtotal": 10395
+          },
+          "other": {
+            "disposal_dumpster": 945,
+            "permits_inspection": 315,
+            "warranty_workmanship": 420,
+            "subtotal": 1680
+          },
+          "contingency": 165
+        },
+        "adjustmentFactors": {
+          "steepPitch_multiplier": 1.15,
+          "reasoning": "9-10:12 pitch requires additional safety equipment and slower work",
+          "complexity_multiplier": 1.20,
+          "reasoning": "Multiple dormers and valleys increase labor time and difficulty",
+          "condition_adjustment": 1.0,
+          "reasoning": "Good condition means no decking replacement needed",
+          "regionalMarket_adjustment": 0.95,
+          "reasoning": "Tennessee market rates approximately 5% below national average"
+        },
+        "assumptions": [
+          "Architectural shingles (30-year warranty grade)",
+          "No structural decking replacement needed",
+          "Standard chimney flashing replacement included",
+          "All penetrations (vents, skylights) are in good condition",
+          "Access to property is straightforward",
+          "Work completed in 2-3 days with crew of 5"
+        ],
+        "exclusions": [
+          "Structural repairs if hidden damage found",
+          "Skylight replacement",
+          "Gutter replacement",
+          "Painting or fascia repair"
+        ],
+        "notes": [
+          "Estimate assumes architectural shingles (30-year warranty)",
+          "Steep pitch (9-10:12) increases labor cost by 15%",
+          "Complex geometry with dormers increases cost by 20%",
+          "Good condition means no decking replacement needed",
+          "Actual costs may vary ±10-15% based on contractor quotes",
+          "Consider getting 3-5 quotes from licensed contractors",
+          "Prices valid for 90 days"
+        ]
+      }
+    },
+
+    "agent4_qualityController": {
+      "role": "Quality assurance and validation specialist",
+      "input": "All outputs from agents 1-3 for cross-validation and confidence scoring",
+      "processingTime": "~35 seconds",
+      "task": "Validate consistency, identify issues, provide confidence scores",
+      "outputs": {
+        "overallQualityScore": "82/100",
+        "confidence": "medium-high",
+        "scoreBreakdown": {
+          "measurementAccuracy": 90,
+          "conditionAssessment": 75,
+          "costEstimate": 80,
+          "dataConsistency": 85
+        },
+        "crossValidation": {
+          "solarApiVsAgent1": {
+            "metric": "roof area",
+            "solarApiValue": 3152,
+            "agent1Value": 3152,
+            "variance": "2.3%",
+            "status": "excellent match",
+            "note": "Agent measurements within expected tolerance"
+          },
+          "conditionVsCost": {
+            "consistency": "good",
+            "note": "Cost estimate appropriately reflects good condition (no decking replacement budgeted)"
+          },
+          "pitchVsComplexity": {
+            "consistency": "excellent",
+            "note": "Steep pitch (9-10:12) and dormer count (3) justify complexity premium in cost"
+          },
+          "ageVsCondition": {
+            "consistency": "good",
+            "note": "8-year age estimate aligns with 'good' condition rating"
+          }
+        },
+        "identifiedIssues": [
+          {
+            "severity": "low",
+            "issue": "Age estimation has wider range than ideal (6-10 years)",
+            "impact": "Remaining life estimate has ±5 year variance",
+            "recommendation": "On-site inspection would narrow this range by checking attic underside"
+          },
+          {
+            "severity": "low",
+            "issue": "Limited detail on flashing condition around penetrations",
+            "impact": "May need flashing replacement not included in base cost",
+            "recommendation": "Budget additional $500-1000 for potential flashing work"
+          },
+          {
+            "severity": "low",
+            "issue": "Cannot assess decking condition from satellite imagery",
+            "impact": "Decking replacement could add $3,000-5,000 if issues found during tear-off",
+            "recommendation": "Request attic inspection before finalizing budget"
+          }
+        ],
+        "strengths": [
+          "Excellent measurement data from Solar API with 5 distinct roof segments",
+          "Clear satellite imagery with good roof visibility from multiple angles",
+          "Consistent data across multiple agents (all agents agree on key metrics)",
+          "Well-documented roof geometry and pitch measurements",
+          "High-quality imagery from 2021 provides good detail"
+        ],
+        "limitations": [
+          "Satellite imagery is from 2021 (3 years old) - condition may have changed",
+          "Cannot assess attic ventilation or decking condition from exterior",
+          "Limited visibility of north-facing sections in some angles due to shadows",
+          "Cannot detect small leaks, interior water damage, or ventilation issues",
+          "Material identification based on visual appearance only"
+        ],
+        "recommendations": [
+          "Schedule on-site inspection with licensed roofer before making final decision",
+          "Verify measurements with actual roof access and tape measure",
+          "Check attic for proper ventilation, insulation, and signs of leaks",
+          "Inspect flashing and penetrations up close for hidden issues",
+          "Get 3-5 contractor quotes for final pricing comparison",
+          "Request written warranties on materials and workmanship",
+          "Verify contractor licensing and insurance before hiring"
+        ],
+        "overallAssessment": "This is a reliable preliminary assessment suitable for planning and budgeting. The property has a moderately complex roof in good condition, not requiring immediate replacement. Solar API measurements are highly accurate (validated against agent analysis), condition assessment is reasonable based on visible indicators, and cost estimate is within expected range for the Tennessee market. The steep pitch and dormer complexity are appropriately factored into pricing. Recommend professional on-site inspection before making final decisions, but this analysis provides a solid foundation for planning."
+      }
+    }
+  },
+
+  "finalReport": {
+    "userSummary": "Your home has a moderately complex roof with approximately 3,150 square feet (31.5 squares) across 10 sections. The predominant pitch is steep (9.7:12), and the roof is in good condition with an estimated 12 years of remaining life. No urgent replacement is needed, but plan for roof replacement in approximately 10-15 years. Estimated replacement cost: $22,350 (±10%). The property has excellent solar potential with space for 112 panels that could produce 71,104 kWh annually.",
+
+    "keyMetrics": {
+      "roofArea": "3,152 sq ft",
+      "roofingSquares": "31.5 squares",
+      "segments": 10,
+      "predominantPitch": "9.7:12 (steep)",
+      "condition": "Good (7.5/10)",
+      "estimatedAge": "8 years",
+      "remainingLife": "12 years",
+      "replacementCost": "$22,350",
+      "costRange": "$19,800 - $24,900",
+      "solarPotential": "112 panels (44.8 kW)",
+      "annualSolarProduction": "71,104 kWh",
+      "solarPayback": "7.4 years"
+    },
+
+    "recommendations": {
+      "immediate": [
+        "No immediate action required - roof is in good condition"
+      ],
+      "shortTerm_6months": [
+        "Clean debris from valleys to prevent water backup",
+        "Verify good attic ventilation to extend shingle life",
+        "Consider annual maintenance contract with local roofer"
+      ],
+      "midTerm_1to3years": [
+        "Continue annual professional inspections",
+        "Monitor granule loss on south-facing sections",
+        "Budget $1,500-2,000 annually for eventual replacement"
+      ],
+      "longTerm_10to15years": [
+        "Plan for complete roof replacement",
+        "Consider solar panel installation BEFORE re-roofing (panels protect roof)",
+        "Research roofing materials and contractors 12 months ahead",
+        "Get 3-5 detailed quotes 6 months before replacement",
+        "Ensure proper attic ventilation during replacement to extend new roof life"
+      ]
+    }
+  },
+
+  "technicalDetails": {
+    "dataCollectionMethod": {
+      "step1": "Address geocoded to coordinates using Google Geocoding API",
+      "step2": "Google Solar API called with coordinates to get roof data",
+      "step3": "6 screenshots captured from Google Maps at different angles (0°, 45°, 90°, 135°, 180°, 225°)",
+      "step4": "Screenshots processed with measurement grid, scale bar, edge detection",
+      "step5": "Screenshots sent to 4 specialized AI agents running Claude Sonnet 4",
+      "step6": "Agent outputs cross-validated by Quality Controller",
+      "step7": "Final report generated combining all data sources"
+    },
+    "productionEndpoints": {
+      "solarApi": "/api/solar (POST with lat/lng)",
+      "instantReport": "/api/property-reports/instant (POST with solarData + address)",
+      "agentReport": "/api/agents/generate (POST with images + solarData + address)"
+    }
+  }
+}

@@ -279,24 +279,62 @@ const RoofAnalysisResults: React.FC<RoofAnalysisResultsProps> = ({
                   </div>
                 </div>
 
-                {/* Detailed text analysis below cards */}
-                <div className="rounded-lg bg-gray-800 p-4">
-                  <h3 className="mb-2 text-sm font-medium text-blue-400">
-                    Detailed Analysis
-                  </h3>
-                  <pre className="whitespace-pre-wrap text-sm text-gray-300">
-                    {rawAnalysis || "No detailed analysis available."}
-                  </pre>
-                </div>
+                {/* Detailed text analysis - parsed into sections */}
+                {rawAnalysis && (
+                  <div className="rounded-lg bg-gray-800 p-4">
+                    <h3 className="mb-3 text-sm font-medium text-blue-400">
+                      Detailed Analysis Report
+                    </h3>
+                    {parseAnalysisIntoSections(rawAnalysis).map(
+                      (section, idx) => (
+                        <div
+                          key={idx}
+                          className="mb-3 rounded-lg border border-blue-700/20 bg-gray-900 p-3"
+                        >
+                          {section.title && (
+                            <h4 className="mb-2 text-sm font-semibold text-blue-300">
+                              {section.title}
+                            </h4>
+                          )}
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                            {section.content}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : rawAnalysis ? (
+              <div className="rounded-lg bg-gray-800 p-4">
+                <h3 className="mb-3 text-sm font-medium text-blue-400">
+                  Detailed Analysis Report
+                </h3>
+                {parseAnalysisIntoSections(rawAnalysis).map((section, idx) => (
+                  <div
+                    key={idx}
+                    className="mb-3 rounded-lg border border-blue-700/20 bg-gray-900 p-3"
+                  >
+                    {section.title && (
+                      <h4 className="mb-2 text-sm font-semibold text-blue-300">
+                        {section.title}
+                      </h4>
+                    )}
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                      {section.content}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="rounded-lg bg-gray-800 p-4">
-                <h3 className="mb-2 text-sm font-medium text-blue-400">
-                  Detailed Analysis
-                </h3>
-                <pre className="whitespace-pre-wrap text-sm text-gray-300">
-                  {rawAnalysis || "No detailed analysis available."}
-                </pre>
+              <div className="rounded-lg bg-gray-800 p-8 text-center">
+                <IconBuildingSkyscraper
+                  size={48}
+                  className="mx-auto mb-3 text-gray-600"
+                />
+                <p className="text-sm text-gray-400">
+                  No detailed analysis available.
+                </p>
               </div>
             )}
           </TabsContent>
@@ -518,6 +556,66 @@ const extractSummary = (analysisText: string): string | null => {
   }
 
   return null
+}
+
+// Helper function to parse analysis into structured sections for better display
+const parseAnalysisIntoSections = (
+  analysisText: string
+): Array<{ title: string | null; content: string }> => {
+  if (!analysisText) return []
+
+  const sections: Array<{ title: string | null; content: string }> = []
+
+  // Split by common section headers (lines with all caps or ending with colon)
+  const lines = analysisText.split("\n")
+  let currentSection: { title: string | null; content: string } | null = null
+
+  for (const line of lines) {
+    // Check if this line is a section header
+    const isHeader =
+      line.trim().endsWith(":") ||
+      (line.trim().length > 0 &&
+        line.trim() === line.trim().toUpperCase() &&
+        line.trim().length < 100) ||
+      line.match(/^={3,}/) // Lines with === separators
+
+    if (isHeader && !line.match(/^={3,}/)) {
+      // Save previous section if exists
+      if (currentSection && currentSection.content.trim()) {
+        sections.push(currentSection)
+      }
+      // Start new section
+      currentSection = {
+        title: line.trim().replace(/:$/, ""),
+        content: ""
+      }
+    } else if (line.match(/^={3,}/) || line.match(/^─{3,}/)) {
+      // Skip separator lines
+      continue
+    } else {
+      // Add content to current section
+      if (!currentSection) {
+        currentSection = { title: null, content: "" }
+      }
+      if (line.trim()) {
+        currentSection.content += line + "\n"
+      } else {
+        currentSection.content += "\n"
+      }
+    }
+  }
+
+  // Add the last section
+  if (currentSection && currentSection.content.trim()) {
+    sections.push(currentSection)
+  }
+
+  // If no sections were found, return the entire text as one section
+  if (sections.length === 0) {
+    return [{ title: null, content: analysisText.trim() }]
+  }
+
+  return sections
 }
 
 // Helper function to convert azimuth degrees to cardinal direction

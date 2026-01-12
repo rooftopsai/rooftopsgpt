@@ -84,118 +84,17 @@ What This Analysis Does NOT Include:
 For comprehensive analysis including condition assessment, material identification, and accurate cost estimates, upgrade to Premium or Business for access to our AI-powered Agent Mode.
 `.trim()
 
-    // Build detailed analysis
+    // Build detailed analysis (minimal text - UI displays data in cards)
     const detailedAnalysis = `
-═══════════════════════════════════════════════════════════════════
 INSTANT MODE PROPERTY REPORT
-═══════════════════════════════════════════════════════════════════
-
-Property Address: ${address || "Unknown"}
-Report Generated: ${new Date().toLocaleString()}
+Generated: ${new Date().toLocaleString()}
 Data Source: Google Solar API (Satellite Imagery)
 Imagery Date: ${solarMetrics.imageryDate}
 Imagery Quality: ${solarMetrics.imageryQuality}
 
-═══════════════════════════════════════════════════════════════════
-📐 ROOF MEASUREMENTS
-═══════════════════════════════════════════════════════════════════
+All measurements and details are displayed in card format above.
 
-Total Roof Area: ${Math.round(solarMetrics.totalRoofAreaSqFt)} sq ft (${Math.round(solarMetrics.totalRoofArea)} sq meters)
-Roofing Squares: ${solarMetrics.roofingSquares} squares (100 sq ft per square)
-Building Footprint: ${Math.round(solarMetrics.buildingAreaSqFt)} sq ft
-
-Number of Roof Sections: ${solarMetrics.roofSegmentCount} facets
-Predominant Pitch: ${pitch}
-Complexity Rating: ${complexity}
-
-Pitch Distribution:
-• Flat (0-2/12): ${solarMetrics.pitchCategories.flat} sections
-• Low (3-5/12): ${solarMetrics.pitchCategories.low} sections
-• Medium (6-8/12): ${solarMetrics.pitchCategories.medium} sections
-• Steep (9+/12): ${solarMetrics.pitchCategories.steep} sections
-
-═══════════════════════════════════════════════════════════════════
-📊 DETAILED ROOF SECTIONS
-═══════════════════════════════════════════════════════════════════
-
-${solarMetrics.segments
-  .map(
-    (segment, idx) => `
-Section ${idx + 1}:
-  • Area: ${segment.areaSqFt} sq ft (${segment.areaSqMeters.toFixed(1)} sq meters)
-  • Pitch: ${segment.pitchRatio} (${segment.pitchDegrees.toFixed(1)}°)
-  • Orientation: ${segment.azimuthDegrees}° (${getCardinalDirection(segment.azimuthDegrees)})`
-  )
-  .join("\n")}
-
-═══════════════════════════════════════════════════════════════════
-⚠️ INSTANT MODE LIMITATIONS
-═══════════════════════════════════════════════════════════════════
-
-This Instant Mode report provides quick measurements but has significant limitations:
-
-WHAT'S INCLUDED:
-✓ Roof area measurements (from satellite data)
-✓ Section/facet count and distribution
-✓ Pitch angles across roof sections
-✓ Building dimensions
-
-WHAT'S MISSING (Available in Agent Mode):
-✗ Roof Condition Assessment
-   - Current age estimation
-   - Wear and damage analysis
-   - Remaining lifespan
-   - Urgency recommendations
-
-✗ Material Identification
-   - Shingle type and quality
-   - Material condition
-   - Warranty information
-
-✗ Cost Estimation
-   - Accurate replacement costs
-   - Material options and pricing
-   - Labor estimates
-   - Regional cost adjustments
-
-✗ Quality Validation
-   - Multi-agent verification
-   - Confidence scores
-   - Professional validation
-   - Detailed recommendations
-
-═══════════════════════════════════════════════════════════════════
-🎯 UPGRADE TO AGENT MODE
-═══════════════════════════════════════════════════════════════════
-
-For comprehensive property analysis, upgrade to Premium or Business to unlock Agent Mode, which includes:
-
-• 4 AI Specialist Agents working together
-• Detailed condition assessment and material identification
-• Accurate cost estimates with multiple material options
-• Professional recommendations and timeline guidance
-• Quality validation with confidence scoring
-• Much higher accuracy on measurements and analysis
-
-Agent Mode uses advanced AI to analyze your property like a team of professional roofers, providing the most accurate and comprehensive analysis available.
-
-═══════════════════════════════════════════════════════════════════
-📋 DISCLAIMERS
-═══════════════════════════════════════════════════════════════════
-
-• This instant analysis is based solely on Google Solar API satellite data
-• Measurements are estimates and should be verified on-site
-• No on-ground inspection has been performed
-• Roof condition, material type, and damage cannot be assessed from this data
-• Cost estimates require Agent Mode analysis with detailed condition assessment
-• This report should be used for preliminary planning only
-• Always obtain professional inspection before making final decisions
-• Imagery date: ${solarMetrics.imageryDate} - property may have changed since then
-
-═══════════════════════════════════════════════════════════════════
-
-Report generated in ${Date.now() - startTime}ms using Instant Mode
-For comprehensive analysis, switch to Agent Mode (Premium/Business subscribers)
+Note: This instant analysis is based on Google Solar API satellite data. Measurements are estimates and should be verified on-site. For comprehensive condition assessment, material identification, and accurate cost estimates, upgrade to Agent Mode (Premium/Business subscribers).
 `.trim()
 
     // Extract solar potential data
@@ -231,6 +130,7 @@ For comprehensive analysis, switch to Agent Mode (Premium/Business subscribers)
         ridgeLength: null, // Not available in instant mode
         valleyLength: null, // Not available in instant mode
         complexity: complexity.toLowerCase(),
+        groundArea: Math.round(solarMetrics.buildingAreaSqFt), // Building footprint
 
         // Not available in instant mode
         material: "Not available in Instant Mode",
@@ -238,6 +138,8 @@ For comprehensive analysis, switch to Agent Mode (Premium/Business subscribers)
         estimatedAge: null,
         remainingLife: null,
         costEstimate: null,
+        propertyType: "Unknown", // Not available from Solar API
+        yearBuilt: "Unknown", // Not available from Solar API
 
         // Confidence indicators
         confidence: "Medium - Based on satellite data only",
