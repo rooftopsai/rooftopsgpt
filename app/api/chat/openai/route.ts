@@ -8,8 +8,8 @@ import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completion
 import { createClient } from "@supabase/supabase-js"
 import { ROOFING_EXPERT_SYSTEM_PROMPT } from "@/lib/system-prompts"
 import { GLOBAL_API_KEYS } from "@/lib/api-keys"
-import { checkChatLimit } from "@/lib/entitlements"
-import { incrementChatUsage } from "@/db/user-usage"
+import { checkChatLimit, checkWebSearchLimit } from "@/lib/entitlements"
+import { incrementChatUsage, incrementWebSearchUsage } from "@/db/user-usage"
 
 export const runtime: ServerRuntime = "edge"
 
@@ -120,8 +120,19 @@ export async function POST(request: Request) {
         profile.web_search_enabled
       )
 
-      // Check if user has web search enabled (default: true)
-      const shouldUseWebSearch = profile.web_search_enabled !== false
+      // Check if user has web search access based on their tier
+      const webSearchCheck = await checkWebSearchLimit(profile.user_id)
+      const hasWebSearchAccess = webSearchCheck.allowed
+
+      // Check if user has web search enabled (default: true) AND has tier access
+      const shouldUseWebSearch =
+        profile.web_search_enabled !== false && hasWebSearchAccess
+
+      console.log(
+        "OpenAI RAG - Web search access:",
+        hasWebSearchAccess,
+        `(remaining: ${webSearchCheck.remaining}/${webSearchCheck.limit})`
+      )
 
       if (userQuery && workspaceId && shouldUseWebSearch) {
         // Skip document RAG search and go straight to web search
@@ -224,6 +235,11 @@ export async function POST(request: Request) {
                   "OpenAI RAG - Found",
                   webResults.length,
                   "web results"
+                )
+
+                // Track web search usage
+                incrementWebSearchUsage(profile.user_id).catch(err =>
+                  console.error("Failed to track web search usage:", err)
                 )
 
                 if (!documentContext) {

@@ -206,3 +206,29 @@ Started: Mon Jan 12 00:17:36 CST 2026
 **Next**: Moving to US-7 (Chat Limit Enforcement) and beyond
 
 ---
+
+### US-7: Chat Limit Enforcement ✅
+**Status**: COMPLETE
+**Commit**: f9a2d60
+
+**What was implemented**:
+- Updated `/app/api/chat/openai/route.ts` to use new tier-based chat limits
+- Replaced old `requireFeatureAccess` with `checkChatLimit` from `/lib/entitlements.ts`
+- Replaced old `trackAndCheckFeature` with `incrementChatUsage` from `/db/user-usage.ts`
+- Added automatic model switching logic:
+  - Free tier: Uses GPT-4o (5 messages/day)
+  - Premium tier: Uses GPT-4.5-mini (1000/month), then switches to unlimited GPT-4o
+  - Business tier: Uses GPT-4.5-mini (5000/month), then switches to unlimited GPT-4o
+- Added logging to track model selection and switching
+
+**Key Features**:
+- Before processing chat: Check authentication → Check chat limit → Determine model
+- Automatic model downgrade when premium messages exhausted
+- Track usage with correct model type (premium vs free)
+- Returns proper error (CHAT_LIMIT_REACHED) with remaining count when limit hit
+- Frontend can catch error and show upgrade modal
+
+**Error Responses**:
+- 403: CHAT_LIMIT_REACHED with message, remaining, limit, and upgradeRequired flag
+
+---
