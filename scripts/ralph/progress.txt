@@ -1275,7 +1275,7 @@ Solar tab now correctly parses and displays Google Solar API data including syst
 
 ### US-31: Create Demo Accounts for Testing ✅
 **Status**: COMPLETE
-**Commit**: (pending)
+**Commit**: c301b11
 
 **What was implemented**:
 - Created comprehensive SQL seed script: `supabase/seed_demo_accounts.sql`
