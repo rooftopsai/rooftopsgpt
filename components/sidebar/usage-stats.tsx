@@ -160,7 +160,9 @@ export const UsageStats: FC<UsageStatsProps> = ({ className }) => {
                 />
               </div>
               {isAtLimit && (
-                <div className="text-xs text-red-500">Limit reached</div>
+                <div className="text-sm font-medium text-red-500">
+                  Limit reached
+                </div>
               )}
             </div>
           )
