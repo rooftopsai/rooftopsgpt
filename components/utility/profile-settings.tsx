@@ -44,6 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
 import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { ThemeSwitcher } from "./theme-switcher"
+import { UsageStats } from "../sidebar/usage-stats"
 
 interface ProfileSettingsProps {}
 
@@ -63,6 +64,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const [isOpen, setIsOpen] = useState(false)
+  const [usageRefreshKey, setUsageRefreshKey] = useState(0)
 
   const [displayName, setDisplayName] = useState(profile?.display_name || "")
   const [username, setUsername] = useState(profile?.username || "")
@@ -133,6 +135,13 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
     }
     fetchUserEmail()
   }, [])
+
+  // Refresh usage stats when profile panel opens
+  useEffect(() => {
+    if (isOpen) {
+      setUsageRefreshKey(prev => prev + 1)
+    }
+  }, [isOpen])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -399,6 +408,14 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                 <LimitDisplay
                   used={profileInstructions.length}
                   limit={PROFILE_CONTEXT_MAX}
+                />
+              </div>
+
+              {/* Usage Stats */}
+              <div className="mt-6">
+                <UsageStats
+                  refreshKey={usageRefreshKey}
+                  className="border-t-0"
                 />
               </div>
             </TabsContent>

@@ -1007,13 +1007,14 @@ const MapView: React.FC<MapViewProps> = ({
     }
   }, [isClient, mapLoaded, toast, heatmapVisible, setSelectedLocation])
 
-  // Expose the map container ref to parent
+  // Expose the map container ref to parent (only once when available)
+  const [refSet, setRefSet] = useState(false)
   useEffect(() => {
-    if (mapContainerRef.current && setMapContainerRef) {
-      console.log("Setting parent's map container ref")
+    if (mapContainerRef.current && setMapContainerRef && !refSet) {
       setMapContainerRef(mapContainerRef.current)
+      setRefSet(true)
     }
-  }, [mapContainerRef.current, setMapContainerRef])
+  }, [setMapContainerRef, refSet])
 
   // Simple fixed style for map container - this is important for proper display
   const mapContainerStyle = {
@@ -1092,13 +1093,35 @@ const MapView: React.FC<MapViewProps> = ({
         <div className="flex max-h-[90vh] w-full max-w-3xl flex-col items-center space-y-6 overflow-y-auto rounded-2xl border border-gray-800 bg-gray-950/95 p-6 shadow-2xl md:space-y-8 md:p-10">
           {/* Status Message */}
           <div className="text-center">
-            <div className="text-sm font-medium uppercase tracking-widest text-gray-400">
+            <div
+              className="text-sm font-medium uppercase tracking-widest"
+              style={{
+                background:
+                  "linear-gradient(90deg, #99F6E4 0%, #5EEAD4 25%, #14B8A6 50%, #5EEAD4 75%, #99F6E4 100%)",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                animation: "shimmer 3s ease-in-out infinite"
+              }}
+            >
               Rooftops Agent is Working
             </div>
             <div className="mt-3 text-2xl font-semibold text-white">
               {currentStep > 0 ? analysisSteps[currentStep - 1]?.name : message}
             </div>
           </div>
+
+          <style jsx>{`
+            @keyframes shimmer {
+              0% {
+                background-position: 200% 0;
+              }
+              100% {
+                background-position: -200% 0;
+              }
+            }
+          `}</style>
 
           {/* Agent Progress Steps - Evenly Spaced */}
           {currentStep > 0 && (

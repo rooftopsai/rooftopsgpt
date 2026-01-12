@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 
+export const maxDuration = 180 // 3 minutes for AI processing
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -16,6 +18,20 @@ export async function POST(req: NextRequest) {
     const prompt = `You are Agent 2: CONDITION INSPECTOR - A master roofer specializing in condition assessment and material identification.
 
 YOUR EXCLUSIVE MISSION: Assess roof condition, identify materials, and detect damage or wear.
+
+🧠 CRITICAL: ANALYZE LIKE A HUMAN INSPECTOR FROM ALL ANGLES
+You have access to ${allImages.length} images showing this roof from multiple angles. Use this unique advantage:
+• Examine ALL images - what's obscured by shadows in one angle may be clear in another
+• Don't be fooled by shadows - verify features across multiple angles before making conclusions
+• If trees block part of the roof, look at other angles to see hidden areas
+• Cross-reference observations: If you see damage/wear in one image, verify it appears from other angles
+• When image quality is low or trees obstruct views in all angles, make your BEST EDUCATED GUESS based on:
+  - What you CAN see clearly
+  - Architectural patterns (if one section shows wear, similar sections likely have similar conditions)
+  - Building age indicators visible in unobstructed areas
+  - Material consistency across visible portions
+
+Think like a professional inspector walking around the property with a drone - combine all perspectives to form a complete assessment.
 
 ═══════════════════════════════════════════════════════════════════
 🔍 YOUR SPECIALIZATION: CONDITION & MATERIAL ASSESSMENT

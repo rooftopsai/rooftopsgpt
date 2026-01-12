@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 
+export const maxDuration = 180 // 3 minutes for AI processing
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -91,6 +93,22 @@ A facet = any distinct flat surface that meets another surface at a different an
 • VALLEY LINES: V-shaped junctions where water flows = separate facets meeting
 • DORMERS: Each dormer face is a separate facet (front, sides, top)
 • SKYLIGHTS/PENETRATIONS: Look around them for facet boundaries
+
+🧠 CRITICAL: ANALYZE LIKE A HUMAN VIEWING FROM ALL ANGLES
+You have a UNIQUE ADVANTAGE over traditional roof inspectors - you can see this roof from MULTIPLE overhead angles simultaneously. Use this to your advantage:
+
+• MULTI-ANGLE ANALYSIS: Examine ALL provided images (Context + Detail views). A facet boundary that's subtle in one image may be obvious in another angle.
+• SHADOW DISAMBIGUATION: If shadows obscure part of the roof in one image, check the other angles. Shadows fall differently from each direction - USE THIS to see past them and identify true facet boundaries.
+• TREE COVERAGE WORKAROUND: If trees block part of the roof in one angle, look at the other images. What's hidden from one perspective is often visible from another.
+• CROSS-REFERENCE VALIDATION: If you see a ridge line or valley in one image, verify it appears in the other angles. This confirms it's a real geometric feature, not an artifact.
+• LOW QUALITY COMPENSATION: If image quality is poor or trees significantly obstruct the view in ALL angles:
+  - Make your BEST EDUCATED GUESS based on what you CAN see
+  - Use architectural logic: If you see one side of a gable with 2 facets, the other side likely mirrors it
+  - Use roof complexity patterns: A hip roof with 2 dormers visible likely has similar features on the obscured side
+  - Consider the building footprint: An L-shaped house suggests multiple roof sections even if partially hidden
+  - ALWAYS provide your reasoning in the methodology section when making educated guesses
+
+Think like a human inspector walking around the property - you're seeing it from multiple vantage points. Combine all angles to form a complete mental model of the roof structure.
 
 ⚠️ COMMON MISTAKES TO AVOID:
 • ❌ Don't count shadows as facet boundaries - verify with multiple images

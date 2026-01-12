@@ -149,18 +149,15 @@ svg {
   stroke-width: 1.5;
 }
 
-/* Custom Toast Styles - Modern & Centered */
+/* Custom Toast Styles - Full Width Professional */
 [data-sonner-toaster] {
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  max-width: 560px !important;
-  width: calc(100% - 32px) !important;
-}
-
-@media (min-width: 640px) {
-  [data-sonner-toaster] {
-    max-width: 560px !important;
-  }
+  left: 0 !important;
+  right: 0 !important;
+  transform: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  perspective: 1000px !important;
+  padding: 0 !important;
 }
 
 [data-sonner-toaster] {
@@ -168,21 +165,27 @@ svg {
 }
 
 [data-sonner-toast] {
-  font-size: 14px !important;
+  font-size: 15px !important;
   line-height: 1.5 !important;
   font-weight: 500 !important;
   letter-spacing: -0.01em !important;
-  animation: toast-slide-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards !important;
-  min-height: 64px !important;
-  padding: 16px 20px !important;
+  animation: toast-roll-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+  min-height: 80px !important;
+  padding: 20px 24px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
-/* Custom layout: Icon on left, content in center, close on right */
+/* Custom layout: Icon on left, content fills remaining space, close on right */
 [data-sonner-toast][data-styled="true"] {
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: flex-start !important;
   gap: 16px !important;
+  position: relative !important;
+  padding-right: 60px !important;
 }
 
 /* Icon styling */
@@ -201,94 +204,104 @@ svg {
 [data-sonner-toast][data-styled="true"] [data-content] {
   display: flex !important;
   flex-direction: column !important;
-  gap: 4px !important;
+  gap: 6px !important;
   flex: 1 !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   min-width: 0 !important;
 }
 
 [data-sonner-toast][data-styled="true"] [data-title] {
-  font-size: 15px !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
   text-align: left !important;
-  color: inherit !important;
+  color: white !important;
+  margin: 0 !important;
 }
 
 [data-sonner-toast][data-styled="true"] [data-description] {
-  font-size: 14px !important;
-  line-height: 1.4 !important;
-  opacity: 0.85 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  opacity: 0.8 !important;
   text-align: left !important;
-  color: inherit !important;
+  color: white !important;
+  margin: 0 !important;
 }
 
-/* Close button */
+/* Close button - positioned absolutely in top right */
 [data-sonner-toast] [data-close-button] {
-  position: relative !important;
-  right: 0 !important;
-  top: 0 !important;
-  margin-left: auto !important;
-  width: 28px !important;
-  height: 28px !important;
+  position: absolute !important;
+  right: 20px !important;
+  top: 20px !important;
+  margin: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   transition: all 0.2s ease !important;
   flex-shrink: 0 !important;
-  opacity: 0.7 !important;
+  opacity: 0.5 !important;
+  color: white !important;
 }
 
 [data-sonner-toast] [data-close-button]:hover {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-  opacity: 1 !important;
-}
-
-.dark [data-sonner-toast] [data-close-button]:hover {
-  background-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
   opacity: 1 !important;
 }
 
 [data-sonner-toast][data-styled="true"] [data-button] {
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.15s ease;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+  width: 100% !important;
+  margin-top: 12px !important;
 }
 
 [data-sonner-toast][data-styled="true"] [data-button]:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) !important;
 }
 
 [data-sonner-toast][data-styled="true"] [data-cancel-button] {
-  transition: all 0.15s ease;
+  transition: all 0.15s ease !important;
 }
 
 [data-sonner-toast][data-removing="true"] {
-  animation: toast-slide-out 0.25s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+  animation: toast-roll-out 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards !important;
 }
 
-@keyframes toast-slide-in {
-  from {
+@keyframes toast-roll-in {
+  0% {
     opacity: 0;
-    transform: translateY(-16px) scale(0.96);
+    transform: translateY(-100%) rotateX(-90deg);
+    transform-origin: top center;
   }
-  to {
+  50% {
+    opacity: 0.8;
+  }
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) rotateX(0deg);
+    transform-origin: top center;
   }
 }
 
-@keyframes toast-slide-out {
-  from {
+@keyframes toast-roll-out {
+  0% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) rotateX(0deg);
+    transform-origin: top center;
   }
-  to {
+  50% {
+    opacity: 0.5;
+  }
+  100% {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-100%) rotateX(90deg);
+    transform-origin: top center;
   }
 }
 

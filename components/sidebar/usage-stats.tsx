@@ -38,16 +38,17 @@ interface UsageStats {
 
 interface UsageStatsProps {
   className?: string
+  refreshKey?: number // Add refreshKey prop to trigger refresh
 }
 
-export const UsageStats: FC<UsageStatsProps> = ({ className }) => {
+export const UsageStats: FC<UsageStatsProps> = ({ className, refreshKey }) => {
   const router = useRouter()
   const [usage, setUsage] = useState<UsageStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchUsage()
-  }, [])
+  }, [refreshKey]) // Re-fetch when refreshKey changes
 
   const fetchUsage = async () => {
     try {

@@ -20,9 +20,9 @@ async function fetchWithRetry(
     try {
       console.log(`[Fetch] Attempt ${attempt}/${maxRetries} for ${url}`)
 
-      // Add timeout to the fetch
+      // Add timeout to the fetch - increased for AI agent processing
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 180000) // 180s (3 min) timeout
 
       const response = await fetch(url, {
         ...options,
@@ -52,7 +52,7 @@ async function fetchWithRetry(
 
       // Don't retry on abort
       if (error.name === "AbortError") {
-        throw new Error(`Request timeout after 60 seconds: ${url}`)
+        throw new Error(`Request timeout after 180 seconds: ${url}`)
       }
     }
 

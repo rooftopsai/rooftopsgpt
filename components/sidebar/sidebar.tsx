@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button"
 import { IconLayoutSidebarLeftCollapse, IconCrown } from "@tabler/icons-react"
 import Link from "next/link"
 import { WithTooltip } from "@/components/ui/with-tooltip"
-import { UsageStats } from "./usage-stats"
 
 interface SidebarProps {
   contentType: ContentType
@@ -197,7 +196,7 @@ export const Sidebar: FC<SidebarProps> = ({
         </div>
 
         {/* Usage Stats - show at bottom of sidebar */}
-        <UsageStats className="mt-auto" />
+        {/* Usage stats moved to Profile panel */}
       </div>
     </TabsContent>
   )

@@ -48,22 +48,49 @@ export const calculateScale = (
   return { metersPerPixel, pixelsFor10m: Math.round(pixelsFor10m) }
 }
 
+// Calculate tight LatLngBounds from center point and dimensions in meters
+// This creates a tight rectangular bounds around the property
+export const calculateTightBounds = (
+  centerLat: number,
+  centerLng: number,
+  widthMeters: number,
+  heightMeters: number
+): { north: number; south: number; east: number; west: number } => {
+  // Earth's radius in meters
+  const earthRadius = 6371000
+
+  // Calculate latitude offset (straightforward - same at all longitudes)
+  const latOffset = (heightMeters / 2 / earthRadius) * (180 / Math.PI)
+
+  // Calculate longitude offset (varies with latitude)
+  const lngOffset =
+    (widthMeters / 2 / (earthRadius * Math.cos((centerLat * Math.PI) / 180))) *
+    (180 / Math.PI)
+
+  return {
+    north: centerLat + latOffset,
+    south: centerLat - latOffset,
+    east: centerLng + lngOffset,
+    west: centerLng - lngOffset
+  }
+}
+
 // Estimate property bounds based on typical residential property sizes
 // Returns estimated width/height in meters
 export const estimatePropertySize = (
   lat: number,
   lng: number
 ): { widthMeters: number; heightMeters: number } => {
-  // Default to typical residential property size
-  // Small: 15m x 15m (small urban lot)
-  // Medium: 30m x 30m (suburban home)
-  // Large: 50m x 50m (large suburban/rural)
+  // ULTRA TIGHT FRAMING: Use minimum ROOF dimensions for maximum zoom
+  // Typical residential roof sizes:
+  // Small: 8m x 8m (small house - EXTREMELY tight)
+  // Medium: 12m x 12m (average suburban home roof)
+  // Large: 16m x 16m (large house roof)
 
-  // For now, use medium as default
-  // In future, could query Google Maps Places API or use building footprint data
+  // Use EXTRA SMALL dimensions for ULTRA MAXIMUM tight framing on just the roof
   return {
-    widthMeters: 40, // Conservative estimate to ensure full capture
-    heightMeters: 40
+    widthMeters: 8, // ULTRA tight on roof only - reduced from 15m
+    heightMeters: 8 // ULTRA tight on roof only - reduced from 15m
   }
 }
 
@@ -74,7 +101,7 @@ export const calculateOptimalZoom = (
   latitude: number,
   viewportWidthPixels: number = 640,
   viewportHeightPixels: number = 480,
-  targetCoveragePercent: number = 0.7 // Property should fill 70% of frame
+  targetCoveragePercent: number = 0.95 // Property should fill 95% of frame - tight on roof
 ): { optimalZoom: number; zoomLevels: number[]; metersPerPixel: number } => {
   // Calculate how many meters we need to show to fit the property
   const requiredWidthMeters = propertyWidthMeters / targetCoveragePercent
@@ -97,12 +124,12 @@ export const calculateOptimalZoom = (
 
   // Round to nearest integer and constrain to valid Google Maps zoom range (0-22)
   let optimalZoom = Math.round(calculatedZoom)
-  optimalZoom = Math.max(17, Math.min(22, optimalZoom)) // Min 17, Max 22
+  optimalZoom = Math.max(21, Math.min(22, optimalZoom)) // Min 21 for ULTRA tight framing, Max 22
 
-  // Generate 2 zoom levels with maximum spread for very distinct perspectives
+  // Generate 2 zoom levels - MAXIMUM zoom on the roof
   const zoomLevels = [
-    Math.max(17, optimalZoom - 3), // Context view (much more zoomed out)
-    Math.min(22, optimalZoom + 3) // Detail view (much more zoomed in)
+    Math.min(22, optimalZoom + 1), // Maximum zoom view 1
+    22 // Always use max zoom (22) for detail view
   ]
 
   // Calculate actual meters per pixel at optimal zoom
@@ -168,7 +195,7 @@ export const calculateZoomForAngle = (
   latitude: number,
   viewportWidthPixels: number = 640,
   viewportHeightPixels: number = 480,
-  targetCoverage: number = 0.85 // Target 85% frame coverage for tight shots
+  targetCoverage: number = 0.95 // Target 95% frame coverage for maximum tight shots
 ): number => {
   // Convert heading to radians
   const headingRad = (heading * Math.PI) / 180
@@ -211,7 +238,7 @@ export const calculateZoomForAngle = (
 
   // Round and constrain to valid Google Maps zoom range
   let optimalZoom = Math.round(calculatedZoom)
-  optimalZoom = Math.max(17, Math.min(22, optimalZoom))
+  optimalZoom = Math.max(21, Math.min(22, optimalZoom)) // Min 21 for ULTRA tight framing
 
   // Validate that property fits at this zoom
   const validation = validatePropertyFitsInFrame(
@@ -223,8 +250,8 @@ export const calculateZoomForAngle = (
     viewportHeightPixels
   )
 
-  // If property doesn't fit, reduce zoom until it does
-  while (!validation.fits && optimalZoom > 17) {
+  // If property doesn't fit, reduce zoom until it does (but keep minimum at 20)
+  while (!validation.fits && optimalZoom > 20) {
     optimalZoom--
     const newValidation = validatePropertyFitsInFrame(
       apparentWidth,
@@ -237,7 +264,7 @@ export const calculateZoomForAngle = (
     if (newValidation.fits) break
   }
 
-  // If we can zoom in more while staying under 90% coverage, do it
+  // If we can zoom in more while staying under 97% coverage, do it
   let testZoom = optimalZoom + 1
   while (testZoom <= 22) {
     const testValidation = validatePropertyFitsInFrame(
@@ -248,7 +275,7 @@ export const calculateZoomForAngle = (
       viewportWidthPixels,
       viewportHeightPixels
     )
-    if (testValidation.fits && testValidation.coveragePercent < 0.9) {
+    if (testValidation.fits && testValidation.coveragePercent < 0.97) {
       optimalZoom = testZoom
       testZoom++
     } else {

@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 
+export const maxDuration = 180 // 3 minutes for AI processing
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

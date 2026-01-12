@@ -11,7 +11,11 @@ import {
   IconAlertTriangle,
   IconCheck,
   IconChartBar,
-  IconTarget
+  IconTarget,
+  IconRobot,
+  IconSun,
+  IconPackage,
+  IconMessageCircle
 } from "@tabler/icons-react"
 
 // ============================================================================
@@ -139,10 +143,12 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
     // Extract solar data from multiple possible structures
     const solar =
       solarData?.solarPotential || // Direct solarPotential
-      solarData || // Solar data might be the solarPotential itself
-      reportData?.solarPotential || // From reportData
-      reportData?.solarData?.solarPotential || // Nested in solarData
-      reportData?.solar?.potential || // From combined report structure
+      reportData?.solarData?.solarPotential || // From reportData.solarData
+      reportData?.metadata?.solarData?.solarPotential || // From metadata
+      reportData?.solarPotential || // Direct from reportData
+      solarData || // Solar data with potential/financials structure
+      reportData?.solarData || // Try solarData directly
+      reportData?.metadata?.solarData || // Try metadata.solarData
       {}
 
     return {
@@ -226,27 +232,39 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
       },
       solar: {
         maxPanels:
+          solar.potential?.maxPanels || // New structure
           solar.maxArrayPanelsCount ||
           solar.maxPanels ||
           solar.maxArrayPanels ||
           0,
         systemKw:
-          (solar.maxArrayPanelsCount ||
+          (solar.potential?.maxPanels ||
+            solar.maxArrayPanelsCount ||
             solar.maxPanels ||
             solar.maxArrayPanels ||
             0) * 0.4,
         annualProduction:
-          solar.maxArrayPanelsCount || solar.maxPanels || solar.maxArrayPanels
-            ? (solar.maxArrayPanelsCount ||
+          solar.potential?.yearlyEnergy || // Use actual yearly energy if available
+          (solar.potential?.maxPanels ||
+          solar.maxArrayPanelsCount ||
+          solar.maxPanels ||
+          solar.maxArrayPanels
+            ? (solar.potential?.maxPanels ||
+                solar.maxArrayPanelsCount ||
                 solar.maxPanels ||
                 solar.maxArrayPanels) *
               400 *
               1.6
-            : 0,
-        monthlyAverage:
-          solar.maxArrayPanelsCount || solar.maxPanels || solar.maxArrayPanels
+            : 0),
+        monthlyAverage: solar.potential?.yearlyEnergy
+          ? Math.round(solar.potential.yearlyEnergy / 12)
+          : solar.potential?.maxPanels ||
+              solar.maxArrayPanelsCount ||
+              solar.maxPanels ||
+              solar.maxArrayPanels
             ? Math.round(
-                ((solar.maxArrayPanelsCount ||
+                ((solar.potential?.maxPanels ||
+                  solar.maxArrayPanelsCount ||
                   solar.maxPanels ||
                   solar.maxArrayPanels) *
                   400 *
@@ -254,10 +272,16 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
                   12
               )
             : 0,
-        paybackYears: 7.4,
-        co2Offset:
-          solar.maxArrayPanelsCount || solar.maxPanels || solar.maxArrayPanels
-            ? (solar.maxArrayPanelsCount ||
+        paybackYears:
+          solar.financials?.paybackPeriodYears || 7.4, // Use actual payback if available
+        co2Offset: solar.potential?.yearlyEnergy
+          ? solar.potential.yearlyEnergy * 0.7
+          : solar.potential?.maxPanels ||
+              solar.maxArrayPanelsCount ||
+              solar.maxPanels ||
+              solar.maxArrayPanels
+            ? (solar.potential?.maxPanels ||
+                solar.maxArrayPanelsCount ||
                 solar.maxPanels ||
                 solar.maxArrayPanels) *
               400 *
@@ -903,13 +927,17 @@ Answer questions about this property clearly and concisely. Use specific numbers
             ×
           </button>
         </div>
-        <div className="mb-1 text-sm font-medium opacity-95">
-          {roofData.property.address}
+        <div className="text-2xl font-bold opacity-95">
+          Rooftops Agent Report
         </div>
-        <div className="text-xs opacity-80">
-          Property Report • Generated{" "}
+        <div className="mt-1 text-sm font-medium opacity-90">
+          for {roofData.property.address}
+        </div>
+        <div className="mt-0.5 text-xs opacity-75">
+          Report Generated{" "}
           {new Date().toLocaleDateString("en-US", {
-            month: "short",
+            month: "long",
+            day: "numeric",
             year: "numeric"
           })}
         </div>
@@ -1012,7 +1040,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
           </div>
 
           <div
-            className="flex gap-2 overflow-x-auto bg-gray-900 p-2.5"
+            className="flex justify-center gap-2 overflow-x-auto bg-gray-900 p-2.5"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             {roofData.images.map((img: any, idx: number) => (
@@ -1120,17 +1148,25 @@ Answer questions about this property clearly and concisely. Use specific numbers
         }}
       >
         {[
-          { id: "overview", label: "Overview" },
-          { id: "roof", label: "Roof" },
-          { id: "estimate", label: "Estimate" },
-          { id: "ai", label: "AI Chat" },
-          { id: "solar", label: "Solar" },
-          { id: "materials", label: "Materials" }
+          {
+            id: "overview",
+            label: "Overview",
+            icon: <IconChartBar size={16} />
+          },
+          { id: "roof", label: "Roof", icon: <IconHome size={16} /> },
+          { id: "estimate", label: "Estimate", icon: <IconCash size={16} /> },
+          { id: "ai", label: "AI Chat", icon: <IconRobot size={16} /> },
+          { id: "solar", label: "Solar", icon: <IconSun size={16} /> },
+          {
+            id: "materials",
+            label: "Materials",
+            icon: <IconPackage size={16} />
+          }
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="cursor-pointer whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-semibold transition-all"
+            className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-semibold transition-all"
             style={{
               background: activeTab === tab.id ? theme.primary : theme.white,
               color: activeTab === tab.id ? theme.white : theme.gray700,
@@ -1138,6 +1174,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
                 activeTab === tab.id ? "none" : `0 1px 3px ${theme.gray200}`
             }}
           >
+            {tab.icon}
             {tab.label}
           </button>
         ))}
@@ -1429,14 +1466,15 @@ Answer questions about this property clearly and concisely. Use specific numbers
               style={{ borderColor: theme.gray100 }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>🤖</span> AI Roof Analysis
+                <IconRobot size={20} className="text-gray-700" /> AI Roof
+                Analysis
               </div>
-              <div className="prose prose-sm max-w-none text-gray-700">
+              <div className="text-gray-700">
                 {reportData?.rawAnalysis ||
                 reportData?.detailedAnalysis ||
                 reportData?.agents?.measurement?.analysis ||
                 reportData?.finalReport?.analysis ? (
-                  <div className="space-y-3 text-sm leading-relaxed">
+                  <div className="space-y-4 text-sm leading-relaxed">
                     {(
                       reportData?.rawAnalysis ||
                       reportData?.detailedAnalysis ||
@@ -1447,11 +1485,86 @@ Answer questions about this property clearly and concisely. Use specific numbers
                       .split("\n\n")
                       .filter((para: string) => para.trim())
                       .slice(0, 5)
-                      .map((para: string, idx: number) => (
-                        <p key={idx} className="m-0">
-                          {para.trim()}
-                        </p>
-                      ))}
+                      .map((para: string, idx: number) => {
+                        // Parse markdown-style formatting
+                        const text = para.trim()
+
+                        // Check if it's a heading with **text:**
+                        if (text.startsWith("**") && text.includes(":**")) {
+                          const headingMatch = text.match(/\*\*(.+?):\*\*/)
+                          if (headingMatch) {
+                            return (
+                              <div key={idx} className="mb-3">
+                                <h4 className="mb-2 font-semibold text-gray-900">
+                                  {headingMatch[1]}:
+                                </h4>
+                              </div>
+                            )
+                          }
+                        }
+
+                        // Check if it's a bullet list
+                        if (text.startsWith("•")) {
+                          const bullets = text
+                            .split("\n")
+                            .filter(line => line.trim().startsWith("•"))
+                          return (
+                            <ul key={idx} className="ml-4 space-y-2">
+                              {bullets.map((bullet, bIdx) => {
+                                const cleanBullet = bullet
+                                  .replace(/^•\s*/, "")
+                                  .trim()
+                                // Remove **bold** markers and render as regular text
+                                const parts =
+                                  cleanBullet.split(/(\*\*[^*]+?\*\*)/)
+                                return (
+                                  <li key={bIdx} className="text-gray-700">
+                                    {parts.map((part, pIdx) => {
+                                      if (
+                                        part.startsWith("**") &&
+                                        part.endsWith("**")
+                                      ) {
+                                        return (
+                                          <strong
+                                            key={pIdx}
+                                            className="font-semibold text-gray-900"
+                                          >
+                                            {part.slice(2, -2)}
+                                          </strong>
+                                        )
+                                      }
+                                      return <span key={pIdx}>{part}</span>
+                                    })}
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                          )
+                        }
+
+                        // Regular paragraph - parse inline bold
+                        const parts = text.split(/(\*\*[^*]+?\*\*)/)
+                        return (
+                          <p key={idx} className="text-gray-700">
+                            {parts.map((part, pIdx) => {
+                              if (
+                                part.startsWith("**") &&
+                                part.endsWith("**")
+                              ) {
+                                return (
+                                  <strong
+                                    key={pIdx}
+                                    className="font-semibold text-gray-900"
+                                  >
+                                    {part.slice(2, -2)}
+                                  </strong>
+                                )
+                              }
+                              return <span key={pIdx}>{part}</span>
+                            })}
+                          </p>
+                        )
+                      })}
                   </div>
                 ) : (
                   <p className="text-gray-500">
@@ -2502,13 +2615,13 @@ Answer questions about this property clearly and concisely. Use specific numbers
         {[
           {
             id: "overview",
-            icon: <IconChartBar size={16} />,
+            icon: <IconChartBar size={20} />,
             label: "Overview"
           },
-          { id: "roof", icon: "🏠", label: "Roof" },
-          { id: "estimate", icon: <IconCash size={16} />, label: "Estimate" },
-          { id: "ai", icon: "🤖", label: "AI" },
-          { id: "solar", icon: "☀️", label: "Solar" }
+          { id: "roof", icon: <IconHome size={20} />, label: "Roof" },
+          { id: "estimate", icon: <IconCash size={20} />, label: "Estimate" },
+          { id: "ai", icon: <IconRobot size={20} />, label: "AI" },
+          { id: "solar", icon: <IconSun size={20} />, label: "Solar" }
         ].map(item => (
           <button
             key={item.id}
@@ -2520,7 +2633,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               color: activeTab === item.id ? theme.primary : theme.gray500
             }}
           >
-            <span className="text-xl">{item.icon}</span>
+            {item.icon}
             <span className="text-[10px] font-semibold">{item.label}</span>
           </button>
         ))}

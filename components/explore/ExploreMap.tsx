@@ -15,7 +15,8 @@ import {
   estimatePropertySize,
   calculateOptimalZoom,
   calculateZoomForAngle,
-  validatePropertyFitsInFrame
+  validatePropertyFitsInFrame,
+  calculateTightBounds
 } from "@/lib/image-processing"
 import {
   extractSolarRoofMetrics,
@@ -328,26 +329,23 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         )
       })
 
-      // CRITICAL FIX: First re-center the map on the selected property with optimal zoom
+      // REMOVED: fitBounds interferes with explicit zoom control
+      // Instead, we'll set the center and let each capture iteration set its own zoom
       if (mapRef.current && selectedLocation) {
         try {
-          // Center the map on the selected location before starting captures
+          // Just center the map on the property - zoom will be set explicitly in each iteration
           mapRef.current.setCenter({
             lat: selectedLocation.lat,
             lng: selectedLocation.lng
           })
 
-          // Set OPTIMAL zoom level for capturing property details
-          mapRef.current.setZoom(zoomCalc.optimalZoom)
-
           logDebug(
-            `Map centered on property at ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)} with optimal zoom ${zoomCalc.optimalZoom}`
+            `Map centered on property at ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`
           )
 
-          // Add a brief delay to ensure the map is properly centered before starting captures
-          await new Promise(resolve => setTimeout(resolve, 800))
+          await new Promise(resolve => setTimeout(resolve, 500))
         } catch (e) {
-          console.error("Error centering map on property:", e)
+          console.error("Error centering map:", e)
           logDebug(`Error centering map: ${e.message}`)
         }
       }
@@ -367,17 +365,13 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         0.95 // 95% coverage - tight crop on roof only
       )
 
-      // Generate 2 meaningfully different zoom levels with significant difference
-      // Context view: High zoom focused tightly on target roof
-      // Detail view: Maximum zoom (22) for precise facet counting and roof detail analysis
-      const zoomLevels = [
-        21, // Context (high zoom - tight on target roof)
-        22 // Detail (maximum zoom - zoom WAY in for facet counting)
-      ]
+      // USE THE CALCULATED ZOOM LEVELS from calculateOptimalZoom
+      // This uses the updated tight framing logic from image-processing.ts
+      const zoomLevels = zoomCalc.zoomLevels // [22, 22] with ultra tight 8m framing
       const zoomLabels = ["Context", "Detail"]
 
       logDebug(
-        `Calculated overhead zoom levels: ${zoomLevels.join(", ")} (optimal: ${optimalOverheadZoom})`
+        `Using calculated zoom levels: ${zoomLevels.join(", ")} (optimal: ${zoomCalc.optimalZoom})`
       )
 
       for (let zoomIdx = 0; zoomIdx < zoomLevels.length; zoomIdx++) {
@@ -395,11 +389,16 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             // Reset heading to north (0 degrees)
             mapRef.current.setHeading(0)
 
-            // Set zoom level and wait for tiles to load
-            const map = mapRef.current
-            map.setZoom(zoomLevel)
+            // FORCE MAXIMUM ZOOM: Set center and zoom explicitly instead of using fitBounds
+            // This ensures we get the tight zoom level we calculated, not auto-calculated by fitBounds
+            mapRef.current.setCenter({
+              lat: selectedLocation.lat,
+              lng: selectedLocation.lng
+            })
+            mapRef.current.setZoom(zoomLevel) // Use the calculated zoom level directly
 
             // Wait for tiles to finish loading using Google Maps tilesloaded event
+            const map = mapRef.current
             await new Promise(resolve => {
               const tilesLoadedListener = map.addListener("tilesloaded", () => {
                 google.maps.event.removeListener(tilesLoadedListener)
@@ -415,8 +414,13 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
             // Additional delay to ensure rendering is complete
             await new Promise(resolve => setTimeout(resolve, 1000))
 
+            // Check what zoom Google Maps actually applied (may be limited by available imagery)
+            const actualZoom = mapRef.current.getZoom()
             logDebug(
-              `Map settings adjusted and tiles loaded for zoom ${zoomLevel}`
+              `Requested zoom ${zoomLevel}, actual zoom: ${actualZoom} (Google Maps may limit based on imagery)`
+            )
+            logDebug(
+              `Map fitted to TIGHT bounds for overhead view (${propertySize.widthMeters}m x ${propertySize.heightMeters}m)`
             )
           } catch (e) {
             console.error("Error setting map properties:", e)
@@ -476,7 +480,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           viewportHeight,
           0.95 // 95% coverage - tight crop on roof only, eliminate neighboring context
         )
-        const angleZoom = Math.min(22, calculatedZoom + 3) // Add +3 to zoom in much closer on target roof
+        const angleZoom = Math.min(22, calculatedZoom + 4) // Add +4 to zoom in extremely close on target roof
 
         logDebug(
           `Capturing view at ${angle}° heading with optimized zoom ${angleZoom} (tilt: ${tiltAngle}°)`
@@ -485,28 +489,28 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         // Check if we have the map reference before trying to use it
         if (mapRef.current) {
           try {
-            // Re-center the map before each rotation angle to ensure property stays in view
-            mapRef.current.setCenter({
-              lat: selectedLocation.lat,
-              lng: selectedLocation.lng
-            })
-
-            // Set map to the current angle
+            // Set heading for directional view
             mapRef.current.setHeading(angle)
-
-            // Set the optimized zoom for this angle
-            mapRef.current.setZoom(angleZoom)
 
             // Add tilt in 3D mode for perspective views
             if (is3DMode) {
               mapRef.current.setTilt(60) // 60-degree tilt for better 3D perspective
             }
+
+            // FORCE MAXIMUM ZOOM: Set center and zoom explicitly instead of using fitBounds
+            // This ensures we use the tight zoom level we calculated (angleZoom)
+            mapRef.current.setCenter({
+              lat: selectedLocation.lat,
+              lng: selectedLocation.lng
+            })
+            mapRef.current.setZoom(angleZoom) // Use the calculated angleZoom directly
+
             logDebug(
-              `Map settings adjusted for angle ${angle}°: zoom ${angleZoom}, tilt: ${tiltAngle}°`
+              `Map adjusted to heading ${angle}° with TIGHT bounds (${propertySize.widthMeters}m x ${propertySize.heightMeters}m), tilt: ${tiltAngle}°`
             )
           } catch (e) {
             console.error(
-              `Error setting map heading/tilt/zoom for angle ${angle}:`,
+              `Error setting map heading/tilt/bounds for angle ${angle}:`,
               e
             )
             logDebug(`Error setting map properties: ${e.message}`)
@@ -752,7 +756,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         useCORS: true,
         allowTaint: true,
         logging: isDebugMode,
-        scale: 1.5, // Reduced from 3.0 to 1.5 to optimize payload size (640x480 -> 960x720)
+        scale: 2.5, // Increased to 2.5 for better quality before cropping (640x480 -> 1600x1200)
         backgroundColor: null, // Preserve transparency
         imageTimeout: 0, // No timeout for better handling of complex maps
         removeContainer: false, // Keep the original container
@@ -779,9 +783,50 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         logDebug("Restored original container size after mobile capture")
       }
 
+      // WORKAROUND: Crop to center 40% to simulate tighter zoom (Google Maps limits zoom)
+      // This compensates for Google Maps restricting zoom levels based on available imagery
+      // Combined with 2.5x scale, this gives excellent detail on the target roof
+      const cropPercent = 0.4 // Crop to center 40% = 2.5x effective zoom
+      const cropWidth = canvas.width * cropPercent
+      const cropHeight = canvas.height * cropPercent
+      const cropX = (canvas.width - cropWidth) / 2
+      const cropY = (canvas.height - cropHeight) / 2
+
+      // Create a new canvas for the cropped image
+      const croppedCanvas = document.createElement("canvas")
+      croppedCanvas.width = canvas.width // Keep same dimensions
+      croppedCanvas.height = canvas.height
+      const croppedCtx = croppedCanvas.getContext("2d")
+
+      if (croppedCtx) {
+        // Fill with black background
+        croppedCtx.fillStyle = "#000000"
+        croppedCtx.fillRect(0, 0, croppedCanvas.width, croppedCanvas.height)
+
+        // Draw the cropped center portion, scaled up to fill the canvas
+        croppedCtx.drawImage(
+          canvas,
+          cropX,
+          cropY,
+          cropWidth,
+          cropHeight, // Source (cropped center)
+          0,
+          0,
+          croppedCanvas.width,
+          croppedCanvas.height // Destination (full canvas)
+        )
+
+        logDebug(
+          `Applied ${cropPercent * 100}% center crop to simulate ${1 / cropPercent}x tighter zoom`
+        )
+      }
+
       // Convert canvas to base64 image with high quality
       // Increased from 0.6 to 0.85 to maintain accuracy with smaller dimensions
-      let imageData = canvas.toDataURL("image/jpeg", 0.85)
+      let imageData = (croppedCtx ? croppedCanvas : canvas).toDataURL(
+        "image/jpeg",
+        0.85
+      )
 
       // Apply image enhancements with improved settings + metadata
       logDebug(`Enhancing ${viewName} view with image processing v2.0...`)
@@ -1098,89 +1143,16 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           flaggedIssues: result.flaggedIssues,
 
           // Detailed analysis from all agents
-          detailedAnalysis: `
-MULTI-AGENT PROPERTY ANALYSIS REPORT
+          detailedAnalysis: `${result.executiveSummary}
 
-${result.executiveSummary}
+**Key Property Details:**
 
-═══════════════════════════════════════════════════════════════════
-📐 MEASUREMENTS (Agent 1: Measurement Specialist)
-═══════════════════════════════════════════════════════════════════
-
-• Roof Area: ${result.finalReport?.measurements?.roofArea} sq ft (${result.finalReport?.measurements?.squares} squares)
-• Facet Count: ${result.finalReport?.measurements?.facets}
-• Pitch: ${result.finalReport?.measurements?.pitch}
-• Complexity: ${result.finalReport?.measurements?.complexity}
-
-${result.finalReport?.measurements?.notes || ""}
-
-═══════════════════════════════════════════════════════════════════
-🔍 CONDITION ASSESSMENT (Agent 2: Condition Inspector)
-═══════════════════════════════════════════════════════════════════
-
-${result.agents?.condition?.professionalAssessment || ""}
-
-• Material: ${result.finalReport?.condition?.material}
-• Overall Condition: ${result.finalReport?.condition?.overallCondition}
-• Estimated Age: ${result.finalReport?.condition?.age} years
-• Remaining Life: ${result.finalReport?.condition?.remainingLife} years
-• Urgency: ${result.finalReport?.condition?.urgency}
-
-${result.finalReport?.condition?.notes || ""}
-
-═══════════════════════════════════════════════════════════════════
-💰 COST ESTIMATE (Agent 3: Cost Estimator)
-═══════════════════════════════════════════════════════════════════
-
-Recommended Material: ${result.finalReport?.costEstimate?.recommendedMaterial}
-
-Estimated Cost Range: $${result.finalReport?.costEstimate?.estimatedCost?.low?.toLocaleString()} - $${result.finalReport?.costEstimate?.estimatedCost?.high?.toLocaleString()}
-
-Cost Breakdown:
-• Materials: $${result.finalReport?.costEstimate?.breakdown?.materials?.toLocaleString()}
-• Labor: $${result.finalReport?.costEstimate?.breakdown?.labor?.toLocaleString()}
-• Tear-Off/Disposal: $${result.finalReport?.costEstimate?.breakdown?.tearOff?.toLocaleString()}
-
-Alternative Options:
-${result.finalReport?.costEstimate?.alternativeOptions?.map(opt => `• ${opt.material}: ${opt.costRange} (${opt.expectedLife} years) ${opt.recommended ? "✓ Recommended" : ""}`).join("\n") || ""}
-
-${result.finalReport?.costEstimate?.notes || ""}
-
-═══════════════════════════════════════════════════════════════════
-✅ QUALITY VALIDATION (Agent 4: Quality Controller)
-═══════════════════════════════════════════════════════════════════
-
-Overall Quality Score: ${result.metadata?.qualityScore}/100
-
-Validation Status:
-• Measurements: ${result.validation?.measurementValidation?.status}
-• Condition Assessment: ${result.validation?.conditionAlignment?.status}
-• Cost Estimate: ${result.validation?.costAlignment?.status}
-
-═══════════════════════════════════════════════════════════════════
-🎯 RECOMMENDATIONS
-═══════════════════════════════════════════════════════════════════
-
-${result.finalReport?.recommendations?.primaryRecommendation}
-
-Timeline: ${result.finalReport?.recommendations?.timeline}
-
-Priority Actions:
-${result.finalReport?.recommendations?.priorityActions?.map((action, i) => `${i + 1}. ${action}`).join("\n") || ""}
+• **Roof Size:** ${result.finalReport?.measurements?.roofArea?.toLocaleString()} sq ft (${result.finalReport?.measurements?.squares} squares)
+• **Roof Complexity:** ${result.finalReport?.measurements?.facets} facets, ${result.finalReport?.measurements?.pitch} pitch, ${result.finalReport?.measurements?.complexity} complexity
+• **Estimated Replacement Cost:** $${result.finalReport?.costEstimate?.estimatedCost?.low?.toLocaleString()} - $${result.finalReport?.costEstimate?.estimatedCost?.high?.toLocaleString()}
+• **Recommended Material:** ${result.finalReport?.costEstimate?.recommendedMaterial}
 
 ${result.finalReport?.recommendations?.budgetGuidance || ""}
-
-═══════════════════════════════════════════════════════════════════
-📋 KEY FINDINGS
-═══════════════════════════════════════════════════════════════════
-
-${result.finalReport?.keyFindings?.map((finding, i) => `${i + 1}. ${finding}`).join("\n") || ""}
-
-═══════════════════════════════════════════════════════════════════
-⚠️ DISCLAIMERS
-═══════════════════════════════════════════════════════════════════
-
-${result.finalReport?.disclaimers?.map(disclaimer => `• ${disclaimer}`).join("\n") || ""}
           `
         },
 
@@ -1871,14 +1843,20 @@ ${referenceSection}
 
       if (mapRef.current) {
         try {
-          // Center map and set optimal zoom for overhead view
+          // Apply TIGHT bounds for instant report overhead view
+          const propertySize = estimatePropertySize(
+            selectedLocation.lat,
+            selectedLocation.lng
+          )
+
+          // Use explicit zoom instead of fitBounds for instant mode too
+          mapRef.current.setTilt(0)
+          mapRef.current.setHeading(0)
           mapRef.current.setCenter({
             lat: selectedLocation.lat,
             lng: selectedLocation.lng
           })
-          mapRef.current.setZoom(21)
-          mapRef.current.setTilt(0)
-          mapRef.current.setHeading(0)
+          mapRef.current.setZoom(22) // Use maximum zoom for instant mode
 
           // Wait for map to render
           await new Promise(resolve => setTimeout(resolve, 1500))
@@ -1892,7 +1870,7 @@ ${referenceSection}
 
           if (overheadView) {
             overheadView.viewName = "Overhead Satellite View"
-            overheadView.zoomLevel = 21
+            overheadView.zoomLevel = 22 // Reflect actual zoom used
             capturedImages.push(overheadView)
             logDebug("Overhead view captured for instant mode")
           }
@@ -2320,12 +2298,14 @@ ${referenceSection}
           captureMapView={captureMapView}
           onAnalyzePropertyClick={handleAnalyzePropertyClick}
           setMapContainerRef={el => {
-            mapContainerRef.current = el
-            console.log("Map container ref set:", el ? "success" : "null")
+            if (el && !mapContainerRef.current) {
+              mapContainerRef.current = el
+            }
           }}
           setMapRef={map => {
-            mapRef.current = map
-            console.log("Map reference set:", map ? "success" : "null")
+            if (map && !mapRef.current) {
+              mapRef.current = map
+            }
           }}
           setInfoWindowRef={infoWindow => {
             infoWindowRef.current = infoWindow
