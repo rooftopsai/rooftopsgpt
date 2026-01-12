@@ -22,11 +22,32 @@ interface SubscriptionData {
   stripeCustomerId?: string
 }
 
-interface UsageData {
-  chat_messages: { used: number; limit: number | string }
-  property_reports: { used: number; limit: number | string }
-  weather_lookups: { used: number; limit: number | string }
-  document_creation: { used: number; limit: number | string }
+interface UsageStats {
+  tier: string
+  usage: {
+    reports: {
+      used: number
+      limit: number
+      remaining: number
+    }
+    chatMessages: {
+      usedPremium: number
+      usedFree: number
+      usedDaily: number
+      limitDaily: number
+      limitMonthly: number
+      remainingDaily: number
+      remainingMonthly: number
+    }
+    webSearches: {
+      used: number
+      limit: number
+      remaining: number
+    }
+    agents: {
+      enabled: boolean
+    }
+  }
 }
 
 export default function BillingPage() {
@@ -36,7 +57,8 @@ export default function BillingPage() {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(
     null
   )
-  const [usage, setUsage] = useState<UsageData | null>(null)
+  const [usage, setUsage] = useState<UsageStats | null>(null)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   useEffect(() => {
     // Check for success/cancel query params
@@ -61,7 +83,7 @@ export default function BillingPage() {
       setSubscription(subData)
 
       // Fetch usage data
-      const usageResponse = await fetch("/api/usage")
+      const usageResponse = await fetch("/api/usage/stats")
       const usageData = await usageResponse.json()
       setUsage(usageData)
     } catch (error) {
@@ -91,18 +113,38 @@ export default function BillingPage() {
     }
   }
 
-  const getUsagePercentage = (used: number, limit: number | string): number => {
-    if (limit === "unlimited") return 0
-    return Math.min((used / (limit as number)) * 100, 100)
+  const getUsagePercentage = (used: number, limit: number): number => {
+    if (limit === 0) return 0
+    return Math.min((used / limit) * 100, 100)
+  }
+
+  const handleCancelSubscription = async () => {
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST"
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        // Stripe portal handles cancellation
+        window.location.href = data.url
+      } else {
+        toast.error("Failed to open billing portal")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      toast.error("An error occurred. Please try again.")
+    }
   }
 
   const getPlanBadgeColor = (plan: string) => {
     switch (plan) {
       case "free":
         return "secondary"
-      case "pro":
+      case "premium":
         return "default"
-      case "team":
+      case "business":
         return "destructive"
       default:
         return "secondary"
@@ -171,16 +213,28 @@ export default function BillingPage() {
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {subscription?.planType !== "free" && (
-              <Button onClick={handleManageSubscription} variant="outline">
-                Manage Subscription
-              </Button>
+              <>
+                <Button onClick={handleManageSubscription} variant="outline">
+                  Update Payment Method
+                </Button>
+                <Button onClick={handleManageSubscription} variant="outline">
+                  View Billing History
+                </Button>
+                <Button
+                  onClick={handleCancelSubscription}
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Cancel Subscription
+                </Button>
+              </>
             )}
             <Button onClick={() => router.push("/pricing")}>
               {subscription?.planType === "free"
                 ? "Upgrade Plan"
-                : "View Plans"}
+                : "Change Plan"}
             </Button>
           </div>
         </CardContent>
@@ -198,42 +252,131 @@ export default function BillingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {usage &&
-            Object.entries(usage).map(([feature, data]) => {
-              const percentage = getUsagePercentage(data.used, data.limit)
-              const isNearLimit = percentage > 80 && data.limit !== "unlimited"
-
-              return (
-                <div key={feature} className="space-y-2">
+          {usage && (
+            <>
+              {/* Property Reports */}
+              {usage.usage.reports.limit > 0 && (
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium capitalize">
-                        {feature.replace(/_/g, " ")}
-                      </span>
-                      {isNearLimit && (
+                      <span className="font-medium">Property Reports</span>
+                      {getUsagePercentage(
+                        usage.usage.reports.used,
+                        usage.usage.reports.limit
+                      ) > 80 && (
                         <AlertCircle className="size-4 text-yellow-500" />
                       )}
                     </div>
                     <span className="text-muted-foreground text-sm">
-                      {data.used} /{" "}
-                      {data.limit === "unlimited" ? "∞" : data.limit}
+                      {usage.usage.reports.used} / {usage.usage.reports.limit}
                     </span>
                   </div>
-                  {data.limit !== "unlimited" && (
-                    <Progress
-                      value={percentage}
-                      className={isNearLimit ? "bg-yellow-100" : ""}
-                    />
-                  )}
-                  {isNearLimit && (
+                  <Progress
+                    value={getUsagePercentage(
+                      usage.usage.reports.used,
+                      usage.usage.reports.limit
+                    )}
+                  />
+                  {getUsagePercentage(
+                    usage.usage.reports.used,
+                    usage.usage.reports.limit
+                  ) > 80 && (
                     <p className="text-xs text-yellow-600">
                       You&apos;re approaching your monthly limit. Consider
                       upgrading your plan.
                     </p>
                   )}
                 </div>
-              )
-            })}
+              )}
+
+              {/* Chat Messages */}
+              {(usage.tier === "free"
+                ? usage.usage.chatMessages.limitDaily
+                : usage.usage.chatMessages.limitMonthly) > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {usage.tier === "free"
+                          ? "Chat Messages (Daily)"
+                          : "Premium Chat Messages"}
+                      </span>
+                      {getUsagePercentage(
+                        usage.tier === "free"
+                          ? usage.usage.chatMessages.usedDaily
+                          : usage.usage.chatMessages.usedPremium,
+                        usage.tier === "free"
+                          ? usage.usage.chatMessages.limitDaily
+                          : usage.usage.chatMessages.limitMonthly
+                      ) > 80 && (
+                        <AlertCircle className="size-4 text-yellow-500" />
+                      )}
+                    </div>
+                    <span className="text-muted-foreground text-sm">
+                      {usage.tier === "free"
+                        ? usage.usage.chatMessages.usedDaily
+                        : usage.usage.chatMessages.usedPremium}{" "}
+                      /{" "}
+                      {usage.tier === "free"
+                        ? usage.usage.chatMessages.limitDaily
+                        : usage.usage.chatMessages.limitMonthly}
+                    </span>
+                  </div>
+                  <Progress
+                    value={getUsagePercentage(
+                      usage.tier === "free"
+                        ? usage.usage.chatMessages.usedDaily
+                        : usage.usage.chatMessages.usedPremium,
+                      usage.tier === "free"
+                        ? usage.usage.chatMessages.limitDaily
+                        : usage.usage.chatMessages.limitMonthly
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Web Searches */}
+              {usage.usage.webSearches.limit > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Web Searches</span>
+                      {getUsagePercentage(
+                        usage.usage.webSearches.used,
+                        usage.usage.webSearches.limit
+                      ) > 80 && (
+                        <AlertCircle className="size-4 text-yellow-500" />
+                      )}
+                    </div>
+                    <span className="text-muted-foreground text-sm">
+                      {usage.usage.webSearches.used} /{" "}
+                      {usage.usage.webSearches.limit}
+                    </span>
+                  </div>
+                  <Progress
+                    value={getUsagePercentage(
+                      usage.usage.webSearches.used,
+                      usage.usage.webSearches.limit
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Agent Access */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Agent Library Access</span>
+                  <Badge
+                    variant={
+                      usage.usage.agents.enabled ? "default" : "secondary"
+                    }
+                  >
+                    {usage.usage.agents.enabled ? "Enabled" : "Locked"}
+                  </Badge>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
