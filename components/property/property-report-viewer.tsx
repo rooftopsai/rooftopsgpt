@@ -3,6 +3,16 @@
 
 import React, { useState } from "react"
 import { toast } from "sonner"
+import {
+  IconRuler,
+  IconHome,
+  IconCash,
+  IconSearch,
+  IconAlertTriangle,
+  IconCheck,
+  IconChartBar,
+  IconTarget
+} from "@tabler/icons-react"
 
 // ============================================================================
 // ROOFTOPS AI - INTERACTIVE ROOF REPORT VIEWER
@@ -737,7 +747,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
     {
       id: "drip",
       name: "Drip Edge",
-      icon: "📐",
+      icon: <IconRuler size={16} />,
       qty: 20,
       unit: "pcs (10ft)",
       price: materialPrices.drip || 12,
@@ -995,7 +1005,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               style={{ borderColor: theme.gray100 }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>📊</span> Roof Summary
+                <IconChartBar size={20} /> Roof Summary
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl bg-gray-50 p-3.5">
@@ -1053,7 +1063,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               style={{ borderColor: theme.gray100 }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>🔍</span> Roof Condition
+                <IconSearch size={20} /> Roof Condition
               </div>
               <div className="mb-4 flex items-center gap-4">
                 <div
@@ -1116,7 +1126,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>💰</span> Replacement Estimate
+                <IconCash size={20} /> Replacement Estimate
               </div>
               <div className="mb-4 text-center">
                 <div
@@ -1154,7 +1164,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               <div className="flex flex-col gap-2.5">
                 {[
                   {
-                    icon: "📐",
+                    icon: <IconRuler size={16} />,
                     label: "View Roof Segments",
                     tab: "roof",
                     color: theme.primary
@@ -1217,7 +1227,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               style={{ borderColor: theme.gray100 }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>📐</span> Roof Measurements
+                <IconRuler size={20} /> Roof Measurements
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl bg-gray-50 p-3.5">
@@ -1856,7 +1866,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
                   }}
                 >
                   <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                    <span>💰</span> Return on Investment
+                    <IconCash size={20} /> Return on Investment
                   </div>
                   <div className="mb-3 text-center">
                     <div className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
@@ -2108,7 +2118,7 @@ Answer questions about this property clearly and concisely. Use specific numbers
               style={{ borderColor: theme.gray100 }}
             >
               <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                <span>📐</span> Waste Factor
+                <IconRuler size={20} /> Waste Factor
               </div>
               <div className="mb-3 flex items-center gap-4">
                 <input
@@ -2357,9 +2367,13 @@ Answer questions about this property clearly and concisely. Use specific numbers
         }}
       >
         {[
-          { id: "overview", icon: "📊", label: "Overview" },
+          {
+            id: "overview",
+            icon: <IconChartBar size={16} />,
+            label: "Overview"
+          },
           { id: "roof", icon: "🏠", label: "Roof" },
-          { id: "estimate", icon: "💰", label: "Estimate" },
+          { id: "estimate", icon: <IconCash size={16} />, label: "Estimate" },
           { id: "ai", icon: "🤖", label: "AI" },
           { id: "solar", icon: "☀️", label: "Solar" }
         ].map(item => (

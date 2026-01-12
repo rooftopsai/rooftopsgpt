@@ -84,7 +84,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const [currentCaptureStage, setCurrentCaptureStage] = useState("")
   const [filteredModels, setFilteredModels] = useState(availableModels)
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null)
-  const [reportMode, setReportMode] = useState<"instant" | "agent">("instant")
+  const [reportMode, setReportMode] = useState<"instant" | "agent">("agent") // Always use agent mode
 
   // This is a direct reference to the map container div from the MapView component
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -202,38 +202,8 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     )
   }, [is3DMode, logDebug])
 
-  // Check if user can use Agent Mode (Premium or Business only)
-  const canUseAgentMode = useCallback(() => {
-    if (!subscriptionInfo) return false
-    const plan = subscriptionInfo.planType || "free"
-    return plan === "premium" || plan === "business"
-  }, [subscriptionInfo])
-
-  // Toggle report mode with subscription check
-  const handleReportModeChange = useCallback(
-    (newMode: "instant" | "agent") => {
-      if (newMode === "agent" && !canUseAgentMode()) {
-        // Redirect free users to pricing page
-        logDebug("User attempted to access Agent Mode without subscription")
-        window.location.href = "/pricing"
-        return
-      }
-
-      setReportMode(newMode)
-      logDebug(`Report mode changed to: ${newMode}`)
-
-      if (newMode === "instant") {
-        toast.info(
-          "Instant Mode: Fast reports using Solar API data only. Limited accuracy on condition and costs."
-        )
-      } else {
-        toast.success(
-          "Agent Mode: Comprehensive analysis with 4 AI specialists for maximum accuracy."
-        )
-      }
-    },
-    [canUseAgentMode, logDebug]
-  )
+  // Agent mode is now always enabled for all users
+  // No subscription check needed
 
   // Enhanced capture satellite views function with 3D mode option
   const captureSatelliteViews = async () => {
@@ -545,8 +515,8 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           logDebug("Map reference is not available for manipulation")
         }
 
-        // Allow time for map to render with new orientation
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Allow time for map to render with new orientation and tiles to load
+        await new Promise(resolve => setTimeout(resolve, 2500))
 
         // Get the direction name based on the angle
         const directionName = getDirectionName(angle)
@@ -719,6 +689,15 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       console.error(`Cannot capture ${viewName} view - container ref is null`)
       return null
     }
+
+    // Verify map is ready before capturing
+    if (!mapRef.current) {
+      console.error(`Cannot capture ${viewName} view - map is not initialized`)
+      return null
+    }
+
+    // Wait for map tiles to fully load
+    await new Promise(resolve => setTimeout(resolve, 1500))
 
     // Store original container styles for restoration (outside try block for catch access)
     const isMobile = window.innerWidth < 768
@@ -2360,9 +2339,6 @@ ${referenceSection}
           showSidebar={showSidebar}
           livePreviewImages={livePreviewImages}
           currentCaptureStage={currentCaptureStage}
-          reportMode={reportMode}
-          onReportModeChange={handleReportModeChange}
-          canUseAgentMode={canUseAgentMode()}
           hasActiveReport={!!(roofAnalysis || reportData)}
         />
       </div>

@@ -81,10 +81,6 @@ interface MapViewProps {
   currentCaptureStage?: string
   // Info window ref
   setInfoWindowRef?: (infoWindow: google.maps.InfoWindow | null) => void
-  // Report mode props
-  reportMode?: "instant" | "agent"
-  onReportModeChange?: (mode: "instant" | "agent") => void
-  canUseAgentMode?: boolean
   // Hide toggle when report is displayed
   hasActiveReport?: boolean
 }
@@ -118,9 +114,6 @@ const MapView: React.FC<MapViewProps> = ({
   availableModels,
   onToggleDebugMode,
   showSidebar = false,
-  reportMode = "instant",
-  onReportModeChange,
-  canUseAgentMode = false,
   hasActiveReport = false
 }) => {
   const [isClient, setIsClient] = useState(false)
@@ -128,7 +121,6 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapLoaded, setMapLoaded] = useState(false)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const [scriptError, setScriptError] = useState<string | null>(null)
-  const [loadTimeout, setLoadTimeout] = useState(false)
   const [center, setCenter] = useState({ lat: 39.8283, lng: -98.5795 }) // Default to US center
   const [zoom, setZoom] = useState(4)
   const [isSearching, setIsSearching] = useState(false)
@@ -174,19 +166,6 @@ const MapView: React.FC<MapViewProps> = ({
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true)
-
-    // Set a timeout for script loading - if it takes more than 15 seconds, show error
-    const timeout = setTimeout(() => {
-      if (!scriptLoaded) {
-        console.error("Google Maps script failed to load within 15 seconds")
-        setLoadTimeout(true)
-        setScriptError(
-          "Map is taking longer than expected to load. Please refresh the page."
-        )
-      }
-    }, 15000)
-
-    return () => clearTimeout(timeout)
   }, [])
 
   // Handle script loading success
@@ -194,7 +173,6 @@ const MapView: React.FC<MapViewProps> = ({
     console.log("Google Maps script loaded")
     setScriptLoaded(true)
     setScriptError(null)
-    setLoadTimeout(false)
   }, [])
 
   // Handle script loading error
@@ -203,13 +181,11 @@ const MapView: React.FC<MapViewProps> = ({
     setScriptError(
       "Failed to load map. Please check your internet connection and refresh the page."
     )
-    setLoadTimeout(true)
   }, [])
 
   // Retry loading the map
   const handleRetry = useCallback(() => {
     setScriptError(null)
-    setLoadTimeout(false)
     setScriptLoaded(false)
     // Reload the page to retry script loading
     window.location.reload()
@@ -1045,8 +1021,8 @@ const MapView: React.FC<MapViewProps> = ({
     height: "100%"
   }
 
-  // Show error state if script failed to load or timed out
-  if (scriptError || loadTimeout) {
+  // Show error state if script failed to load
+  if (scriptError) {
     return (
       <div className="explore-map-container h-full">
         <div className="flex h-full items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -1112,8 +1088,8 @@ const MapView: React.FC<MapViewProps> = ({
     ]
 
     return (
-      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md">
-        <div className="flex w-full max-w-3xl flex-col items-center space-y-8 rounded-2xl border border-gray-800 bg-gray-950/95 p-10 shadow-2xl">
+      <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+        <div className="flex max-h-[90vh] w-full max-w-3xl flex-col items-center space-y-6 overflow-y-auto rounded-2xl border border-gray-800 bg-gray-950/95 p-6 shadow-2xl md:space-y-8 md:p-10">
           {/* Status Message */}
           <div className="text-center">
             <div className="text-sm font-medium uppercase tracking-widest text-gray-400">
@@ -1428,51 +1404,6 @@ const MapView: React.FC<MapViewProps> = ({
 
         {/* Map Container */}
         <div className="relative flex-1">
-          {/* Report Mode Toggle - Centered at Top - Only show when no report is displayed */}
-          {onReportModeChange && !hasActiveReport && (
-            <div className="absolute left-1/2 top-4 z-30 -translate-x-1/2">
-              <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex items-center gap-1 p-1">
-                  <button
-                    onClick={() => onReportModeChange("instant")}
-                    className={`relative flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                      reportMode === "instant"
-                        ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
-                        : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                    }`}
-                  >
-                    <IconSparkles size={16} />
-                    Instant Mode
-                  </button>
-                  <button
-                    onClick={() => onReportModeChange("agent")}
-                    disabled={!canUseAgentMode}
-                    className={`relative flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all ${
-                      reportMode === "agent"
-                        ? "bg-gradient-to-r from-cyan-500 to-green-500 text-white shadow-sm"
-                        : canUseAgentMode
-                          ? "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                          : "cursor-not-allowed text-gray-400 opacity-50 dark:text-gray-600"
-                    }`}
-                    title={
-                      !canUseAgentMode
-                        ? "Agent Mode requires Premium or Business subscription"
-                        : ""
-                    }
-                  >
-                    <Icon3dRotate size={16} />
-                    Agent Mode
-                    {!canUseAgentMode && (
-                      <span className="ml-1 rounded bg-gradient-to-r from-cyan-500 to-green-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
-                        Premium
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {isSearching && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-60">
               <div className="flex items-center space-x-3 rounded-lg bg-gray-800 p-4 text-white">

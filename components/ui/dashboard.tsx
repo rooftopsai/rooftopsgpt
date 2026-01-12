@@ -132,7 +132,20 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     <div className="relative flex size-full overflow-hidden">
       <CommandK />
 
-      {/* Sidebar - hidden on mobile when collapsed or when explore report is active */}
+      {/* Floating hamburger button for mobile when sidebar is collapsed */}
+      {isMobile && !showSidebar && !hasActiveExploreReport && (
+        <Button
+          className="fixed left-4 top-4 z-30 size-10 bg-black/80 hover:bg-black"
+          variant="ghost"
+          size="icon"
+          onClick={handleToggleSidebar}
+          aria-label="Open sidebar"
+        >
+          <IconMenu2 size={24} className="text-white" />
+        </Button>
+      )}
+
+      {/* Sidebar - always part of layout flow */}
       {(!isMobile || showSidebar) && !hasActiveExploreReport && (
         <div
           className={cn(
@@ -154,7 +167,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
           }}
         >
           <Tabs
-            className="flex h-full"
+            className="flex size-full"
             value={contentType}
             onValueChange={val => {
               setContentType(val as ContentType)
@@ -162,7 +175,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
             }}
           >
             {!showSidebar ? (
-              <div className="flex h-full flex-col bg-black">
+              <div className="flex size-full flex-col bg-black">
                 {/* Rooftops AI logo with expand button */}
                 <div className="flex flex-col items-center border-b border-gray-800/50 px-2 py-3">
                   <div

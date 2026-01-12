@@ -17,7 +17,13 @@ import {
   IconHomeEco,
   IconPhoto,
   IconClipboardData,
-  IconBulb
+  IconBulb,
+  IconSearch,
+  IconCheck,
+  IconTarget,
+  IconAlertTriangle,
+  IconClipboard,
+  IconChartBar
 } from "@tabler/icons-react"
 import {
   Accordion,
@@ -529,13 +535,25 @@ const CombinedReport: FC<CombinedReportProps> = ({
             {section.title && (
               <h4 className="mb-3 flex items-center gap-2 border-b border-gray-200 pb-2 text-sm font-semibold uppercase tracking-wide text-gray-900 dark:border-gray-700 dark:text-gray-100">
                 <span className="text-blue-500 dark:text-blue-400">
-                  {section.title.includes("MEASUREMENTS") && "📐"}
-                  {section.title.includes("CONDITION") && "🔍"}
-                  {section.title.includes("COST") && "💰"}
-                  {section.title.includes("QUALITY") && "✅"}
-                  {section.title.includes("RECOMMENDATIONS") && "🎯"}
-                  {section.title.includes("KEY FINDINGS") && "📋"}
-                  {section.title.includes("DISCLAIMERS") && "⚠️"}
+                  {section.title.includes("MEASUREMENTS") && (
+                    <IconRuler size={18} />
+                  )}
+                  {section.title.includes("CONDITION") && (
+                    <IconSearch size={18} />
+                  )}
+                  {section.title.includes("COST") && (
+                    <IconCurrencyDollar size={18} />
+                  )}
+                  {section.title.includes("QUALITY") && <IconCheck size={18} />}
+                  {section.title.includes("RECOMMENDATIONS") && (
+                    <IconTarget size={18} />
+                  )}
+                  {section.title.includes("KEY FINDINGS") && (
+                    <IconClipboard size={18} />
+                  )}
+                  {section.title.includes("DISCLAIMERS") && (
+                    <IconAlertTriangle size={18} />
+                  )}
                 </span>
                 {section.title.replace(/[📐🔍💰✅🎯📋⚠️]/g, "").trim()}
               </h4>
@@ -818,7 +836,7 @@ Generate a comprehensive estimate breakdown. Provide the estimate in this EXACT 
 
 ---
 
-### 💰 Cost Breakdown
+### Cost Breakdown
 
 **1. Materials**
 - ${squares} squares × $${pricePerSquare} = [calculate exact amount]
@@ -850,7 +868,7 @@ Generate a comprehensive estimate breakdown. Provide the estimate in this EXACT 
 
 ---
 
-### 📊 TOTAL ESTIMATE
+### TOTAL ESTIMATE
 
 **Low Range**: [calculate]
 **High Range**: [calculate]
@@ -869,7 +887,7 @@ Provide 3-4 bullet points about:
 
 ---
 
-**⚠️ Disclaimer**: Rough estimate based on satellite imagery. Actual costs vary based on local rates, materials, contractor markup, and hidden damage. Get multiple quotes from licensed contractors.
+**Disclaimer**: Rough estimate based on satellite imagery. Actual costs vary based on local rates, materials, contractor markup, and hidden damage. Get multiple quotes from licensed contractors.
 
 Be realistic and professional. Show actual calculations.`
 
