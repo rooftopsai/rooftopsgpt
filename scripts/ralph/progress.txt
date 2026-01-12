@@ -437,16 +437,44 @@ Started: Mon Jan 12 00:17:36 CST 2026
 
 ---
 
-## Iteration 3 Progress Summary
+### US-17: Usage Counter Component ✅
+**Status**: COMPLETE
+**Commit**: 89f866b
 
-**Stories Completed**: 16 out of 36 (44%)
-**Recent Batch**: US-10 through US-16 (7 stories)
+**What was implemented**:
+- Updated `/components/sidebar/usage-stats.tsx` to use new tier-based usage API
+- Changed endpoint from `/api/usage` to `/api/usage/stats`
+- Shows Reports, Chat Messages, and Web Searches with progress bars
+- Color-coded progress bars: Green (<75%), Yellow (75-90%), Red (>90%)
+- Different chat displays: "Chat (Daily)" for free tier, "Chat Messages" for premium/business
+- Only shows features that have limits (hides unlimited ones)
+- "Upgrade Plan" button only shown for free tier
+- Already integrated in sidebar (no layout changes needed)
+
+**API Integration**:
+- Uses `/api/usage/stats` endpoint (already exists from US-1/2)
+- Returns tier info and usage stats for all features
+- Supports both daily limits (free tier) and monthly limits (paid tiers)
+
+**UI Patterns**:
+- Tabler icons for each feature
+- Progress bars with percentage calculation
+- Color transitions at 75% and 90% thresholds
+- "Limit reached" warning when at 100%
+
+---
+
+## Iteration 4 Progress Summary
+
+**Stories Completed**: 17 out of 36 (47%)
+**Recent Batch**: US-10 through US-17 (8 stories)
 **Major Milestones**:
 - ✅ Agent library paywall UI complete
 - ✅ Agent backend enforcement complete
 - ✅ Pricing page updated with accurate tiers
 - ✅ Full Stripe integration verified and enhanced
 - ✅ Checkout success page created
+- ✅ Usage counter component updated and functional
 
-**Next Focus**: US-17+ (Dashboard, usage counters, account settings)
+**Next Focus**: US-18+ (Account settings, Stripe portal, UX enhancements)
 
