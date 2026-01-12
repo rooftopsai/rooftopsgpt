@@ -1,10 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import {
-  requireFeatureAccess,
-  trackAndCheckFeature
-} from "@/lib/subscription-helpers"
+import { checkReportLimit } from "@/lib/entitlements"
+import { incrementReportUsage } from "@/db/user-usage"
 
 // GET - Fetch all property reports for the current user
 export async function GET(request: Request) {
@@ -62,14 +60,15 @@ export async function POST(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    // Check if user has access to property_reports feature
-    const accessCheck = await requireFeatureAccess(user.id, "property_reports")
-    if (!accessCheck.allowed) {
+    // Check if user can generate another report
+    const limitCheck = await checkReportLimit(user.id)
+    if (!limitCheck.allowed) {
       return NextResponse.json(
         {
-          error: accessCheck.error,
-          limit: accessCheck.limit,
-          currentUsage: accessCheck.currentUsage
+          error: "REPORT_LIMIT_REACHED",
+          message: "You've reached your report generation limit for this month",
+          remaining: limitCheck.remaining,
+          limit: limitCheck.limit
         },
         { status: 403 }
       )
@@ -164,10 +163,21 @@ export async function POST(request: Request) {
     }
 
     // Track the usage after successful report creation
-    await trackAndCheckFeature(user.id, "property_reports", 1)
+    const updatedUsage = await incrementReportUsage(user.id)
+    console.log(
+      "✅ Property report created successfully:",
+      report.id,
+      "Usage:",
+      updatedUsage.reports_generated
+    )
 
-    console.log("✅ Property report created successfully:", report.id)
-    return NextResponse.json(report)
+    return NextResponse.json({
+      ...report,
+      usage: {
+        remaining: limitCheck.limit - updatedUsage.reports_generated,
+        limit: limitCheck.limit
+      }
+    })
   } catch (error: any) {
     console.error("Error in POST /api/property-reports:", error)
     const errorMessage = error.message || "Internal server error"

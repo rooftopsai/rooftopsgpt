@@ -2,12 +2,41 @@
   "permissions": {
     "filesystem": {
       "read": "always",
-      "write": "always"
+      "write": "always",
+      "delete": "ask"
     },
     "command": {
       "git": "always",
       "npm": "always",
-      "npx": "always"
+      "npx": "always",
+      "tsc": "always"
     }
+  },
+  "autoApprove": {
+    "commands": [
+      "git add",
+      "git commit",
+      "npm install",
+      "npm run",
+      "npx",
+      "tsc"
+    ],
+    "filePatterns": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.json",
+      "**/*.md",
+      "**/*.css",
+      "prisma/**",
+      "src/**",
+      "app/**",
+      "components/**",
+      "lib/**"
+    ]
+  },
+  "ralph": {
+    "autonomousMode": true
   }
 }

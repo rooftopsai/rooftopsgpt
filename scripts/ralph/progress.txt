@@ -117,3 +117,34 @@ Started: Mon Jan 12 00:17:36 CST 2026
 - All functions update atomically, create month record if needed, return updated counts
 
 ---
+
+### US-4: Signup Modal Component ✅
+**Status**: COMPLETE
+**Commit**: db6f25a
+
+**What was implemented**:
+- Created `/components/modals/signup-modal.tsx` using Radix Dialog
+- Modal shows when unauthenticated user clicks "Analyze Property"
+- Supports email/password signup and signin
+- Supports Google OAuth signin
+- Created API routes:
+  - `/app/api/auth/signup/route.ts`: Handles email/password signup
+  - `/app/api/auth/signin/route.ts`: Handles email/password signin
+  - `/app/api/auth/google/route.ts`: Handles Google OAuth flow
+
+**Patterns Used**:
+- Used Radix Dialog components from `/components/ui/dialog.tsx`
+- Followed existing auth patterns from `/app/[locale]/login/page.tsx`
+- Used Supabase Auth (`supabase.auth.signUp`, `signInWithPassword`, `signInWithOAuth`)
+- API routes use NextResponse.json for responses
+- Server-side Supabase client from `/lib/supabase/server.ts`
+
+**Features**:
+- Toggle between signup and signin modes
+- Email/password authentication
+- Google OAuth integration
+- Error handling and loading states
+- Auto-reload on success to update auth state
+- Responsive design matching existing UI
+
+---
