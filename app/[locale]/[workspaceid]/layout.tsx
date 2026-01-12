@@ -19,6 +19,7 @@ import { Dashboard } from "@/components/ui/dashboard"
 import { UsageWarningProvider } from "@/components/usage/usage-warning-provider"
 import { OnboardingModal } from "@/components/modals/onboarding-modal"
 import { PaymentFailureBanner } from "@/components/billing/payment-failure-banner"
+import { CancellationNoticeBanner } from "@/components/billing/cancellation-notice-banner"
 import { toast } from "sonner"
 
 interface WorkspaceLayoutProps {
@@ -65,8 +66,31 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
     inGracePeriod: boolean
     daysRemaining: number
   } | null>(null)
+  const [cancellationInfo, setCancellationInfo] = useState<{
+    isCancelled: boolean
+    tier: string
+    endDate: string
+  } | null>(null)
 
   const handleUpdatePayment = async () => {
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST"
+      })
+
+      if (response.ok) {
+        const { url } = await response.json()
+        window.location.href = url
+      } else {
+        toast.error("Failed to open billing portal")
+      }
+    } catch (error) {
+      console.error("Error opening billing portal:", error)
+      toast.error("An error occurred. Please try again.")
+    }
+  }
+
+  const handleReactivateSubscription = async () => {
     try {
       const response = await fetch("/api/stripe/portal", {
         method: "POST"
@@ -165,6 +189,21 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
               console.error("Error loading grace period:", error)
             }
           }
+
+          // Check for cancelled subscriptions
+          if (subscription.cancel_at_period_end) {
+            try {
+              const cancelResponse = await fetch(
+                "/api/subscription/cancellation"
+              )
+              if (cancelResponse.ok) {
+                const { cancellation } = await cancelResponse.json()
+                setCancellationInfo(cancellation)
+              }
+            } catch (error) {
+              console.error("Error loading cancellation info:", error)
+            }
+          }
         }
       }
     } catch (error) {
@@ -229,6 +268,15 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
         <PaymentFailureBanner
           daysRemaining={gracePeriodInfo.daysRemaining}
           onUpdatePayment={handleUpdatePayment}
+        />
+      )}
+
+      {/* Cancellation notice banner - show above Dashboard */}
+      {cancellationInfo && (
+        <CancellationNoticeBanner
+          tier={cancellationInfo.tier}
+          endDate={cancellationInfo.endDate}
+          onReactivate={handleReactivateSubscription}
         />
       )}
 

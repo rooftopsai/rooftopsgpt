@@ -55,6 +55,7 @@ const GRACE_PERIOD_DAYS = 7
  * Get user's current tier
  * Returns 'free' if no subscription exists
  * Handles grace period for past_due subscriptions
+ * Handles cancelled subscriptions (active until current_period_end)
  */
 export async function getUserTier(userId: string): Promise<Tier> {
   try {
@@ -92,6 +93,21 @@ export async function getUserTier(userId: string): Promise<Tier> {
     // Only allow tier access if status is 'active'
     if (subscription.status !== "active") {
       return "free"
+    }
+
+    // Handle cancelled subscriptions (cancel_at_period_end = true)
+    // These remain active until current_period_end
+    if (subscription.cancel_at_period_end && subscription.current_period_end) {
+      const periodEnd = new Date(subscription.current_period_end)
+      const now = new Date()
+
+      if (now > periodEnd) {
+        // Period has ended - downgrade to free
+        return "free"
+      }
+
+      // Still within period - allow tier access
+      return tier
     }
 
     return tier
@@ -145,6 +161,46 @@ export async function getGracePeriodInfo(userId: string): Promise<{
     }
   } catch (error) {
     console.error(`Error getting grace period info for ${userId}:`, error)
+    return null
+  }
+}
+
+/**
+ * Get cancellation info for a subscription that's been cancelled
+ */
+export async function getCancellationInfo(userId: string): Promise<{
+  isCancelled: boolean
+  tier: string
+  endDate: string
+} | null> {
+  try {
+    const subscription = await getSubscriptionByUserId(userId)
+
+    if (
+      !subscription ||
+      !subscription.cancel_at_period_end ||
+      !subscription.current_period_end
+    ) {
+      return null
+    }
+
+    const periodEnd = new Date(subscription.current_period_end)
+    const now = new Date()
+
+    // Only show cancellation notice if still within the period
+    if (now > periodEnd) {
+      return null
+    }
+
+    const tier = (subscription.tier || subscription.plan_type || "free") as Tier
+
+    return {
+      isCancelled: true,
+      tier: tier.charAt(0).toUpperCase() + tier.slice(1), // Capitalize
+      endDate: subscription.current_period_end
+    }
+  } catch (error) {
+    console.error(`Error getting cancellation info for ${userId}:`, error)
     return null
   }
 }
