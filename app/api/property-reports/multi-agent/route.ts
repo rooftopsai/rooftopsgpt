@@ -375,6 +375,13 @@ export async function POST(req: NextRequest) {
       flaggedIssues: agentResults.quality?.data?.flaggedIssues,
       overallConfidence: agentResults.quality?.data?.overallConfidence,
 
+      // Solar data (if provided)
+      solarData: solarData,
+
+      // Captured images
+      capturedImages: capturedImages,
+      satelliteViews: capturedImages,
+
       // Performance metrics
       performance: {
         totalTime,
@@ -397,7 +404,9 @@ export async function POST(req: NextRequest) {
         hasSolarData: !!solarData,
         agentsUsed: 4,
         qualityScore: agentResults.quality?.data?.metadata?.qualityScore,
-        readyForCustomer: agentResults.quality?.data?.metadata?.readyForCustomer
+        readyForCustomer:
+          agentResults.quality?.data?.metadata?.readyForCustomer,
+        solarData: solarData
       }
     }
 

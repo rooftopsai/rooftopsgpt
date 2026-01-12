@@ -92,20 +92,45 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
 
   // Extract data from reportData with safe fallbacks
   const roofData = React.useMemo(() => {
-    const measurements =
-      reportData?.structuredData || reportData?.measurements || {}
-    const segments =
-      reportData?.roofSegments ||
-      solarData?.solarPotential?.roofSegmentStats ||
-      []
-    const condition = reportData?.roofCondition || {}
-    const estimate = reportData?.costEstimate || {}
+    // Check if this is agent mode data (multi-agent analysis)
+    const isAgentMode = reportData?.multiAgent || reportData?.agents
+
+    // For agent mode, extract from agent results
+    const measurements = isAgentMode
+      ? reportData?.agents?.measurement?.roofMetrics ||
+        reportData?.finalReport?.roofMetrics ||
+        {}
+      : reportData?.structuredData || reportData?.measurements || {}
+
+    const segments = isAgentMode
+      ? reportData?.agents?.measurement?.roofSegments ||
+        reportData?.finalReport?.roofSegments ||
+        solarData?.solarPotential?.roofSegmentStats ||
+        []
+      : reportData?.roofSegments ||
+        solarData?.solarPotential?.roofSegmentStats ||
+        []
+
+    const condition = isAgentMode
+      ? reportData?.agents?.condition ||
+        reportData?.finalReport?.roofCondition ||
+        {}
+      : reportData?.roofCondition || {}
+
+    const estimate = isAgentMode
+      ? reportData?.agents?.cost || reportData?.finalReport?.costEstimate || {}
+      : reportData?.costEstimate || {}
+
     const solar = solarData?.solarPotential || reportData?.solarPotential || {}
 
     return {
       property: {
-        address: reportData?.address || "Property Address",
-        coordinates: reportData?.location || { lat: 0, lng: 0 },
+        address:
+          reportData?.metadata?.address ||
+          reportData?.address ||
+          "Property Address",
+        coordinates: reportData?.metadata?.location ||
+          reportData?.location || { lat: 0, lng: 0 },
         imageDate: reportData?.imageryDate?.year
           ? `${reportData.imageryDate.year}-${String(reportData.imageryDate.month).padStart(2, "0")}-${String(reportData.imageryDate.day).padStart(2, "0")}`
           : "2024"

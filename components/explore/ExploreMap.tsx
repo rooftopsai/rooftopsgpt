@@ -590,10 +590,13 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       // Send views to Multi-Agent system for comprehensive analysis
       const analysisResult = await sendToMultiAgentSystem(views, solarMetrics)
 
-      // Store the captured views in the analysis result
+      // Store the captured views and solar data in the analysis result
       if (analysisResult) {
         analysisResult.capturedImages = views
         analysisResult.satelliteViews = views
+        if (solarMetrics && !analysisResult.solarData) {
+          analysisResult.solarData = solarMetrics
+        }
       }
 
       setRoofAnalysis(analysisResult)
@@ -2438,9 +2441,17 @@ ${referenceSection}
         <div className="absolute inset-0 z-20">
           <PropertyReportViewer
             reportData={roofAnalysis || reportData}
-            solarData={reportData?.solar || reportData?.solarMetrics}
+            solarData={
+              roofAnalysis?.solarData ||
+              roofAnalysis?.metadata?.solarData ||
+              reportData?.solar ||
+              reportData?.solarMetrics
+            }
             images={
-              roofAnalysis?.satelliteViews || reportData?.capturedImages || []
+              roofAnalysis?.capturedImages ||
+              roofAnalysis?.satelliteViews ||
+              reportData?.capturedImages ||
+              []
             }
             onClose={() => {
               setRoofAnalysis(null)
