@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         }
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_URL}?subscription_success=true&plan=${planType}&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing?canceled=true`,
       metadata: {
         userId: profile.user_id,
