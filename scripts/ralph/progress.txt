@@ -1268,3 +1268,90 @@ Started: Mon Jan 12 00:17:36 CST 2026
 **Result**:
 Solar tab now correctly parses and displays Google Solar API data including system size (kW), production (kWh/year), and savings ($). When data is unavailable, shows user-friendly empty state instead of confusing "0" values.
 
+
+---
+
+## Iteration 20
+
+### US-31: Create Demo Accounts for Testing ✅
+**Status**: COMPLETE
+**Commit**: (pending)
+
+**What was implemented**:
+- Created comprehensive SQL seed script: `supabase/seed_demo_accounts.sql`
+- Generates 3 demo accounts with different tier levels and realistic usage patterns
+- Automatically creates profiles and workspaces via existing triggers
+- Sets up subscriptions and usage records for each tier
+- Created detailed documentation: `DEMO_ACCOUNTS.md`
+- Updated main README with testing section
+
+**Demo Accounts Created**:
+
+1. **demo-free@rooftops.test** (Free Tier)
+   - Password: `demo123`
+   - Usage: 1/1 reports (at limit), 3/5 chat messages today
+   - No web search or agent access
+   - Tests: Upgrade modals, daily limit enforcement
+
+2. **demo-premium@rooftops.test** (Premium $29/mo)
+   - Password: `demo123`
+   - Usage: 8/20 reports, 450/1000 messages, 22/50 searches
+   - Full agent library access
+   - Tests: Usage counters, warnings at 80%, feature access
+
+3. **demo-business@rooftops.test** (Business $99/mo)
+   - Password: `demo123`
+   - Usage: 45/100 reports, 2300/5000 messages, 120/250 searches
+   - Full features with higher limits
+   - Tests: Higher tier limits, all features enabled
+
+**Files Created**:
+- `supabase/seed_demo_accounts.sql` (269 lines)
+  - Uses bcrypt password hashing via `crypt('demo123', gen_salt('bf'))`
+  - Leverages existing `create_profile_and_workspace()` trigger
+  - Inserts into auth.users, updates profiles, creates subscriptions and usage records
+  - Includes pg_sleep() delays to allow triggers to complete
+  - Outputs NOTICE messages for verification
+- `DEMO_ACCOUNTS.md` (350+ lines)
+  - Quick reference table with all credentials
+  - Setup instructions for Supabase SQL Editor, CLI, and psql
+  - Detailed account specifications and expected behaviors
+  - 4 comprehensive testing scenarios
+  - SQL snippets for resetting/deleting accounts
+  - Troubleshooting section
+  - Security warnings
+
+**Files Modified**:
+- `README.md`:
+  - Added "Testing" section with demo account overview
+  - Links to DEMO_ACCOUNTS.md for full details
+  - Security note about dev/testing only
+
+**Database Structure**:
+- `auth.users` - Supabase authentication (manual insert)
+- `profiles` - Auto-created via trigger with username/display_name updates
+- `workspaces` - Auto-created via trigger (home workspace)
+- `subscriptions` - Manual insert with tier/status/period
+- `user_usage` - Manual insert with current month usage data
+
+**Key Design Decisions**:
+1. **Password:** All accounts use `demo123` (bcrypt hashed) for easy testing
+2. **No Stripe:** `stripe_customer_id` and `stripe_subscription_id` set to NULL (not required for tier testing)
+3. **Current Month:** Usage records use TO_CHAR(CURRENT_DATE, 'YYYY-MM') for automatic month tracking
+4. **Realistic Usage:** Accounts set to different usage levels to test various scenarios (at limit, moderate, high)
+5. **Onboarding Skipped:** `has_onboarded = true` to bypass onboarding modal
+6. **Trigger Utilization:** Leverages existing create_profile_and_workspace() trigger instead of manual inserts
+
+**Testing Scenarios Documented**:
+1. Free tier limits (reports, chat, agents, search)
+2. Premium tier usage tracking and counters
+3. Business tier higher limits
+4. Usage warnings at 80% thresholds
+
+**Result**:
+✅ 3 demo accounts ready for immediate testing
+✅ Comprehensive documentation for QA and development
+✅ Easy setup via single SQL script execution
+✅ Reset and cleanup procedures documented
+✅ All tier features can now be tested systematically
+

@@ -283,6 +283,29 @@ Click "Deploy" and wait for your frontend to deploy.
 
 Once deployed, you should be able to use your hosted instance of Chatbot UI via the URL Vercel gives you.
 
+## Testing
+
+### Demo Accounts
+
+For testing the tier-based subscription system, we provide pre-configured demo accounts with realistic usage data:
+
+- **Free Tier:** `demo-free@rooftops.test` (password: `demo123`)
+- **Premium Tier:** `demo-premium@rooftops.test` (password: `demo123`)
+- **Business Tier:** `demo-business@rooftops.test` (password: `demo123`)
+
+See [DEMO_ACCOUNTS.md](./DEMO_ACCOUNTS.md) for:
+- Full account details and usage limits
+- Setup instructions
+- Testing scenarios
+- How to reset or delete demo accounts
+
+**Setup:**
+1. Run the seed script: `supabase/seed_demo_accounts.sql`
+2. Use Supabase SQL Editor or CLI to execute
+3. Log in with any demo account to test tier features
+
+⚠️ **Security Note:** Demo accounts are for development/testing only. Never use in production.
+
 ## Contributing
 
 We are working on a guide for contributing.

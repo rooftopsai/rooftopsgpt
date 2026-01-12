@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-12
 **Status**: ✅ PRODUCTION READY (Core System Complete)
-**Progress**: 30/36 User Stories (83%)
+**Progress**: 31/36 User Stories (86%)
 
 ---
 
@@ -106,13 +106,19 @@
 - ✅ Financial savings calculation
 - ✅ Empty state for missing solar data
 
+### Testing Infrastructure (US-31)
+- ✅ SQL seed script for demo accounts (`supabase/seed_demo_accounts.sql`)
+- ✅ 3 demo accounts (free, premium, business) with realistic usage
+- ✅ Comprehensive documentation (`DEMO_ACCOUNTS.md`)
+- ✅ Testing scenarios and reset procedures
+- ✅ README updated with testing section
+
 ---
 
-## 🔧 REMAINING WORK (US-31 to US-36)
+## 🔧 REMAINING WORK (US-32 to US-36)
 
-### Testing & Polish (US-31 to US-36)
-- ⏳ Demo accounts for each tier
-- ⏳ End-to-end testing
+### Testing & Polish (US-32 to US-36)
+- ⏳ End-to-end testing with demo accounts
 - ⏳ Mobile responsiveness audit
 - ⏳ Accessibility improvements (WCAG AA)
 - ⏳ Performance optimization
@@ -297,12 +303,13 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 📊 SUCCESS METRICS
 
-- ✅ 83% of user stories complete (30/36)
-- ✅ 40 commits across implementation
-- ✅ ~60+ files modified
+- ✅ 86% of user stories complete (31/36)
+- ✅ 41 commits across implementation
+- ✅ ~62+ files modified/created
 - ✅ 12 new components created
 - ✅ 5 new API endpoints
 - ✅ 2 new database tables (+ 1 field migration)
+- ✅ 3 demo accounts ready for testing
 - ✅ All builds compile successfully
 - ✅ Zero blocking issues for production
 - ✅ 4 pre-existing bugs fixed (images, roof tab, chat errors, solar parsing)
