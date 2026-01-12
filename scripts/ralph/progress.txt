@@ -38,3 +38,36 @@ Started: Mon Jan 12 00:17:36 CST 2026
 - API routes should use NextResponse.json
 
 ---
+
+### US-1: Database Schema & Migrations ✅
+**Status**: COMPLETE
+**Commit**: 319caf3
+
+**What was implemented**:
+- Created migration `20260112_add_tier_system_usage.sql`
+- Added `user_usage` table with columns: user_id, month, reports_generated, chat_messages_premium, chat_messages_free, web_searches, last_chat_date, daily_chat_count
+- Added `tier` column to subscriptions table (alias for plan_type for PRD consistency)
+- Created indexes for performance
+- Added RLS policies for security
+- Created `/db/user-usage.ts` with query functions:
+  - `getUserUsage()`, `getOrCreateUserUsage()`
+  - `incrementReportUsage()`, `incrementChatUsage()`, `incrementWebSearchUsage()`
+  - `resetDailyChatCount()` for daily limit resets
+
+**Patterns Used**:
+- Followed existing Supabase migration pattern in `/supabase/migrations`
+- Used existing RLS policy patterns
+- Created database query functions in `/db` directory matching existing patterns
+- Used service role Supabase client for database operations
+
+**Adaptations Made**:
+- Kept existing `subscriptions` table, added `tier` column alongside `plan_type`
+- Created new `user_usage` table instead of modifying `feature_usage` (kept both for compatibility)
+- Updated status values to match PRD ('active', 'cancelled', 'past_due')
+
+**Learnings**:
+- Migration will be applied when Supabase is running locally (Docker needed)
+- Service role client needed for server-side database operations
+- UNIQUE constraint on (user_id, month) prevents duplicate records
+
+---

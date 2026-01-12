@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "filesystem": {
+      "read": "always",
+      "write": "always"
+    },
+    "command": {
+      "git": "always",
+      "npm": "always",
+      "npx": "always"
+    }
+  }
+}
