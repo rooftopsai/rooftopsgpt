@@ -4,12 +4,19 @@ import { Tables } from "@/supabase/types"
 import { FC, useContext, useState } from "react"
 import { Message } from "../messages/message"
 import { loadDocument, setDocumentMode } from "@/lib/stores/document-store"
+import { ChatTypingIndicator } from "./chat-typing-indicator"
 
 interface ChatMessagesProps {}
 
 export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
-  const { chatMessages, chatFileItems, chatFiles, newMessageFiles } =
-    useChatbotUI()
+  const {
+    chatMessages,
+    chatFileItems,
+    chatFiles,
+    newMessageFiles,
+    isGenerating,
+    firstTokenReceived
+  } = useChatbotUI()
   const { handleSendEdit } = useChatHandler()
   const [editingMessage, setEditingMessage] = useState<Tables<"messages">>()
 
@@ -29,7 +36,7 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
     return documentMatch ? documentMatch[1] : null
   }
 
-  return chatMessages
+  const sortedMessages = chatMessages
     .sort((a, b) => a.message.sequence_number - b.message.sequence_number)
     .map((chatMessage, index, array) => {
       const messageFileItems = chatFileItems.filter(
@@ -97,4 +104,12 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
         />
       )
     })
+
+  return (
+    <>
+      {sortedMessages}
+      {/* Show typing indicator when generating but before first token */}
+      {isGenerating && !firstTokenReceived && <ChatTypingIndicator />}
+    </>
+  )
 }

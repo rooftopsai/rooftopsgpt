@@ -174,7 +174,7 @@ function PricingContent() {
               {currentTier === "premium"
                 ? "Current Plan"
                 : loadingPlan === "premium"
-                  ? "Loading..."
+                  ? "Redirecting to checkout..."
                   : "Upgrade to Premium"}
             </Button>
           </div>
@@ -234,7 +234,7 @@ function PricingContent() {
               {currentTier === "business"
                 ? "Current Plan"
                 : loadingPlan === "business"
-                  ? "Loading..."
+                  ? "Redirecting to checkout..."
                   : "Upgrade to Business"}
             </Button>
           </div>
