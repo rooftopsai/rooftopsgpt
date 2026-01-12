@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-12
 **Status**: ✅ PRODUCTION READY (Core System Complete)
-**Progress**: 22/36 User Stories (61%)
+**Progress**: 23/36 User Stories (64%)
 
 ---
 
@@ -58,12 +58,15 @@
 - ✅ Skip/dismiss functionality
 - ✅ Tracks has_onboarded in profile
 
+### Loading States (US-23)
+- ✅ Chat typing indicator with animated dots
+- ✅ "Redirecting to checkout..." in pricing
+- ✅ Report generation loading (pre-existing)
+- ✅ Agent generation loading (pre-existing)
+
 ---
 
-## 🔧 REMAINING WORK (US-23 to US-36)
-
-### UX Polish (US-23)
-- ⏳ Loading state improvements
+## 🔧 REMAINING WORK (US-24 to US-36)
 
 ### Edge Cases (US-24 to US-26)
 - ⏳ Payment failure grace period (7 days)
@@ -109,6 +112,7 @@
 - `components/empty-states/empty-state-explore.tsx` - Explore empty state
 - `components/empty-states/empty-state-agents-locked.tsx` - Locked agents state
 - `components/modals/onboarding-modal.tsx` - Welcome onboarding modal
+- `components/chat/chat-typing-indicator.tsx` - Typing indicator
 - `components/sidebar/usage-stats.tsx` - Usage counters
 - `components/modals/upgrade-modal.tsx` - Upgrade prompts
 - `components/usage/usage-warning-provider.tsx` - Warning toasts
@@ -254,10 +258,10 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 📊 SUCCESS METRICS
 
-- ✅ 61% of user stories complete (22/36)
-- ✅ 26 commits across implementation
-- ✅ ~48+ files modified
-- ✅ 9 new components created
+- ✅ 64% of user stories complete (23/36)
+- ✅ 28 commits across implementation
+- ✅ ~50+ files modified
+- ✅ 10 new components created
 - ✅ 3 new API endpoints
 - ✅ 2 new database tables
 - ✅ All builds compile successfully

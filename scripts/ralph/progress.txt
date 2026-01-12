@@ -780,3 +780,42 @@ Started: Mon Jan 12 00:17:36 CST 2026
 
 ---
 
+
+## Iteration 10
+
+### US-23: Loading States for Async Operations ✅
+**Status**: COMPLETE
+**Commit**: 35dd47a
+
+**What was implemented**:
+- Created `/components/chat/chat-typing-indicator.tsx`
+  - Animated typing indicator with 3 bouncing dots
+  - Shows robot avatar icon
+  - Uses staggered animation delays (0ms, 200ms, 400ms)
+  - Matches assistant message styling
+
+- Integrated into chat messages (`components/chat/chat-messages.tsx`)
+  - Shows typing indicator when `isGenerating && !firstTokenReceived`
+  - Appears before assistant starts streaming response
+  - Gives immediate feedback that AI is thinking
+
+- Updated checkout loading text (`app/[locale]/pricing/page.tsx`)
+  - Changed "Loading..." to "Redirecting to checkout..."
+  - More descriptive and professional
+  - Applied to both Premium and Business plan buttons
+
+**Already Existing Loading States** (verified no changes needed):
+- Report generation: ReportLoading component shows "Analyzing Property..." with spinner
+- Agent generation: Shows "Generating..." with IconLoader2 spinner + disabled buttons
+- Workspace layout: Shows spinner during initial data load
+
+**Result**: All major async operations now have professional, contextual loading feedback
+
+**User Experience**:
+- Users see immediate feedback when starting any async action
+- Typing dots provide conversational feel in chat
+- Clear messaging ("Redirecting to checkout..." vs generic "Loading...")
+- Consistent loading patterns across the application
+
+---
+
