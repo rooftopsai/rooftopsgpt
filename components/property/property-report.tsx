@@ -156,33 +156,97 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
     }
   }
 
-  // Load solar data safely
+  // Load solar data safely - handles both Google Solar API structure and simplified structure
   const loadSolarData = () => {
-    const potential =
-      safeExtract(data, "solar.potential", {}) ||
-      safeExtract(data, "propertyData.solar.potential", {}) ||
-      {}
+    // Try to get simplified structure first (legacy format)
+    let potential =
+      safeExtract(data, "solar.potential", null) ||
+      safeExtract(data, "propertyData.solar.potential", null)
 
-    const financials =
-      safeExtract(data, "solar.financials", {}) ||
-      safeExtract(data, "propertyData.solar.financials", {}) ||
-      {}
+    let financials =
+      safeExtract(data, "solar.financials", null) ||
+      safeExtract(data, "propertyData.solar.financials", null)
+
+    // If not found, try to extract from Google Solar API structure
+    if (!potential || Object.keys(potential).length === 0) {
+      const solarPotential =
+        safeExtract(data, "solarData.solarPotential", null) ||
+        safeExtract(data, "metadata.solarData.solarPotential", null) ||
+        safeExtract(data, "solar_metrics.solarPotential", null) ||
+        {}
+
+      if (solarPotential && Object.keys(solarPotential).length > 0) {
+        // Extract from Google Solar API response structure
+        const panelCount = solarPotential.maxArrayPanelsCount || 0
+        const panelCapacityWatts = solarPotential.panelCapacityWatts || 400
+        const sunshineHours = solarPotential.maxSunshineHoursPerYear || 0
+        const yearlyEnergyDcKwh = solarPotential.yearlyEnergyDcKwh || 0
+
+        // Calculate yearly energy (use API value if available, otherwise calculate)
+        const yearlyEnergy =
+          yearlyEnergyDcKwh ||
+          Math.round((panelCount * panelCapacityWatts * sunshineHours) / 1000)
+
+        potential = {
+          maxPanels: panelCount,
+          yearlyEnergy: yearlyEnergy,
+          sunshineHours: sunshineHours,
+          panelCapacityWatts: panelCapacityWatts,
+          maxArrayAreaMeters2: solarPotential.maxArrayAreaMeters2 || 0,
+          suitabilityScore:
+            solarPotential.buildingStats?.suitabilityScore || "Unknown"
+        }
+
+        // Calculate financial estimates
+        const costPerKwh = 0.12
+        const installationCostPerPanel = 800 // $800 per panel
+        const lifetimeYears = solarPotential.panelLifetimeYears || 20
+        const installationCost = Math.round(
+          panelCount * installationCostPerPanel
+        )
+        const costWithoutSolar = Math.round(
+          yearlyEnergy * costPerKwh * lifetimeYears
+        )
+        const lifetimeUtilityBill = costWithoutSolar
+        const totalCostWithSolar = installationCost
+        const netSavings = costWithoutSolar - installationCost
+        const monthlyUtilityBill = Math.round((yearlyEnergy * costPerKwh) / 12)
+        const paybackPeriodYears =
+          yearlyEnergy > 0
+            ? Math.round(
+                (installationCost / (yearlyEnergy * costPerKwh)) * 10
+              ) / 10
+            : null
+
+        financials = {
+          installationCost,
+          netSavings,
+          lifetimeUtilityBill,
+          totalCostWithSolar,
+          costWithoutSolar,
+          paybackPeriodYears,
+          monthlyUtilityBill
+        }
+      }
+    }
 
     return {
       potential: {
-        maxPanels: potential.maxPanels || 0,
-        yearlyEnergy: potential.yearlyEnergy || 0,
-        sunshineHours: potential.sunshineHours || 0,
-        suitabilityScore: potential.suitabilityScore || "Unknown"
+        maxPanels: potential?.maxPanels || 0,
+        yearlyEnergy: potential?.yearlyEnergy || 0,
+        sunshineHours: potential?.sunshineHours || 0,
+        panelCapacityWatts: potential?.panelCapacityWatts || 0,
+        maxArrayAreaMeters2: potential?.maxArrayAreaMeters2 || 0,
+        suitabilityScore: potential?.suitabilityScore || "Unknown"
       },
       financials: {
-        installationCost: financials.installationCost || 0,
-        netSavings: financials.netSavings || 0,
-        lifetimeUtilityBill: financials.lifetimeUtilityBill || 0,
-        totalCostWithSolar: financials.totalCostWithSolar || 0,
-        costWithoutSolar: financials.costWithoutSolar || 0,
-        paybackPeriodYears: financials.paybackPeriodYears || null,
-        monthlyUtilityBill: financials.monthlyUtilityBill || null
+        installationCost: financials?.installationCost || 0,
+        netSavings: financials?.netSavings || 0,
+        lifetimeUtilityBill: financials?.lifetimeUtilityBill || 0,
+        totalCostWithSolar: financials?.totalCostWithSolar || 0,
+        costWithoutSolar: financials?.costWithoutSolar || 0,
+        paybackPeriodYears: financials?.paybackPeriodYears || null,
+        monthlyUtilityBill: financials?.monthlyUtilityBill || null
       }
     }
   }
@@ -865,130 +929,176 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
           data-tab-content="solar"
           className={activeTab === "solar" ? "block" : "hidden space-y-4"}
         >
-          <div className="rounded-lg bg-gray-50 p-4">
-            <h3 className="mb-2 text-lg font-medium text-gray-800">
-              Solar Potential
-            </h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded bg-white p-3 shadow-sm">
-                <p className="text-sm text-gray-500">Maximum Panels</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {solarInfo.potential.maxPanels || 0}
-                </p>
-              </div>
-              <div className="rounded bg-white p-3 shadow-sm">
-                <p className="text-sm text-gray-500">Yearly Energy</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatNumber(solarInfo.potential.yearlyEnergy)} kWh
-                </p>
-              </div>
-              <div className="rounded bg-white p-3 shadow-sm">
-                <p className="text-sm text-gray-500">Daily Sunshine</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatNumber(
-                    (solarInfo.potential.sunshineHours || 0) / 365,
-                    1
-                  )}{" "}
-                  hrs/day
-                </p>
-              </div>
+          {/* Check if solar data is truly unavailable */}
+          {solarInfo.potential.maxPanels === 0 &&
+          solarInfo.potential.yearlyEnergy === 0 &&
+          solarInfo.financials.netSavings === 0 ? (
+            <div className="rounded-lg bg-gray-50 p-8 text-center">
+              <svg
+                className="mx-auto mb-4 size-16 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+              <h3 className="mb-2 text-lg font-semibold text-gray-700">
+                Solar Data Not Available
+              </h3>
+              <p className="text-sm text-gray-600">
+                Solar potential analysis is not available for this property.
+                This may be due to limited imagery quality or location
+                restrictions.
+              </p>
             </div>
-          </div>
-
-          <div className="rounded-lg bg-blue-50 p-4">
-            <h3 className="mb-2 text-lg font-medium text-gray-800">
-              Financial Analysis
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                <span className="text-gray-600">
-                  Upfront Cost of Solar Installation:
-                </span>
-                <span className="font-medium">
-                  ${formatNumber(solarInfo.financials.installationCost)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                <span className="text-gray-600">
-                  Lifetime Utility Bill with Solar:
-                </span>
-                <span className="font-medium">
-                  ${formatNumber(solarInfo.financials.lifetimeUtilityBill)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                <span className="text-gray-600">
-                  Total Cost with Solar (20 Years):
-                </span>
-                <span className="font-medium">
-                  ${formatNumber(solarInfo.financials.totalCostWithSolar)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                <span className="text-gray-600">
-                  Cost Without Solar (20 Years):
-                </span>
-                <span className="font-medium">
-                  ${formatNumber(solarInfo.financials.costWithoutSolar)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                <span className="text-gray-600">
-                  Net Savings Over 20 Years:
-                </span>
-                <span className="font-medium text-green-600">
-                  ${formatNumber(solarInfo.financials.netSavings)}
-                </span>
-              </div>
-              {solarInfo.financials.paybackPeriodYears !== null &&
-                solarInfo.financials.paybackPeriodYears !== undefined && (
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                    <span className="text-gray-600">Payback Period:</span>
-                    <span className="font-medium">
-                      {solarInfo.financials.paybackPeriodYears} years
-                    </span>
+          ) : (
+            <>
+              <div className="rounded-lg bg-gray-50 p-4">
+                <h3 className="mb-2 text-lg font-medium text-gray-800">
+                  Solar Potential
+                </h3>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="rounded bg-white p-3 shadow-sm">
+                    <p className="text-sm text-gray-500">Maximum Panels</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {solarInfo.potential.maxPanels || 0}
+                    </p>
                   </div>
-                )}
-              {solarInfo.financials.monthlyUtilityBill !== null &&
-                solarInfo.financials.monthlyUtilityBill !== undefined && (
+                  <div className="rounded bg-white p-3 shadow-sm">
+                    <p className="text-sm text-gray-500">System Size</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatNumber(
+                        ((solarInfo.potential.maxPanels || 0) *
+                          (solarInfo.potential.panelCapacityWatts || 400)) /
+                          1000,
+                        1
+                      )}{" "}
+                      kW
+                    </p>
+                  </div>
+                  <div className="rounded bg-white p-3 shadow-sm">
+                    <p className="text-sm text-gray-500">Yearly Energy</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatNumber(solarInfo.potential.yearlyEnergy)} kWh
+                    </p>
+                  </div>
+                  <div className="rounded bg-white p-3 shadow-sm">
+                    <p className="text-sm text-gray-500">Daily Sunshine</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {formatNumber(
+                        (solarInfo.potential.sunshineHours || 0) / 365,
+                        1
+                      )}{" "}
+                      hrs/day
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-blue-50 p-4">
+                <h3 className="mb-2 text-lg font-medium text-gray-800">
+                  Financial Analysis
+                </h3>
+                <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-gray-200 pb-2">
                     <span className="text-gray-600">
-                      Current Monthly Utility Bill:
+                      Upfront Cost of Solar Installation:
                     </span>
                     <span className="font-medium">
-                      $
-                      {formatNumber(solarInfo.financials.monthlyUtilityBill, 2)}
+                      ${formatNumber(solarInfo.financials.installationCost)}
                     </span>
                   </div>
-                )}
-            </div>
-          </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-gray-600">
+                      Lifetime Utility Bill with Solar:
+                    </span>
+                    <span className="font-medium">
+                      ${formatNumber(solarInfo.financials.lifetimeUtilityBill)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-gray-600">
+                      Total Cost with Solar (20 Years):
+                    </span>
+                    <span className="font-medium">
+                      ${formatNumber(solarInfo.financials.totalCostWithSolar)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-gray-600">
+                      Cost Without Solar (20 Years):
+                    </span>
+                    <span className="font-medium">
+                      ${formatNumber(solarInfo.financials.costWithoutSolar)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <span className="text-gray-600">
+                      Net Savings Over 20 Years:
+                    </span>
+                    <span className="font-medium text-green-600">
+                      ${formatNumber(solarInfo.financials.netSavings)}
+                    </span>
+                  </div>
+                  {solarInfo.financials.paybackPeriodYears !== null &&
+                    solarInfo.financials.paybackPeriodYears !== undefined && (
+                      <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                        <span className="text-gray-600">Payback Period:</span>
+                        <span className="font-medium">
+                          {solarInfo.financials.paybackPeriodYears} years
+                        </span>
+                      </div>
+                    )}
+                  {solarInfo.financials.monthlyUtilityBill !== null &&
+                    solarInfo.financials.monthlyUtilityBill !== undefined && (
+                      <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                        <span className="text-gray-600">
+                          Current Monthly Utility Bill:
+                        </span>
+                        <span className="font-medium">
+                          $
+                          {formatNumber(
+                            solarInfo.financials.monthlyUtilityBill,
+                            2
+                          )}
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </div>
 
-          <div className="rounded-lg bg-green-50 p-4 text-center">
-            <h3 className="mb-2 text-lg font-medium text-gray-800">
-              Solar Suitability
-            </h3>
-            <p
-              className={`font-medium ${
-                solarInfo.potential.suitabilityScore === "Great Fit"
-                  ? "text-green-600"
-                  : solarInfo.potential.suitabilityScore === "Good Fit"
-                    ? "text-blue-600"
-                    : "text-red-600"
-              }`}
-            >
-              Based on our analysis, this property{" "}
-              {solarInfo.potential.suitabilityScore !== "Unknown"
-                ? `is a ${solarInfo.potential.suitabilityScore.toLowerCase()} for solar panel installation.`
-                : solarInfo.financials.netSavings > 0
-                  ? "could benefit from solar panel installation."
-                  : "may not be ideal for solar panel installation."}
-            </p>
-            <p className="mt-1 text-sm text-gray-600">
-              With ${formatNumber(solarInfo.financials.netSavings)} in estimated
-              savings over 20 years.
-            </p>
-          </div>
+              <div className="rounded-lg bg-green-50 p-4 text-center">
+                <h3 className="mb-2 text-lg font-medium text-gray-800">
+                  Solar Suitability
+                </h3>
+                <p
+                  className={`font-medium ${
+                    solarInfo.potential.suitabilityScore === "Great Fit"
+                      ? "text-green-600"
+                      : solarInfo.potential.suitabilityScore === "Good Fit"
+                        ? "text-blue-600"
+                        : "text-red-600"
+                  }`}
+                >
+                  Based on our analysis, this property{" "}
+                  {solarInfo.potential.suitabilityScore !== "Unknown"
+                    ? `is a ${solarInfo.potential.suitabilityScore.toLowerCase()} for solar panel installation.`
+                    : solarInfo.financials.netSavings > 0
+                      ? "could benefit from solar panel installation."
+                      : "may not be ideal for solar panel installation."}
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  With ${formatNumber(solarInfo.financials.netSavings)} in
+                  estimated savings over 20 years.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* New Captured Images Tab */}

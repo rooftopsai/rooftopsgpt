@@ -1200,3 +1200,71 @@ Started: Mon Jan 12 00:17:36 CST 2026
 **Progress**: 29/36 user stories (81%)
 
 ---
+
+---
+
+## Iteration 19
+
+### US-30: Fix Solar Tab Data Display ✅
+**Status**: COMPLETE
+**Commit**: (pending)
+
+**Problem Identified**:
+- Solar tab showed default values (0) for all metrics
+- Google Solar API returns data in structure: `solarPotential.maxArrayPanelsCount`, `solarPotential.yearlyEnergyDcKwh`, etc.
+- Component expected simplified structure: `solar.potential.maxPanels`, `solar.potential.yearlyEnergy`, etc.
+- No transformation layer existed between API response and display
+
+**What was implemented**:
+- Enhanced `loadSolarData()` function in `components/property/property-report.tsx` (lines 159-250)
+- Added Google Solar API response parsing with fallback paths:
+  - `solarData.solarPotential` → extracts from raw Google API structure
+  - `metadata.solarData.solarPotential` → multi-agent route structure
+  - `solar_metrics.solarPotential` → database JSONB field structure
+- Extracts key metrics:
+  - Panel count: `maxArrayPanelsCount`
+  - System size: calculated as (panels × panelCapacityWatts) / 1000 kW
+  - Yearly energy: `yearlyEnergyDcKwh` or calculated from panels × capacity × sunshine
+  - Sunshine hours: `maxSunshineHoursPerYear`
+  - Suitability: `buildingStats.suitabilityScore`
+- Calculates financial estimates:
+  - Installation cost: $800/panel
+  - Net savings: 20-year energy value - installation cost
+  - Payback period: installation cost / (yearly energy × $0.12/kWh)
+  - Monthly utility bill: (yearly energy × $0.12) / 12
+- Added "Solar Data Not Available" empty state with sun icon
+- Display now shows 4 metrics instead of 3: Maximum Panels, System Size (kW), Yearly Energy, Daily Sunshine
+- Properly handles missing data with conditional rendering
+
+**Files Modified**:
+- `components/property/property-report.tsx`:
+  - Lines 159-250: Enhanced loadSolarData() with Google API parsing
+  - Lines 968-1007: Added empty state + updated grid from 3 to 4 columns
+  - Lines 1008-1146: Wrapped financials and suitability in conditional
+
+**Data Flow Documented**:
+1. Google Solar API → `/api/solar` (passthrough)
+2. Client → `/api/property-reports/multi-agent` with `solarData` parameter
+3. Multi-agent orchestrator passes to measurement/quality agents
+4. Final report includes `solarData` and `metadata.solarData`
+5. Stored in database as `solar_metrics` JSONB field
+6. Component extracts using multiple fallback paths
+
+**Calculations**:
+- System Size: (maxArrayPanelsCount × panelCapacityWatts) / 1000 kW
+- Yearly Energy: yearlyEnergyDcKwh || (panels × capacity × sunshine / 1000)
+- Installation Cost: panels × $800
+- Cost Without Solar: yearlyEnergy × $0.12/kWh × 20 years
+- Net Savings: costWithoutSolar - installationCost
+- Payback Period: installationCost / (yearlyEnergy × $0.12/kWh)
+
+**Testing**:
+- ✅ Build successful (Next.js production build)
+- ✅ TypeScript compilation passed
+- ✅ Component properly handles missing solar data with empty state
+- ✅ Displays system size in kW when data available
+- ✅ Backwards compatible with legacy simplified structure
+
+**Result**:
+Solar tab now correctly parses and displays Google Solar API data including system size (kW), production (kWh/year), and savings ($). When data is unavailable, shows user-friendly empty state instead of confusing "0" values.
+
