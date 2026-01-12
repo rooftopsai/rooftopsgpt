@@ -76,6 +76,11 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
   // Image gallery state
   const [activeImageIndex, setActiveImageIndex] = useState(0)
   const [showFullscreenImage, setShowFullscreenImage] = useState(false)
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(new Set())
+
+  // Placeholder image for fallback (1x1 gray pixel)
+  const PLACEHOLDER_IMAGE =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='16' fill='%239ca3af'%3EImage Not Available%3C/text%3E%3C/svg%3E"
 
   // Theme colors matching Rooftops AI
   const theme = {
@@ -899,9 +904,12 @@ Answer questions about this property clearly and concisely. Use specific numbers
           <div className="relative">
             <img
               src={
-                roofData.images[activeImageIndex].imageData ||
-                roofData.images[activeImageIndex].url ||
-                roofData.images[activeImageIndex]
+                imageLoadErrors.has(activeImageIndex)
+                  ? PLACEHOLDER_IMAGE
+                  : roofData.images[activeImageIndex].imageData ||
+                    roofData.images[activeImageIndex].url ||
+                    roofData.images[activeImageIndex] ||
+                    PLACEHOLDER_IMAGE
               }
               alt={
                 roofData.images[activeImageIndex].label ||
@@ -910,7 +918,8 @@ Answer questions about this property clearly and concisely. Use specific numbers
               className="block h-[220px] w-full cursor-pointer object-cover"
               onClick={() => setShowFullscreenImage(true)}
               onError={(e: any) => {
-                e.target.style.background = theme.gray700
+                setImageLoadErrors(prev => new Set(prev).add(activeImageIndex))
+                e.target.src = PLACEHOLDER_IMAGE
               }}
             />
             <div className="absolute inset-x-3 bottom-[60px] flex items-center justify-between">
@@ -939,7 +948,11 @@ Answer questions about this property clearly and concisely. Use specific numbers
             {roofData.images.map((img: any, idx: number) => (
               <img
                 key={img.id || idx}
-                src={img.imageData || img.url || img}
+                src={
+                  imageLoadErrors.has(idx)
+                    ? PLACEHOLDER_IMAGE
+                    : img.imageData || img.url || img || PLACEHOLDER_IMAGE
+                }
                 alt={img.label || `Thumbnail ${idx + 1}`}
                 className="size-14 shrink-0 cursor-pointer rounded-lg object-cover transition-all"
                 style={{
@@ -951,7 +964,8 @@ Answer questions about this property clearly and concisely. Use specific numbers
                 }}
                 onClick={() => setActiveImageIndex(idx)}
                 onError={(e: any) => {
-                  e.target.style.background = theme.gray600
+                  setImageLoadErrors(prev => new Set(prev).add(idx))
+                  e.target.src = PLACEHOLDER_IMAGE
                 }}
               />
             ))}
@@ -975,9 +989,12 @@ Answer questions about this property clearly and concisely. Use specific numbers
           </button>
           <img
             src={
-              roofData.images[activeImageIndex].imageData ||
-              roofData.images[activeImageIndex].url ||
-              roofData.images[activeImageIndex]
+              imageLoadErrors.has(activeImageIndex)
+                ? PLACEHOLDER_IMAGE
+                : roofData.images[activeImageIndex].imageData ||
+                  roofData.images[activeImageIndex].url ||
+                  roofData.images[activeImageIndex] ||
+                  PLACEHOLDER_IMAGE
             }
             alt={
               roofData.images[activeImageIndex].label ||
@@ -985,6 +1002,10 @@ Answer questions about this property clearly and concisely. Use specific numbers
             }
             className="max-h-[80vh] max-w-full object-contain"
             onClick={e => e.stopPropagation()}
+            onError={(e: any) => {
+              setImageLoadErrors(prev => new Set(prev).add(activeImageIndex))
+              e.target.src = PLACEHOLDER_IMAGE
+            }}
           />
           <div className="mt-3 text-sm font-semibold text-white">
             {roofData.images[activeImageIndex].label ||

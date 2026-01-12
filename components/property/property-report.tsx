@@ -26,7 +26,12 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
   >("overview")
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<number>>(new Set())
   const reportRef = useRef<HTMLDivElement>(null)
+
+  // Placeholder image for fallback
+  const PLACEHOLDER_IMAGE =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-size='16' fill='%239ca3af'%3EImage Not Available%3C/text%3E%3C/svg%3E"
 
   // If no report data, render a standard message
   if (!reportData) {
@@ -591,9 +596,17 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
                     className="aspect-square overflow-hidden rounded bg-gray-200"
                   >
                     <img
-                      src={img.imageData || img.url || img}
+                      src={
+                        imageLoadErrors.has(idx)
+                          ? PLACEHOLDER_IMAGE
+                          : img.imageData || img.url || img || PLACEHOLDER_IMAGE
+                      }
                       alt={`View ${idx + 1}`}
                       className="size-full object-cover"
+                      onError={(e: any) => {
+                        setImageLoadErrors(prev => new Set(prev).add(idx))
+                        e.target.src = PLACEHOLDER_IMAGE
+                      }}
                     />
                   </div>
                 ))}
@@ -867,9 +880,20 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
                       onClick={() => setSelectedImageIndex(idx)}
                     >
                       <img
-                        src={img.imageData || img.url || img}
+                        src={
+                          imageLoadErrors.has(idx)
+                            ? PLACEHOLDER_IMAGE
+                            : img.imageData ||
+                              img.url ||
+                              img ||
+                              PLACEHOLDER_IMAGE
+                        }
                         alt={`View ${idx + 1}`}
                         className="size-full object-cover"
+                        onError={(e: any) => {
+                          setImageLoadErrors(prev => new Set(prev).add(idx))
+                          e.target.src = PLACEHOLDER_IMAGE
+                        }}
                       />
                     </div>
                   ))}
@@ -894,12 +918,21 @@ export const PropertyReportMessage: FC<PropertyReportMessageProps> = ({
                   <div className="p-2">
                     <img
                       src={
-                        capturedImages[selectedImageIndex]?.imageData ||
-                        capturedImages[selectedImageIndex]?.url ||
-                        capturedImages[selectedImageIndex]
+                        imageLoadErrors.has(selectedImageIndex)
+                          ? PLACEHOLDER_IMAGE
+                          : capturedImages[selectedImageIndex]?.imageData ||
+                            capturedImages[selectedImageIndex]?.url ||
+                            capturedImages[selectedImageIndex] ||
+                            PLACEHOLDER_IMAGE
                       }
                       alt={`Selected view ${selectedImageIndex + 1}`}
                       className="w-full rounded"
+                      onError={(e: any) => {
+                        setImageLoadErrors(prev =>
+                          new Set(prev).add(selectedImageIndex)
+                        )
+                        e.target.src = PLACEHOLDER_IMAGE
+                      }}
                     />
                   </div>
                   <div className="border-t border-gray-200 bg-gray-50 p-2 text-xs text-gray-500">
