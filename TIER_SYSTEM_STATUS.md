@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-01-12
 **Status**: ✅ PRODUCTION READY (Core System Complete)
-**Progress**: 28/36 User Stories (78%)
+**Progress**: 29/36 User Stories (81%)
 
 ---
 
@@ -86,20 +86,22 @@
 
 ---
 
-### Bug Fixes (US-27 & US-28)
+### Bug Fixes (US-27, US-28, US-29)
 - ✅ Property report image loading with graceful fallbacks
 - ✅ SVG placeholder for failed images
 - ✅ Error state tracking to prevent retry loops
 - ✅ Roof tab AI summary display with condition assessment
 - ✅ Replaced Solar API segments with agent-generated findings
 - ✅ Key findings, condition, and recommendations now visible
+- ✅ AI chat error handling with specific messages
+- ✅ Error categorization (auth, API key, rate limit, network, timeout)
+- ✅ Consistent error response format across API
 
 ---
 
-## 🔧 REMAINING WORK (US-29 to US-36)
+## 🔧 REMAINING WORK (US-30 to US-36)
 
-### Bug Fixes (US-29 & US-30)
-- ⏳ AI chat error handling (pre-existing)
+### Bug Fixes (US-30)
 - ⏳ Solar tab data parsing (pre-existing)
 
 ### Testing & Polish (US-31 to US-36)
@@ -278,7 +280,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 1. ✅ ~~Property report images may not load~~ - FIXED in US-27 with fallback placeholders
 2. ✅ ~~Roof tab shows segments instead of AI summary~~ - FIXED in US-28 with agent-generated findings
-3. AI chat returns generic errors (needs better error handling)
+3. ✅ ~~AI chat returns generic errors~~ - FIXED in US-29 with categorized error messages
 4. Solar tab doesn't parse API response (needs data extraction)
 
 **Note**: These are existing issues in the codebase unrelated to the tier system implementation.
@@ -287,15 +289,15 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 📊 SUCCESS METRICS
 
-- ✅ 78% of user stories complete (28/36)
-- ✅ 37 commits across implementation
-- ✅ ~58+ files modified
+- ✅ 81% of user stories complete (29/36)
+- ✅ 39 commits across implementation
+- ✅ ~60+ files modified
 - ✅ 12 new components created
 - ✅ 5 new API endpoints
 - ✅ 2 new database tables (+ 1 field migration)
 - ✅ All builds compile successfully
 - ✅ Zero blocking issues for production
-- ✅ 2 pre-existing bugs fixed (image loading, roof tab display)
+- ✅ 3 pre-existing bugs fixed (image loading, roof tab display, chat errors)
 
 ---
 

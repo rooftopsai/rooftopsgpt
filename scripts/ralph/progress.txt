@@ -1121,3 +1121,82 @@ Started: Mon Jan 12 00:17:36 CST 2026
 **Progress**: 28/36 user stories (78%)
 
 ---
+
+
+## Iteration 17
+
+### US-29: Fix AI Chat Error Handling ✅
+**Status**: COMPLETE
+**Commit**: f5779a0
+
+**Root Cause**:
+- Generic "Sorry I encountered an error" messages made debugging difficult for users and support
+- Inconsistent error response format: some returned `{ error: ... }`, others `{ message: ... }`
+- Poor error categorization - all errors treated the same way
+- No distinction between auth errors, API key issues, rate limits, network problems, etc.
+- Users couldn't understand what went wrong or how to fix it
+
+**What was implemented**:
+
+1. **API Error Response Standardization** (`app/api/chat/openai/route.ts`):
+   - All error responses now include BOTH `error` and `message` fields for compatibility
+   - Added `code` field with error category names (AUTH_ERROR, API_KEY_MISSING, RATE_LIMIT, etc.)
+   - Added `status` field to error response body
+   - Set proper `Content-Type: application/json` header on all error responses
+   - Line 421-430: New error response structure
+
+2. **Enhanced Error Categorization** (lines 397-450):
+   - **AUTH_ERROR** (401): "user not found" or "profile not found" → "Authentication error. Please log in again."
+   - **API_KEY_MISSING** (500): "api key not found" → "AI service is not configured. Please contact support."
+   - **API_KEY_INVALID** (500): "incorrect api key" → "AI service configuration error. Please contact support."
+   - **RATE_LIMIT** (429): "rate limit" or "quota exceeded" → "AI service is temporarily unavailable due to high demand."
+   - **TIMEOUT** (504): "timeout" or "timed out" → "Request timed out. Please try a shorter question."
+   - **CONTENT_FILTERED** (400): "content filter" or "safety" → "Your message was filtered for safety reasons."
+   - **CONNECTION_ERROR** (500): ECONNREFUSED → "Unable to connect to AI service. Please try again later."
+   - Each error type has appropriate HTTP status code
+
+3. **Client-Side Error Handling** (`components/property/property-report-viewer.tsx`):
+   - Lines 620-650: Enhanced error message detection
+   - Convert error messages to lowercase for reliable string matching
+   - Added detection for:
+     * API key / not configured → "AI chat is currently unavailable"
+     * Auth / unauthorized / profile → "Please log in to use the AI chat feature"
+     * Limit / quota → "You've reached your chat message limit. Please upgrade"
+     * Network / fetch / connection → "Network error. Please check your internet connection"
+     * Timeout → "Request timed out. Please try again with a shorter question"
+   - Show actual error message when meaningful (not generic "Failed to get response")
+   - Maintain helpful fallback: "You can still view all the report data in the other tabs"
+
+4. **Additional Logging** (line 61-64):
+   - Added profile load success logging with userId
+   - Logs whether user has API keys configured
+   - Error responses log: code, message, and status
+   - Helps with debugging and production monitoring
+
+**Error Message Comparison**:
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| Auth failure | "Sorry, I encountered an error" | "Authentication error. Please log in again." |
+| No API key | "Sorry, I encountered an error" | "AI service is not configured. Please contact support." |
+| Rate limit | "Sorry, I encountered an error" | "AI service is temporarily unavailable due to high demand." |
+| Network error | "Sorry, I encountered an error" | "Network error. Please check your internet connection and try again." |
+| Timeout | "Sorry, I encountered an error" | "Request timed out. Please try again with a shorter question." |
+
+**User Experience**:
+- Clear, actionable error messages that explain what went wrong
+- Users understand the issue and know what action to take
+- Support team can diagnose problems faster from user reports
+- Better error categorization enables monitoring and alerting
+- Maintains friendly tone while being informative
+
+**Developer Experience**:
+- Consistent error response format across all endpoints
+- Error codes enable programmatic error handling
+- Enhanced logging for debugging production issues
+- Clear separation between user errors (4xx) and system errors (5xx)
+
+**Build Status**: ✅ Successful
+**Progress**: 29/36 user stories (81%)
+
+---
