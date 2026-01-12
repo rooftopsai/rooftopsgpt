@@ -301,8 +301,37 @@ Started: Mon Jan 12 00:17:36 CST 2026
 
 ---
 
-## Iteration 2 Progress
+### US-11: Agent Usage Check Backend Enforcement ✅
+**Status**: COMPLETE
+**Commit**: f8654a3
 
-**Stories Completed So Far**: 10 out of 36 (28%)
-**Current Focus**: Moving to US-11 (Agent Usage Check backend enforcement)
+**What was implemented**:
+**Backend (/app/api/agents/generate/route.ts)**:
+- Replaced old `requireFeatureAccess` with `checkAgentAccess()` from entitlements
+- Returns 403 error with `PREMIUM_REQUIRED` for free tier users
+- Error includes clear message: "Agents are available on Premium and Business plans"
+- Removed chat message usage tracking (agents are tier-gated, not usage-based)
+
+**Frontend (/app/[locale]/[workspaceid]/creator/[toolId]/page.tsx)**:
+- Added `UpgradeModal` import and state
+- Updated error handling in `handleSubmit` to catch PREMIUM_REQUIRED
+- Shows upgrade modal when backend rejects agent access
+- Provides seamless upgrade path for users
+
+**Patterns Used**:
+- Edge runtime for performance
+- Proper error codes (403 for forbidden)
+- Defense-in-depth: client redirect (US-9) + backend enforcement (US-11)
+
+**Result**:
+- Free tier users blocked at both client and server level
+- Clear error messaging and upgrade path
+- Premium/Business users can use agents without restriction
+
+---
+
+## Iteration 2-3 Progress
+
+**Stories Completed So Far**: 11 out of 36 (31%)
+**Current Focus**: Moving to US-12 (Pricing Page Component)
 

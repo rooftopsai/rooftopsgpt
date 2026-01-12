@@ -3,9 +3,10 @@
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Check } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { toast } from "sonner"
 import { STRIPE_PRICE_IDS } from "@/lib/stripe-config"
+import { useChatbotUI } from "@/context/context"
 
 function PricingContent() {
   const router = useRouter()
@@ -14,6 +15,11 @@ function PricingContent() {
   const canceled = searchParams.get("canceled") === "true"
 
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+
+  // Get user subscription to show current plan
+  const { userSubscription } = useChatbotUI()
+  const currentTier =
+    userSubscription?.tier || userSubscription?.plan_type || "free"
 
   // Show cancellation message if user canceled checkout
   useEffect(() => {
@@ -84,34 +90,36 @@ function PricingContent() {
             <ul className="mb-8 grow space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>20 chat messages per month</span>
+                <span>1 property report</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>0 property reports</span>
+                <span>5 chat messages per day (GPT-4o)</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>5 weather lookups per month</span>
+                <X className="mt-0.5 size-5 text-gray-400" />
+                <span className="text-muted-foreground">No web searches</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>0 document generations</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Basic support</span>
+                <X className="mt-0.5 size-5 text-gray-400" />
+                <span className="text-muted-foreground">
+                  View agents only (locked)
+                </span>
               </li>
             </ul>
 
-            <Button variant="outline" className="w-full" disabled>
-              Current Plan
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={currentTier === "free"}
+            >
+              {currentTier === "free" ? "Current Plan" : "Downgrade"}
             </Button>
           </div>
 
           {/* Premium Plan */}
           <div
-            className={`flex flex-col rounded-lg border p-8 ${suggestedPlan === "premium" ? "border-primary ring-primary/20 border-2 ring-2" : ""}`}
+            className={`relative flex flex-col rounded-lg border p-8 ${suggestedPlan === "premium" ? "border-primary ring-primary/20 border-2 ring-2" : ""}`}
           >
             {suggestedPlan === "premium" && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -134,29 +142,25 @@ function PricingContent() {
             <ul className="mb-8 grow space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span className="font-semibold">
-                  1,000 chat messages per month
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
                 <span>20 property reports per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Unlimited weather lookups</span>
+                <span className="font-semibold">
+                  1,000 GPT-4.5-mini messages per month
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>50 document generations per month</span>
+                <span>+ Unlimited GPT-4o messages</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Priority support</span>
+                <span>50 web searches per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Advanced AI models</span>
+                <span>Full agent library access</span>
               </li>
             </ul>
 
@@ -165,11 +169,13 @@ function PricingContent() {
               onClick={() =>
                 handleSubscribe("premium", STRIPE_PRICE_IDS.premium)
               }
-              disabled={loadingPlan !== null}
+              disabled={loadingPlan !== null || currentTier === "premium"}
             >
-              {loadingPlan === "premium"
-                ? "Loading..."
-                : "Subscribe to Premium"}
+              {currentTier === "premium"
+                ? "Current Plan"
+                : loadingPlan === "premium"
+                  ? "Loading..."
+                  : "Upgrade to Premium"}
             </Button>
           </div>
 
@@ -196,33 +202,25 @@ function PricingContent() {
             <ul className="mb-8 grow space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span className="font-semibold">
-                  5,000 chat messages per month
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
                 <span>100 property reports per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Unlimited weather lookups</span>
+                <span className="font-semibold">
+                  5,000 GPT-4.5-mini messages per month
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Unlimited document generations</span>
+                <span>+ Unlimited GPT-4o messages</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Dedicated support</span>
+                <span>250 web searches per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Team collaboration tools</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Custom integrations</span>
+                <span>Full agent library access</span>
               </li>
             </ul>
 
@@ -231,30 +229,72 @@ function PricingContent() {
               onClick={() =>
                 handleSubscribe("business", STRIPE_PRICE_IDS.business)
               }
-              disabled={loadingPlan !== null}
+              disabled={loadingPlan !== null || currentTier === "business"}
             >
-              {loadingPlan === "business"
-                ? "Loading..."
-                : "Subscribe to Business"}
+              {currentTier === "business"
+                ? "Current Plan"
+                : loadingPlan === "business"
+                  ? "Loading..."
+                  : "Upgrade to Business"}
             </Button>
           </div>
         </div>
 
         {/* FAQ or Additional Info */}
-        <div className="mt-16 text-center">
-          <p className="text-muted-foreground">
-            All plans include access to our roofing AI assistant, document
-            management, and regular updates.
-          </p>
-          <p className="text-muted-foreground mt-2">
-            Need a custom enterprise plan?{" "}
-            <a
-              href="mailto:support@rooftopsgpt.com"
-              className="text-primary hover:underline"
-            >
-              Contact us
-            </a>
-          </p>
+        <div className="mt-16 space-y-8">
+          <div className="text-center">
+            <h2 className="mb-6 text-2xl font-bold">
+              Frequently Asked Questions
+            </h2>
+            <div className="mx-auto max-w-3xl space-y-4 text-left">
+              <details className="group rounded-lg border p-4">
+                <summary className="cursor-pointer font-semibold">
+                  Can I change plans anytime?
+                </summary>
+                <p className="text-muted-foreground mt-2">
+                  Yes! You can upgrade or downgrade your plan at any time.
+                  Upgrades take effect immediately with prorated billing.
+                  Downgrades take effect at the end of your current billing
+                  period.
+                </p>
+              </details>
+              <details className="group rounded-lg border p-4">
+                <summary className="cursor-pointer font-semibold">
+                  What happens when I reach my limits?
+                </summary>
+                <p className="text-muted-foreground mt-2">
+                  When you reach your monthly limits, you&apos;ll see a prompt
+                  to upgrade. For chat messages, Premium and Business users
+                  automatically switch to GPT-4o (unlimited) when premium
+                  messages are used.
+                </p>
+              </details>
+              <details className="group rounded-lg border p-4">
+                <summary className="cursor-pointer font-semibold">
+                  Do unused limits roll over?
+                </summary>
+                <p className="text-muted-foreground mt-2">
+                  No, limits reset on the 1st of each month. We recommend
+                  choosing a plan that fits your typical monthly usage.
+                </p>
+              </details>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-muted-foreground">
+              Cancel anytime. No hidden fees.
+            </p>
+            <p className="text-muted-foreground mt-2">
+              Need a custom enterprise plan?{" "}
+              <a
+                href="mailto:support@rooftopsgpt.com"
+                className="text-primary hover:underline"
+              >
+                Contact us
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
