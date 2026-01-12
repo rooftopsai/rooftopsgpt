@@ -1362,7 +1362,7 @@ Solar tab now correctly parses and displays Google Solar API data including syst
 
 ### US-32: End-to-End Testing with Demo Accounts ✅
 **Status**: TESTING INFRASTRUCTURE COMPLETE / MANUAL TESTING REQUIRED
-**Commit**: (pending)
+**Commit**: 90d19f5
 
 **What was implemented**:
 - Created comprehensive testing checklist: `TESTING_CHECKLIST.md`
