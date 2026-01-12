@@ -18,6 +18,8 @@ import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { Dashboard } from "@/components/ui/dashboard"
 import { UsageWarningProvider } from "@/components/usage/usage-warning-provider"
 import { OnboardingModal } from "@/components/modals/onboarding-modal"
+import { PaymentFailureBanner } from "@/components/billing/payment-failure-banner"
+import { toast } from "sonner"
 
 interface WorkspaceLayoutProps {
   children: ReactNode
@@ -59,6 +61,28 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
 
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [gracePeriodInfo, setGracePeriodInfo] = useState<{
+    inGracePeriod: boolean
+    daysRemaining: number
+  } | null>(null)
+
+  const handleUpdatePayment = async () => {
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST"
+      })
+
+      if (response.ok) {
+        const { url } = await response.json()
+        window.location.href = url
+      } else {
+        toast.error("Failed to open billing portal")
+      }
+    } catch (error) {
+      console.error("Error opening billing portal:", error)
+      toast.error("An error occurred. Please try again.")
+    }
+  }
 
   useEffect(() => {
     ;(async () => {
@@ -126,6 +150,21 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
               (subscription.plan_type as "free" | "premium" | "business") ||
               "free"
           }
+
+          // Check for payment failure grace period
+          if (subscription.status === "past_due") {
+            try {
+              const graceResponse = await fetch(
+                "/api/subscription/grace-period"
+              )
+              if (graceResponse.ok) {
+                const { gracePeriod } = await graceResponse.json()
+                setGracePeriodInfo(gracePeriod)
+              }
+            } catch (error) {
+              console.error("Error loading grace period:", error)
+            }
+          }
         }
       }
     } catch (error) {
@@ -184,10 +223,23 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Dashboard>
-      <UsageWarningProvider />
-      {children}
-      <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
-    </Dashboard>
+    <>
+      {/* Payment failure banner - show above Dashboard */}
+      {gracePeriodInfo && (
+        <PaymentFailureBanner
+          daysRemaining={gracePeriodInfo.daysRemaining}
+          onUpdatePayment={handleUpdatePayment}
+        />
+      )}
+
+      <Dashboard>
+        <UsageWarningProvider />
+        {children}
+        <OnboardingModal
+          open={showOnboarding}
+          onOpenChange={setShowOnboarding}
+        />
+      </Dashboard>
+    </>
   )
 }

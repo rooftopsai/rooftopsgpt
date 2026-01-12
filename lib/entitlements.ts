@@ -47,8 +47,14 @@ export interface ChatLimitCheckResult extends LimitCheckResult {
 }
 
 /**
+ * Grace period for past_due subscriptions (in days)
+ */
+const GRACE_PERIOD_DAYS = 7
+
+/**
  * Get user's current tier
  * Returns 'free' if no subscription exists
+ * Handles grace period for past_due subscriptions
  */
 export async function getUserTier(userId: string): Promise<Tier> {
   try {
@@ -70,10 +76,76 @@ export async function getUserTier(userId: string): Promise<Tier> {
       return "free"
     }
 
+    // Handle past_due status with grace period
+    if (subscription.status === "past_due") {
+      const gracePeriodExpired = isGracePeriodExpired(subscription.updated_at)
+
+      if (gracePeriodExpired) {
+        // Grace period expired - downgrade to free
+        return "free"
+      }
+
+      // Still within grace period - allow tier access
+      return tier
+    }
+
+    // Only allow tier access if status is 'active'
+    if (subscription.status !== "active") {
+      return "free"
+    }
+
     return tier
   } catch (error) {
     console.error(`Error fetching user tier for ${userId}:`, error)
     return "free" // Default to free on error
+  }
+}
+
+/**
+ * Check if grace period has expired for a past_due subscription
+ */
+function isGracePeriodExpired(updatedAt: string | null): boolean {
+  if (!updatedAt) return true
+
+  const updated = new Date(updatedAt)
+  const now = new Date()
+  const daysSinceUpdate = Math.floor(
+    (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  return daysSinceUpdate >= GRACE_PERIOD_DAYS
+}
+
+/**
+ * Get grace period info for a past_due subscription
+ */
+export async function getGracePeriodInfo(userId: string): Promise<{
+  inGracePeriod: boolean
+  daysRemaining: number
+} | null> {
+  try {
+    const subscription = await getSubscriptionByUserId(userId)
+
+    if (!subscription || subscription.status !== "past_due") {
+      return null
+    }
+
+    const updated = new Date(subscription.updated_at || new Date())
+    const now = new Date()
+    const daysSinceUpdate = Math.floor(
+      (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    const daysRemaining = Math.max(0, GRACE_PERIOD_DAYS - daysSinceUpdate)
+    const inGracePeriod = daysRemaining > 0
+
+    return {
+      inGracePeriod,
+      daysRemaining
+    }
+  } catch (error) {
+    console.error(`Error getting grace period info for ${userId}:`, error)
+    return null
   }
 }
 
