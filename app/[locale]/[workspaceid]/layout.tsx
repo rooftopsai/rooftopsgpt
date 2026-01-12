@@ -16,6 +16,7 @@ import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 
 import { Dashboard } from "@/components/ui/dashboard"
+import { UsageWarningProvider } from "@/components/usage/usage-warning-provider"
 
 interface WorkspaceLayoutProps {
   children: ReactNode
@@ -174,5 +175,10 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
     )
   }
 
-  return <Dashboard>{children}</Dashboard>
+  return (
+    <Dashboard>
+      <UsageWarningProvider />
+      {children}
+    </Dashboard>
+  )
 }
