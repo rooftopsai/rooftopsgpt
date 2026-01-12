@@ -360,8 +360,93 @@ Started: Mon Jan 12 00:17:36 CST 2026
 
 ---
 
-## Iteration 3 Progress
+### US-13: Stripe Integration Setup ✅
+**Status**: COMPLETE (Already implemented)
+**Verification**: Confirmed existing
 
-**Stories Completed So Far**: 12 out of 36 (33%)
-**Current Focus**: Moving to US-13+ (Stripe integration - checking what exists)
+**What exists**:
+- Stripe price IDs configured in `/lib/stripe-config.ts`
+- Premium: `price_1SWUd2La49gFMOt6XzOeOePh` ($29/month)
+- Business: `price_1SWUdKLa49gFMOt6ij7fwsyl` ($99/month)
+- Checkout API endpoint at `/app/api/stripe/checkout/route.ts`
+- Environment variables configured
+
+**Pattern**: Stripe SDK properly integrated
+
+---
+
+### US-14: Checkout Flow ✅
+**Status**: COMPLETE (Already implemented)
+**Verification**: Confirmed existing
+**Commit**: 9feaa47 (updated success URL)
+
+**What exists**:
+- `/app/api/stripe/checkout/route.ts` creates checkout sessions
+- Accepts priceId and planType in POST body
+- Returns checkout URL for redirect
+- Proper error handling and auth checks
+- **Updated**: success_url now points to `/checkout/success` page
+- **Updated**: Passes session_id and plan as query parameters
+
+**Pattern**: Standard Stripe checkout redirect flow
+
+---
+
+### US-15: Webhook Handler for Subscriptions ✅
+**Status**: COMPLETE (Already implemented)
+**Verification**: Confirmed existing
+
+**What exists**:
+- `/app/api/stripe/webhook/route.ts` handles all required events
+- Verifies webhook signatures for security
+- Events handled:
+  - `checkout.session.completed`: Creates subscription in database
+  - `customer.subscription.updated`: Updates subscription status and dates
+  - `customer.subscription.deleted`: Marks subscription as canceled
+  - `invoice.payment_succeeded`: Reactivates past_due subscriptions
+  - `invoice.payment_failed`: Marks subscription as past_due
+- Proper error handling and logging
+
+**Database Integration**:
+- Uses `/db/subscriptions.ts` functions
+- `createSubscription()`, `updateSubscription()`, `getSubscriptionByStripeId()`
+
+**Pattern**: Standard Stripe webhook handler with signature verification
+
+---
+
+### US-16: Checkout Success Page ✅
+**Status**: COMPLETE (NEW)
+**Commit**: 9feaa47
+
+**What was implemented**:
+- Created `/app/[locale]/checkout/success/page.tsx`
+- Shows success checkmark icon
+- Displays "Welcome to Rooftops AI [tier]!" message
+- Lists tier-specific features with checkmarks
+- Two CTAs: "Start Analyzing Properties" and "Try AI Chat"
+- Waits 2 seconds for webhook to process
+- Loading state while fetching details
+- Responsive design for mobile
+
+**Features by Tier**:
+- **Premium**: 20 reports, 1000 GPT-4.5-mini + unlimited GPT-4o, 50 searches, full agents
+- **Business**: 100 reports, 5000 GPT-4.5-mini + unlimited GPT-4o, 250 searches, full agents, priority support
+
+**Pattern**: Suspense wrapper with loading fallback, client-side data fetching
+
+---
+
+## Iteration 3 Progress Summary
+
+**Stories Completed**: 16 out of 36 (44%)
+**Recent Batch**: US-10 through US-16 (7 stories)
+**Major Milestones**:
+- ✅ Agent library paywall UI complete
+- ✅ Agent backend enforcement complete
+- ✅ Pricing page updated with accurate tiers
+- ✅ Full Stripe integration verified and enhanced
+- ✅ Checkout success page created
+
+**Next Focus**: US-17+ (Dashboard, usage counters, account settings)
 
