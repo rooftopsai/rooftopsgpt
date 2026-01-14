@@ -5,47 +5,13 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getServerProfile } from "@/lib/server/server-chat-helpers"
-// Import agent POST handlers directly
-import { POST as measurementSpecialistPOST } from "@/app/api/agents/measurement-specialist/route"
-import { POST as conditionInspectorPOST } from "@/app/api/agents/condition-inspector/route"
-import { POST as costEstimatorPOST } from "@/app/api/agents/cost-estimator/route"
-import { POST as qualityControllerPOST } from "@/app/api/agents/quality-controller/route"
+// Import pure agent functions (no Next.js dependencies, no Vercel auth issues)
+import { runMeasurementSpecialist } from "@/lib/agents/measurement-specialist"
+import { runConditionInspector } from "@/lib/agents/condition-inspector"
+import { runCostEstimator } from "@/lib/agents/cost-estimator"
+import { runQualityController } from "@/lib/agents/quality-controller"
 
 export const maxDuration = 300 // 5 minutes for multi-agent processing
-
-// Helper to call agent functions directly (no HTTP, no auth issues)
-async function callAgent(
-  agentPOST: Function,
-  agentName: string,
-  body: any
-): Promise<any> {
-  try {
-    console.log(`[${agentName}] Calling agent function directly (no HTTP)...`)
-
-    // Create a mock Request object with the agent's input data
-    const mockRequest = new Request("http://localhost/mock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    }) as NextRequest
-
-    // Call the agent POST handler directly
-    const response = await agentPOST(mockRequest)
-
-    // Extract JSON from Response
-    const data = await response.json()
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || `${agentName} failed`)
-    }
-
-    console.log(`[${agentName}] Success`)
-    return data
-  } catch (error) {
-    console.error(`[${agentName}] Error:`, error)
-    throw new Error(`${agentName} error: ${error.message}`)
-  }
-}
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
@@ -113,15 +79,13 @@ export async function POST(req: NextRequest) {
       console.log("[Agent 1] Starting Measurement Specialist...")
       const agent1Start = Date.now()
 
-      agentResults.measurement = await callAgent(
-        measurementSpecialistPOST,
-        "Measurement Specialist",
-        {
-          overheadImages,
-          solarData: solarMetrics, // Pass extracted metrics for measurements
-          address
-        }
-      )
+      // Call pure function directly (no Next.js Request/Response, no Vercel auth)
+      agentResults.measurement = await runMeasurementSpecialist({
+        overheadImages,
+        solarData: solarMetrics, // Pass extracted metrics for measurements
+        address
+      })
+
       agentTimings.measurement = Date.now() - agent1Start
       console.log(`[Agent 1] Completed in ${agentTimings.measurement}ms`)
       console.log(
@@ -154,14 +118,14 @@ export async function POST(req: NextRequest) {
       const parallelStart = Date.now()
 
       const [conditionResult, costResult] = await Promise.all([
-        // Agent 2: Condition Inspector
-        callAgent(conditionInspectorPOST, "Condition Inspector", {
+        // Agent 2: Condition Inspector (pure function call)
+        runConditionInspector({
           allImages,
           address,
           measurementData: agentResults.measurement?.data
         }),
-        // Agent 3: Cost Estimator
-        callAgent(costEstimatorPOST, "Cost Estimator", {
+        // Agent 3: Cost Estimator (pure function call)
+        runCostEstimator({
           measurementData: agentResults.measurement?.data,
           conditionData: {
             condition: { material: { type: "Estimating..." } }
@@ -194,7 +158,7 @@ export async function POST(req: NextRequest) {
 
       // Now update cost estimator with actual condition data
       console.log("[Agent 3] Refining cost estimate with condition data...")
-      agentResults.cost = await callAgent(costEstimatorPOST, "Cost Estimator (Refined)", {
+      agentResults.cost = await runCostEstimator({
         measurementData: agentResults.measurement?.data,
         conditionData: agentResults.condition?.data,
         address,
@@ -222,7 +186,7 @@ export async function POST(req: NextRequest) {
       console.log("[Agent 4] Starting Quality Controller...")
       const agent4Start = Date.now()
 
-      agentResults.quality = await callAgent(qualityControllerPOST, "Quality Controller", {
+      agentResults.quality = await runQualityController({
         measurementData: agentResults.measurement?.data,
         conditionData: agentResults.condition?.data,
         costData: agentResults.cost?.data,

@@ -1,5 +1,5 @@
-// Measurement Specialist Agent - Direct function (no HTTP)
-// Extracted from app/api/agents/measurement-specialist/route.ts
+// Measurement Specialist Agent - Pure function (no Next.js dependencies)
+// Extracted core logic from app/api/agents/measurement-specialist/route.ts
 
 export async function runMeasurementSpecialist({
   overheadImages,
@@ -128,7 +128,7 @@ Think like a human inspector walking around the property - you're seeing it from
    - Count garage roof facets separately
    - Include attached porch roofs
 
-4. Add LOWER LEVEL FEATURES:
+4. ADD LOWER LEVEL FEATURES:
    - Bay window roofs (often 2-3 small facets)
    - Covered entry porches
    - Sunroom/addition roofs
