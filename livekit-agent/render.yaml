@@ -1,0 +1,19 @@
+services:
+  - type: worker
+    name: rooftops-voice-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
+    plan: starter  # Free tier
+    autoDeploy: false  # Manual deploys
+    envVars:
+      - key: LIVEKIT_URL
+        value: wss://rooftopsai-t0eylram.livekit.cloud
+      - key: LIVEKIT_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: LIVEKIT_API_SECRET
+        sync: false  # Set in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: ELEVEN_API_KEY
+        sync: false  # Optional - set in Render dashboard for premium voices
