@@ -286,8 +286,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
                   12
               )
             : 0,
-        paybackYears:
-          solar.financials?.paybackPeriodYears || 7.4, // Use actual payback if available
+        paybackYears: solar.financials?.paybackPeriodYears || 7.4, // Use actual payback if available
         co2Offset: solar.potential?.yearlyEnergy
           ? solar.potential.yearlyEnergy * 0.7
           : solar.potential?.maxPanels ||
@@ -922,20 +921,9 @@ Answer questions about this property clearly and concisely. Use specific numbers
         }}
       >
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="flex size-8 items-center justify-center rounded-lg text-lg"
-              style={{ background: theme.white }}
-            >
-              🏠
-            </div>
-            <span className="text-lg font-bold tracking-tight">
-              rooftops<span style={{ color: "#5EEAD4" }}>ai</span>
-            </span>
-          </div>
           <button
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-full text-2xl text-white transition-colors hover:bg-white/20"
+            className="ml-auto flex size-8 items-center justify-center rounded-full text-2xl text-white transition-colors hover:bg-white/20"
             style={{ background: "rgba(255,255,255,0.1)" }}
           >
             ×

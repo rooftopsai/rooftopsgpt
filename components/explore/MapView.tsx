@@ -201,7 +201,9 @@ const MapView: React.FC<MapViewProps> = ({
       setLoadAttempts(prev => prev + 1)
 
       // Remove existing script tag
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
+      const existingScript = document.querySelector(
+        'script[src*="maps.googleapis.com"]'
+      )
       if (existingScript) {
         existingScript.remove()
       }
@@ -242,7 +244,14 @@ const MapView: React.FC<MapViewProps> = ({
         }
       }
     }
-  }, [isClient, scriptLoaded, scriptError, checkGoogleMapsLoaded, handleScriptLoad, handleScriptError])
+  }, [
+    isClient,
+    scriptLoaded,
+    scriptError,
+    checkGoogleMapsLoaded,
+    handleScriptLoad,
+    handleScriptError
+  ])
 
   // Retry loading the map
   const handleRetry = useCallback(() => {
@@ -646,9 +655,10 @@ const MapView: React.FC<MapViewProps> = ({
           })
         }
 
+        // Temporarily set clicked location (will be updated with geocoded location)
         setSelectedLocation({ lat, lng })
 
-        // Reverse geocode
+        // Reverse geocode to find the actual building address and its centered coordinates
         if (geocoderRef.current) {
           geocoderRef.current.geocode(
             {
@@ -661,6 +671,26 @@ const MapView: React.FC<MapViewProps> = ({
                 results[0]
               ) {
                 setSelectedAddress(results[0].formatted_address)
+
+                // CRITICAL: Use the geocoded building coordinates (centered on property)
+                // instead of the raw click coordinates
+                if (results[0].geometry && results[0].geometry.location) {
+                  const geocodedLat = results[0].geometry.location.lat()
+                  const geocodedLng = results[0].geometry.location.lng()
+                  setSelectedLocation({ lat: geocodedLat, lng: geocodedLng })
+                  logDebug(
+                    `Updated location to geocoded building center: ${geocodedLat.toFixed(6)}, ${geocodedLng.toFixed(6)}`
+                  )
+
+                  // Move marker to the geocoded (centered) position
+                  if (markerRef.current) {
+                    markerRef.current.setPosition({
+                      lat: geocodedLat,
+                      lng: geocodedLng
+                    })
+                  }
+                }
+
                 // Update both search inputs with the new address directly
                 if (autocompleteInputRef.current) {
                   autocompleteInputRef.current.value =
@@ -1107,7 +1137,8 @@ const MapView: React.FC<MapViewProps> = ({
               Map Failed to Load
             </h3>
             <p className="mb-4 text-gray-600 dark:text-gray-400">
-              {scriptError || "The map could not be loaded after multiple attempts."}
+              {scriptError ||
+                "The map could not be loaded after multiple attempts."}
             </p>
             <Button onClick={handleRetry} className="gap-2">
               <IconLoader2 size={16} />
