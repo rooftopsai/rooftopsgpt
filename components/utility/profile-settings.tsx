@@ -25,7 +25,15 @@ import {
 } from "@tabler/icons-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { FC, useCallback, useContext, useEffect, useRef, useState, ChangeEvent } from "react"
+import {
+  FC,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ChangeEvent
+} from "react"
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
 import { Button } from "../ui/button"
@@ -64,6 +72,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
   const [isOpen, setIsOpen] = useState(false)
   const [usageRefreshKey, setUsageRefreshKey] = useState(0)
+  const [isLoadingPortal, setIsLoadingPortal] = useState(false)
 
   const [displayName, setDisplayName] = useState(profile?.display_name || "")
   const [username, setUsername] = useState(profile?.username || "")
@@ -318,7 +327,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
                 <div className="relative">
                   <Input
-                    className="pr-10 rounded-lg border-gray-200 bg-white from-transparent to-transparent shadow-none focus-visible:border-gray-300 dark:border-gray-700 dark:bg-gray-800/50"
+                    className="rounded-lg border-gray-200 bg-white from-transparent to-transparent pr-10 shadow-none focus-visible:border-gray-300 dark:border-gray-700 dark:bg-gray-800/50"
                     placeholder="Username..."
                     value={username}
                     onChange={e => {
@@ -358,7 +367,7 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
 
                 <div className="flex items-center gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
                   {/* Profile Image Preview */}
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {profileImageSrc ? (
                       <Image
                         className="rounded-full border-2 border-gray-200 shadow-sm dark:border-gray-600"
@@ -377,7 +386,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                   {/* Upload Controls */}
                   <div className="flex flex-1 flex-col gap-2">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Choose a profile picture. Recommended: Square image, at least 400x400px
+                      Choose a profile picture. Recommended: Square image, at
+                      least 400x400px
                     </p>
                     <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
                       <svg
@@ -433,15 +443,22 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
                                 targetSize
                               )
 
-                              const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85)
+                              const compressedDataUrl = canvas.toDataURL(
+                                "image/jpeg",
+                                0.85
+                              )
 
                               canvas.toBlob(
                                 blob => {
                                   if (blob) {
-                                    const compressedFile = new File([blob], file.name, {
-                                      type: "image/jpeg",
-                                      lastModified: Date.now()
-                                    })
+                                    const compressedFile = new File(
+                                      [blob],
+                                      file.name,
+                                      {
+                                        type: "image/jpeg",
+                                        lastModified: Date.now()
+                                      }
+                                    )
 
                                     setProfileImageSrc(compressedDataUrl)
                                     setProfileImageFile(compressedFile)
@@ -506,25 +523,43 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
         <div className="mt-6 space-y-4">
           {/* Subscription Management and Help */}
           <div className="space-y-3">
-            {userSubscription?.status === "active" && (
+            {(userSubscription?.status === "active" || userSubscription?.status === "trialing" || userSubscription?.status === "past_due") && (
               <Button
                 variant="outline"
                 className="w-full rounded-lg border-gray-200 bg-white from-transparent to-transparent shadow-none hover:bg-gray-50 hover:from-transparent hover:to-transparent dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-700"
+                disabled={isLoadingPortal}
                 onClick={async () => {
+                  setIsLoadingPortal(true)
                   try {
+                    toast.loading("Opening billing portal...")
                     const response = await fetch("/api/stripe/portal", {
                       method: "POST"
                     })
+
+                    if (!response.ok) {
+                      const error = await response.json()
+                      throw new Error(error.error || "Failed to open billing portal")
+                    }
+
                     const { url } = await response.json()
                     if (url) {
+                      toast.success("Redirecting to billing portal...")
                       window.location.href = url
+                    } else {
+                      throw new Error("No portal URL received")
                     }
-                  } catch (error) {
+                  } catch (error: any) {
                     console.error("Error opening billing portal:", error)
+                    toast.error(error.message || "Failed to open billing portal. Please try again.")
+                    setIsLoadingPortal(false)
                   }
                 }}
               >
-                <IconCrown size={18} className="mr-2" />
+                {isLoadingPortal ? (
+                  <IconLoader2 size={18} className="mr-2 animate-spin" />
+                ) : (
+                  <IconCrown size={18} className="mr-2" />
+                )}
                 Manage Subscription
               </Button>
             )}
