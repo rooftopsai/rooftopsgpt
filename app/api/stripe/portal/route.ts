@@ -11,15 +11,39 @@ export async function POST(req: NextRequest) {
     const profile = await getServerProfile()
 
     if (!profile?.user_id) {
+      console.error("[Stripe Portal] Unauthorized - no user profile")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    console.log(`[Stripe Portal] User ID: ${profile.user_id}`)
 
     // Get subscription to find Stripe customer ID
     const subscription = await getSubscriptionByUserId(profile.user_id)
 
-    if (!subscription?.stripe_customer_id) {
+    console.log(`[Stripe Portal] Subscription found:`, {
+      hasSubscription: !!subscription,
+      status: subscription?.status,
+      customerId: subscription?.stripe_customer_id ? "present" : "missing"
+    })
+
+    if (!subscription) {
       return NextResponse.json(
-        { error: "No active subscription found" },
+        {
+          error: "No subscription found",
+          details:
+            "You don't have an active subscription. Please subscribe first."
+        },
+        { status: 404 }
+      )
+    }
+
+    if (!subscription.stripe_customer_id) {
+      return NextResponse.json(
+        {
+          error: "No Stripe customer ID",
+          details:
+            "Subscription exists but is missing Stripe customer ID. Please contact support."
+        },
         { status: 404 }
       )
     }
@@ -38,7 +62,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`[Stripe Portal] Creating portal session for customer ${subscription.stripe_customer_id}`)
+    console.log(
+      `[Stripe Portal] Creating portal session for customer ${subscription.stripe_customer_id}`
+    )
     console.log(`[Stripe Portal] Return URL: ${returnUrl}`)
 
     // Create portal session
@@ -47,13 +73,37 @@ export async function POST(req: NextRequest) {
       return_url: returnUrl
     })
 
+    console.log(
+      `[Stripe Portal] Portal session created: ${portalSession.id}`
+    )
+
     return NextResponse.json({ url: portalSession.url })
   } catch (error: any) {
-    console.error("Error creating portal session:", error)
+    console.error("[Stripe Portal] Error:", {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      statusCode: error.statusCode,
+      raw: error.raw
+    })
+
+    // Better error messages for common Stripe errors
+    let userMessage = "Failed to create portal session"
+    if (error.type === "StripeInvalidRequestError") {
+      if (error.message.includes("No such customer")) {
+        userMessage =
+          "Customer not found in Stripe. Your subscription may be incomplete."
+      } else if (error.message.includes("test mode")) {
+        userMessage =
+          "Stripe API key mismatch (test vs live mode). Please check your configuration."
+      }
+    }
+
     return NextResponse.json(
       {
-        error: "Failed to create portal session",
-        details: error.message
+        error: userMessage,
+        details: error.message,
+        type: error.type
       },
       { status: 500 }
     )
