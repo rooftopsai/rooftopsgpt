@@ -9,15 +9,20 @@ export async function POST(req: Request) {
   try {
     const { priceId, planType } = await req.json()
 
+    console.log("[Stripe Checkout] Request received:", { priceId, planType })
+
     // Get the user from Supabase auth
     const profile = await getServerProfile()
 
     if (!profile?.user_id) {
+      console.log("[Stripe Checkout] Error: No profile found")
       return NextResponse.json(
         { error: "You must be logged in to subscribe" },
         { status: 401 }
       )
     }
+
+    console.log("[Stripe Checkout] Profile found:", profile.user_id)
 
     // Get the actual user email from Supabase auth - need to fetch it separately
     const { createServerClient } = await import("@supabase/ssr")
@@ -40,6 +45,17 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser()
     const userEmail = user?.email || `user-${profile.user_id}@rooftopsgpt.com`
 
+    console.log("[Stripe Checkout] User email:", userEmail)
+    console.log(
+      "[Stripe Checkout] Creating session with:",
+      {
+        priceId,
+        userEmail,
+        successUrl: `${process.env.NEXT_PUBLIC_URL}/checkout/success`,
+        cancelUrl: `${process.env.NEXT_PUBLIC_URL}/pricing?canceled=true`
+      }
+    )
+
     // Create a checkout session
     const stripeSession = await stripe.checkout.sessions.create({
       customer_email: userEmail,
@@ -58,11 +74,23 @@ export async function POST(req: Request) {
       }
     })
 
+    console.log("[Stripe Checkout] Session created:", stripeSession.id)
+
     return NextResponse.json({ url: stripeSession.url })
-  } catch (error) {
-    console.error("Error creating checkout session:", error)
+  } catch (error: any) {
+    console.error("[Stripe Checkout] Error creating checkout session:", error)
+    console.error("[Stripe Checkout] Error details:", {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      statusCode: error.statusCode
+    })
+
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      {
+        error: "Failed to create checkout session",
+        details: error.message
+      },
       { status: 500 }
     )
   }
