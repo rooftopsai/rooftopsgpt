@@ -101,79 +101,73 @@ export async function POST(req: NextRequest) {
           error: "Measurement Specialist failed",
           details: error.message,
           agent: "measurement-specialist",
-          timestamp: new Date().toISOString(),
-          
+          timestamp: new Date().toISOString()
         },
         { status: 500 }
       )
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // AGENTS 2 & 3: RUN IN PARALLEL (Condition & Cost can run simultaneously)
+    // AGENT 2: CONDITION INSPECTOR
     // ═══════════════════════════════════════════════════════════════════
     try {
-      console.log(
-        "[Agents 2 & 3] Starting Condition Inspector and Cost Estimator in parallel..."
-      )
-      const parallelStart = Date.now()
+      console.log("[Agent 2] Starting Condition Inspector...")
+      const agent2Start = Date.now()
 
-      const [conditionResult, costResult] = await Promise.all([
-        // Agent 2: Condition Inspector (pure function call)
-        runConditionInspector({
-          allImages,
-          address,
-          measurementData: agentResults.measurement?.data
-        }),
-        // Agent 3: Cost Estimator (pure function call)
-        runCostEstimator({
-          measurementData: agentResults.measurement?.data,
-          conditionData: {
-            condition: { material: { type: "Estimating..." } }
-          }, // Placeholder for parallel execution
-          address,
-          location
-        })
-      ])
+      agentResults.condition = await runConditionInspector({
+        allImages,
+        address,
+        measurementData: agentResults.measurement?.data
+      })
 
-      const parallelTime = Date.now() - parallelStart
-      console.log(
-        `[Agents 2 & 3] Parallel execution completed in ${parallelTime}ms`
-      )
-
-      agentResults.condition = conditionResult
-      agentResults.cost = costResult
-
-      agentTimings.condition = parallelTime
-      agentTimings.cost = parallelTime
-
+      agentTimings.condition = Date.now() - agent2Start
+      console.log(`[Agent 2] Completed in ${agentTimings.condition}ms`)
       console.log(
         `[Agent 2] Material: ${agentResults.condition?.data?.condition?.material?.type}`
       )
       console.log(
         `[Agent 2] Condition: ${agentResults.condition?.data?.condition?.overallCondition}`
       )
-      console.log(
-        `[Agent 3] Estimated cost: $${agentResults.cost?.data?.costEstimates?.[0]?.breakdown?.total}`
+    } catch (error: any) {
+      console.error("[Agent 2] Error:", error)
+      return NextResponse.json(
+        {
+          error: "Condition Inspector failed",
+          details: error.message,
+          agent: "condition-inspector",
+          timestamp: new Date().toISOString()
+        },
+        { status: 500 }
       )
+    }
 
-      // Now update cost estimator with actual condition data
-      console.log("[Agent 3] Refining cost estimate with condition data...")
+    // ═══════════════════════════════════════════════════════════════════
+    // AGENT 3: COST ESTIMATOR
+    // ═══════════════════════════════════════════════════════════════════
+    try {
+      console.log("[Agent 3] Starting Cost Estimator with condition data...")
+      const agent3Start = Date.now()
+
       agentResults.cost = await runCostEstimator({
         measurementData: agentResults.measurement?.data,
         conditionData: agentResults.condition?.data,
         address,
         location
       })
-      console.log("[Agent 3] Cost estimate refined with condition data")
+
+      agentTimings.cost = Date.now() - agent3Start
+      console.log(`[Agent 3] Completed in ${agentTimings.cost}ms`)
+      console.log(
+        `[Agent 3] Estimated cost: $${agentResults.cost?.data?.costEstimates?.[0]?.breakdown?.total}`
+      )
     } catch (error: any) {
-      console.error("[Agents 2 & 3] Error:", error)
+      console.error("[Agent 3] Error:", error)
       return NextResponse.json(
         {
-          error: "Condition or Cost agent failed",
+          error: "Cost Estimator failed",
           details: error.message,
-          agent: "condition-inspector or cost-estimator",
-          timestamp: new Date().toISOString(),
-          
+          agent: "cost-estimator",
+          timestamp: new Date().toISOString()
         },
         { status: 500 }
       )
@@ -208,8 +202,7 @@ export async function POST(req: NextRequest) {
           error: "Quality Controller failed",
           details: error.message,
           agent: "quality-controller",
-          timestamp: new Date().toISOString(),
-          
+          timestamp: new Date().toISOString()
         },
         { status: 500 }
       )
@@ -223,7 +216,7 @@ export async function POST(req: NextRequest) {
       `[Multi-Agent Orchestrator] Analysis complete in ${totalTime}ms`
     )
     console.log(
-      `[Multi-Agent Orchestrator] Breakdown: Agent1=${agentTimings.measurement}ms, Agents2&3=${agentTimings.condition}ms, Agent4=${agentTimings.quality}ms`
+      `[Multi-Agent Orchestrator] Breakdown: Agent1=${agentTimings.measurement}ms, Agent2=${agentTimings.condition}ms, Agent3=${agentTimings.cost}ms, Agent4=${agentTimings.quality}ms`
     )
 
     const finalReport = {
