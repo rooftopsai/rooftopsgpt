@@ -5,9 +5,9 @@
 // MODEL CONFIGURATION - Change this to switch between models
 // ═══════════════════════════════════════════════════════════════════
 const MODEL_CONFIG = {
-  provider: "anthropic" as "openai" | "anthropic", // Switch between "openai" or "anthropic"
+  provider: "openai" as "openai" | "anthropic", // Switch between "openai" or "anthropic"
   model:
-    "claude-opus-4-5-20251101" as
+    "gpt-5.1-2025-11-13" as
       | "gpt-5.1-2025-11-13"
       | "claude-opus-4-5-20251101",
   temperature: 0.4, // Slightly higher for condition assessment nuance
