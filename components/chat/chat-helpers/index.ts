@@ -283,6 +283,23 @@ export const fetchChatResponse = async (
 
     const errorData = await response.json()
 
+    // Handle chat limit specially - redirect to upgrade
+    if (response.status === 403 && errorData.error === "CHAT_LIMIT_REACHED") {
+      toast.error(errorData.message || "You've reached your chat limit", {
+        duration: 6000,
+        action: {
+          label: "Upgrade",
+          onClick: () => (window.location.href = "/upgrade")
+        }
+      })
+      setTimeout(() => {
+        window.location.href = "/upgrade"
+      }, 2000)
+      setIsGenerating(false)
+      setChatMessages(prevMessages => prevMessages.slice(0, -2))
+      throw new Error("CHAT_LIMIT_REACHED")
+    }
+
     toast.error(errorData.message)
 
     setIsGenerating(false)

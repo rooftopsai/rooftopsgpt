@@ -479,7 +479,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         const streetViewResponse = await fetch(streetViewUrl)
         if (streetViewResponse.ok) {
           const blob = await streetViewResponse.blob()
-          const base64 = await new Promise<string>((resolve) => {
+          const base64 = await new Promise<string>(resolve => {
             const reader = new FileReader()
             reader.onloadend = () => resolve(reader.result as string)
             reader.readAsDataURL(blob)
@@ -1204,6 +1204,24 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         }
 
         console.error("Multi-agent analysis failed:", errorData)
+
+        // Handle limit errors specially - redirect to upgrade
+        if (response.status === 403 && errorData.error === "REPORT_LIMIT_REACHED") {
+          toast.error(errorData.message || "You've reached your report limit", {
+            duration: 6000,
+            action: {
+              label: "Upgrade",
+              onClick: () => window.location.href = "/upgrade"
+            }
+          })
+
+          // Redirect to upgrade page after a moment
+          setTimeout(() => {
+            window.location.href = "/upgrade"
+          }, 2000)
+
+          throw new Error("REPORT_LIMIT_REACHED")
+        }
 
         // Create detailed error object for reporting
         const errorInfo = {
