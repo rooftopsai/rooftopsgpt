@@ -107,7 +107,7 @@ export default function LandingPage() {
         <div className="relative z-10 w-full max-w-5xl">
           {/* Hero Heading with Shimmer Effect */}
           <div className="mb-6 text-center sm:mb-10 md:mb-14">
-            <h1 className="animate-shimmer-text text-2xl leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="animate-shimmer-text text-4xl leading-tight tracking-tight sm:text-5xl md:text-5xl lg:text-6xl">
               A new era of roofing is here.
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-[Inter] text-sm font-normal text-gray-600 sm:text-base md:text-lg">
