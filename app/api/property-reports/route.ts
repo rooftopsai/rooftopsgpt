@@ -123,6 +123,8 @@ export async function POST(request: Request) {
     }
 
     // Insert property report
+    // NOTE: We don't store captured_images or satellite_views to save on Supabase egress costs
+    // Users regenerate reports instead of viewing historical ones, so these images aren't needed
     const { data: report, error } = await supabase
       .from("property_reports")
       .insert({
@@ -132,8 +134,8 @@ export async function POST(request: Request) {
         latitude,
         longitude,
         analysis_data: analysisData,
-        captured_images: capturedImages || null,
-        satellite_views: satelliteViews || null,
+        captured_images: null, // Don't store images - saves 10-20 MB per report
+        satellite_views: null, // Don't store images - saves egress costs
         solar_metrics: solarMetrics || null,
         debug_info: debugInfo || null,
 
