@@ -45,14 +45,18 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser()
     const userEmail = user?.email || `user-${profile.user_id}@rooftopsgpt.com`
 
+    // Trim the base URL to remove any trailing whitespace/newlines
+    const baseUrl = (process.env.NEXT_PUBLIC_URL || "").trim()
+
     console.log("[Stripe Checkout] User email:", userEmail)
+    console.log("[Stripe Checkout] Base URL:", baseUrl)
     console.log(
       "[Stripe Checkout] Creating session with:",
       {
         priceId,
         userEmail,
-        successUrl: `${process.env.NEXT_PUBLIC_URL}/checkout/success`,
-        cancelUrl: `${process.env.NEXT_PUBLIC_URL}/pricing?canceled=true`
+        successUrl: `${baseUrl}/checkout/success`,
+        cancelUrl: `${baseUrl}/pricing?canceled=true`
       }
     )
 
@@ -66,8 +70,8 @@ export async function POST(req: Request) {
         }
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing?canceled=true`,
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
+      cancel_url: `${baseUrl}/pricing?canceled=true`,
       metadata: {
         userId: profile.user_id,
         planType: planType // 'premium' or 'business'
