@@ -29,7 +29,6 @@ export const ReportsList: FC = () => {
   const { selectedWorkspace } = useChatbotUI()
   const [reports, setReports] = useState<PropertyReport[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedReport, setSelectedReport] = useState<string | null>(null)
 
   console.log("📋 ReportsList: Component rendered")
   console.log("📋 ReportsList: selectedWorkspace:", selectedWorkspace)
@@ -99,12 +98,6 @@ export const ReportsList: FC = () => {
     }
   }
 
-  const handleViewReport = (reportId: string) => {
-    setSelectedReport(reportId)
-    // Navigate to explore page with report ID parameter
-    router.push(`/${selectedWorkspace?.id}/explore?reportId=${reportId}`)
-  }
-
   const handleNewReport = () => {
     // Navigate to explore page to create a new report
     router.push(`/${selectedWorkspace?.id}/explore`)
@@ -172,12 +165,7 @@ export const ReportsList: FC = () => {
             {reports.map(report => (
               <div
                 key={report.id}
-                onClick={() => handleViewReport(report.id)}
-                className={`hover:bg-accent group relative flex cursor-pointer flex-col rounded-lg border p-3 transition-colors ${
-                  selectedReport === report.id
-                    ? "bg-accent border-primary"
-                    : "border-border"
-                }`}
+                className="border-border group relative flex flex-col rounded-lg border p-3"
               >
                 {/* Address */}
                 <div className="mb-1 pr-8">
@@ -185,6 +173,20 @@ export const ReportsList: FC = () => {
                     {report.address}
                   </div>
                 </div>
+
+                {/* Roof Details */}
+                {(report.roof_area || report.facet_count) && (
+                  <div className="text-muted-foreground mb-1 flex gap-3 text-xs">
+                    {report.roof_area && (
+                      <span>
+                        {Math.round(report.roof_area).toLocaleString()} sq ft
+                      </span>
+                    )}
+                    {report.facet_count && (
+                      <span>{report.facet_count} facets</span>
+                    )}
+                  </div>
+                )}
 
                 {/* Date */}
                 <div className="text-muted-foreground text-xs">

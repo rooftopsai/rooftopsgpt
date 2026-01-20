@@ -11,7 +11,7 @@ const MODEL_CONFIG = {
       | "gpt-5.1-2025-11-13"
       | "claude-opus-4-5-20251101",
   temperature: 0.3, // Lower temperature for precise cost calculations
-  maxTokens: 4000
+  maxTokens: 2000 // Reduced from 4000 - optimized for concise output
 }
 
 export async function runCostEstimator({
@@ -66,43 +66,11 @@ CONDITION INSPECTOR (Agent 2) determined:
 ═══════════════════════════════════════════════════════════════════
 
 STEP 1: MATERIAL CALCULATIONS
-Based on the roof area and complexity, calculate:
-
-A. PRIMARY ROOFING MATERIAL
-   - Shingles/material needed (squares + 10-15% waste factor)
-   - Adjust waste factor for complexity:
-     • Simple: +10%
-     • Moderate: +12%
-     • Complex: +15%
-
-B. UNDERLAYMENT
-   - Synthetic underlayment (1 roll per 4 squares typically)
-   - Ice & water shield for valleys, eaves (linear feet needed)
-
-C. RIDGE CAP SHINGLES
-   - Based on ridge length (calculate linear feet needed)
-   - Typical: 1 bundle per 35 linear feet
-
-D. VALLEY MATERIAL
-   - Based on valley length
-   - Metal valley or woven valley considerations
-
-E. STARTER STRIPS
-   - Based on eave length (perimeter calculation)
-
-F. VENTILATION
-   - Ridge vent (linear feet of ridge)
-   - Roof vents or turbines (1 per 300 sq ft typically)
-
-G. FLASHING
-   - Pipe boots, chimney flashing, wall flashing
-   - Estimate based on typical penetrations
-
-H. FASTENERS
-   - Nails/screws (estimate based on area and material type)
-
-I. DRIP EDGE
-   - Eave and rake edges (linear feet needed)
+Calculate basic material needs:
+- Primary roofing material (squares + waste factor based on complexity)
+- Underlayment and ice & water shield
+- Ridge cap, starter strips, drip edge
+- Ventilation, flashing, fasteners
 
 STEP 2: LABOR ESTIMATION
 Calculate labor hours and cost:
@@ -115,42 +83,7 @@ Calculate labor hours and cost:
 - Steep pitch surcharge: +15-25% for 8/12 or steeper
 
 STEP 3: COST RANGES BY MATERIAL TYPE
-Provide estimates for common material options:
-
-A. ASPHALT SHINGLES (3-tab)
-   - Material: $90-$150 per square
-   - Labor: $150-$250 per square
-   - Total: $240-$400 per square
-
-B. ASPHALT SHINGLES (Architectural/Dimensional)
-   - Material: $150-$250 per square
-   - Labor: $175-$300 per square
-   - Total: $325-$550 per square
-
-C. METAL ROOFING (Standing Seam)
-   - Material: $400-$700 per square
-   - Labor: $300-$500 per square
-   - Total: $700-$1,200 per square
-
-D. METAL SHINGLES/PANELS
-   - Material: $300-$500 per square
-   - Labor: $250-$400 per square
-   - Total: $550-$900 per square
-
-E. TILE (Concrete)
-   - Material: $300-$500 per square
-   - Labor: $400-$600 per square
-   - Total: $700-$1,100 per square
-
-F. TILE (Clay)
-   - Material: $600-$1,000 per square
-   - Labor: $500-$800 per square
-   - Total: $1,100-$1,800 per square
-
-G. SLATE
-   - Material: $800-$1,500+ per square
-   - Labor: $600-$1,000 per square
-   - Total: $1,400-$2,500+ per square
+Provide estimates for 2-3 most suitable material options based on current material and condition.
 
 STEP 4: PROJECT COST BREAKDOWN
 Provide detailed cost breakdown:
@@ -214,19 +147,15 @@ Consider typical regional cost variations:
         "disposal": <dollar amount>,
         "permits": <dollar amount>,
         "contingency": <dollar amount>,
-        "subtotal": <dollar amount>,
-        "taxEstimate": <dollar amount>,
         "total": <dollar amount>
       },
       "range": {
         "low": <dollar amount>,
         "high": <dollar amount>
       },
-      "pricePerSquare": <dollar amount>,
       "expectedLifespan": <years>,
-      "warranty": "<typical warranty>",
-      "pros": ["<list benefits>"],
-      "cons": ["<list drawbacks>"]
+      "pros": ["<2-3 key benefits>"],
+      "cons": ["<2-3 key drawbacks>"]
     }
   ],
   "recommendation": {
@@ -238,18 +167,8 @@ Consider typical regional cost variations:
     "priorityRepairs": ["<if not full replacement>"],
     "costBenefitAnalysis": "<explanation of options>"
   },
-  "assumptions": [
-    "<list key assumptions made in estimates>"
-  ],
-  "disclaimers": [
-    "Estimates are preliminary and based on aerial imagery",
-    "Final pricing requires on-site inspection",
-    "Regional costs may vary significantly",
-    "Does not include structural repairs if needed",
-    "Contingency included for typical unexpected issues"
-  ],
   "confidence": "<low|medium|high>",
-  "notes": "<any additional notes or considerations>"
+  "notes": "<1-2 sentence summary of key considerations>"
 }
 
 NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.

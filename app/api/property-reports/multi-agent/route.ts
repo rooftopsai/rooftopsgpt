@@ -180,10 +180,63 @@ export async function POST(req: NextRequest) {
       console.log("[Agent 4] Starting Quality Controller...")
       const agent4Start = Date.now()
 
+      // Extract only essential data for Quality Controller to reduce token usage
+      // This prevents sending verbose outputs (methodology, enumeratedLists, etc.) twice
+      const essentialMeasurementData = {
+        agent: "measurement_specialist",
+        measurements: {
+          facetCount: agentResults.measurement?.data?.measurements?.facetCount,
+          facetCountRange: agentResults.measurement?.data?.measurements?.facetCountRange,
+          roofFootprintArea: agentResults.measurement?.data?.measurements?.roofFootprintArea,
+          estimatedPitch: agentResults.measurement?.data?.measurements?.estimatedPitch,
+          pitchMultiplier: agentResults.measurement?.data?.measurements?.pitchMultiplier,
+          totalRoofArea: agentResults.measurement?.data?.measurements?.totalRoofArea,
+          roofAreaRange: agentResults.measurement?.data?.measurements?.roofAreaRange,
+          squares: agentResults.measurement?.data?.measurements?.squares,
+          ridgeLength: agentResults.measurement?.data?.measurements?.ridgeLength,
+          valleyLength: agentResults.measurement?.data?.measurements?.valleyLength,
+          hipLength: agentResults.measurement?.data?.measurements?.hipLength,
+          eaveLength: agentResults.measurement?.data?.measurements?.eaveLength,
+          complexity: agentResults.measurement?.data?.measurements?.complexity,
+          confidence: agentResults.measurement?.data?.measurements?.confidence
+        },
+        observations: agentResults.measurement?.data?.observations,
+        uncertainties: agentResults.measurement?.data?.uncertainties
+      }
+
+      const essentialConditionData = {
+        agent: "condition_inspector",
+        condition: {
+          material: agentResults.condition?.data?.condition?.material,
+          overallCondition: agentResults.condition?.data?.condition?.overallCondition,
+          estimatedAge: agentResults.condition?.data?.condition?.estimatedAge,
+          remainingLifespan: agentResults.condition?.data?.condition?.remainingLifespan,
+          damageAssessment: agentResults.condition?.data?.condition?.damageAssessment,
+          specificIssues: agentResults.condition?.data?.condition?.specificIssues,
+          riskFactors: agentResults.condition?.data?.condition?.riskFactors,
+          maintenanceNeeds: agentResults.condition?.data?.condition?.maintenanceNeeds,
+          urgency: agentResults.condition?.data?.condition?.urgency,
+          urgencyReason: agentResults.condition?.data?.condition?.urgencyReason
+        },
+        recommendations: agentResults.condition?.data?.recommendations,
+        confidence: agentResults.condition?.data?.confidence
+      }
+
+      const essentialCostData = {
+        agent: "cost_estimator",
+        materialCalculations: agentResults.cost?.data?.materialCalculations,
+        laborEstimate: agentResults.cost?.data?.laborEstimate,
+        costEstimates: agentResults.cost?.data?.costEstimates,
+        recommendation: agentResults.cost?.data?.recommendation,
+        confidence: agentResults.cost?.data?.confidence
+      }
+
+      console.log("[Agent 4] Using optimized data extraction to reduce token usage")
+
       agentResults.quality = await runQualityController({
-        measurementData: agentResults.measurement?.data,
-        conditionData: agentResults.condition?.data,
-        costData: agentResults.cost?.data,
+        measurementData: essentialMeasurementData,
+        conditionData: essentialConditionData,
+        costData: essentialCostData,
         address,
         solarData
       })

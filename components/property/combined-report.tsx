@@ -1599,6 +1599,109 @@ Be realistic and professional. Show actual calculations.`
                   </div>
                 </div>
               </div>
+
+              {/* Roof Facet Details */}
+              {(() => {
+                // Extract facet data from multiple possible locations
+                const facets =
+                  safeExtract(reportData?.jsonData, "roofDetails.facets", null) ||
+                  safeExtract(reportData?.jsonData, "solarData.roofDetails.facets", null) ||
+                  safeExtract(analysisData, "solarData.roofDetails.facets", null) ||
+                  []
+
+                // Debug logging
+                console.log("🔍 Facet Debug - reportData?.jsonData:", reportData?.jsonData)
+                console.log("🔍 Facet Debug - analysisData:", analysisData)
+                console.log("🔍 Facet Debug - facets found:", facets)
+
+                if (!facets || facets.length === 0) return null
+
+                // Sort facets by area (largest first)
+                const sortedFacets = [...facets].sort((a: any, b: any) => b.area - a.area)
+
+                return (
+                  <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-base font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+                      Roof Facet Details
+                    </h3>
+                    <div className="p-4">
+                      <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                        Individual roof planes detected from satellite imagery,
+                        sorted by size. Each facet has unique pitch and
+                        orientation.
+                      </p>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {sortedFacets.map((facet: any, idx: number) => (
+                          <div
+                            key={facet.index || idx}
+                            className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <svg
+                                className="size-5 text-blue-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                                />
+                              </svg>
+                              <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                                Roof Facet {facet.index || idx + 1}
+                              </h4>
+                            </div>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Area:
+                                </span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">
+                                  {formatNumber(facet.area, 2)} sq ft
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Pitch:
+                                </span>
+                                <span className="font-medium text-gray-800 dark:text-gray-200">
+                                  {facet.pitch}
+                                </span>
+                              </div>
+                              {facet.orientation &&
+                                facet.orientation !== "Unknown" && (
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                      Orientation:
+                                    </span>
+                                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                                      {facet.orientation}
+                                    </span>
+                                  </div>
+                                )}
+                              {facet.percentageOfRoof && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600 dark:text-gray-400">
+                                    % of Roof:
+                                  </span>
+                                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                                    {facet.percentageOfRoof}%
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Waste Calculation */}
               {wasteData && wasteData.length > 0 && (
                 <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">

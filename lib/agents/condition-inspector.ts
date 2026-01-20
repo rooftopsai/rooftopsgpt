@@ -11,7 +11,7 @@ const MODEL_CONFIG = {
       | "gpt-5.1-2025-11-13"
       | "claude-opus-4-5-20251101",
   temperature: 0.4, // Slightly higher for condition assessment nuance
-  maxTokens: 4000
+  maxTokens: 2000 // Reduced from 4000 - optimized for concise output
 }
 
 export async function runConditionInspector({
@@ -173,19 +173,11 @@ STEP 6: URGENCY ASSESSMENT
     "urgency": "<immediate|urgent|planned|monitor|excellent>",
     "urgencyReason": "<why this urgency level>"
   },
-  "viewAnalysis": {
-    "overheadObservations": "<what you saw in overhead views>",
-    "northViewObservations": "<what you saw from north>",
-    "eastViewObservations": "<what you saw from east>",
-    "southViewObservations": "<what you saw from south>",
-    "westViewObservations": "<what you saw from west>"
-  },
   "recommendations": [
-    "<list prioritized recommendations for homeowner>"
+    "<list 3-5 prioritized recommendations for homeowner>"
   ],
-  "professionalAssessment": "<your complete narrative assessment as an expert>",
   "confidence": "<low|medium|high>",
-  "uncertainties": "<any aspects you're unsure about>"
+  "uncertainties": "<any aspects you're unsure about (1-2 sentences max)>"
 }
 
 NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.`

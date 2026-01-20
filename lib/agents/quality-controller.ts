@@ -11,7 +11,7 @@ const MODEL_CONFIG = {
       | "gpt-5.1-2025-11-13"
       | "claude-opus-4-5-20251101",
   temperature: 0.2, // Very low temperature for precise validation
-  maxTokens: 6000 // More tokens for comprehensive synthesis
+  maxTokens: 2500 // Reduced from 6000 - optimized for focused synthesis
 }
 
 export async function runQualityController({
@@ -155,46 +155,15 @@ Write a 2-3 sentence summary for the homeowner that captures:
 {
   "agent": "quality_controller",
   "validation": {
-    "measurementValidation": {
-      "status": "<valid|questionable|error>",
-      "concerns": ["<list any measurement concerns>"],
-      "confidence": "<low|medium|high>",
-      "notes": "<validation notes>"
-    },
-    "conditionAlignment": {
-      "status": "<consistent|minor_issues|inconsistent>",
-      "concerns": ["<list any alignment issues>"],
-      "confidence": "<low|medium|high>",
-      "notes": "<alignment notes>"
-    },
-    "costAlignment": {
-      "status": "<aligned|review_needed|misaligned>",
-      "concerns": ["<list any cost concerns>"],
-      "confidence": "<low|medium|high>",
-      "notes": "<cost validation notes>"
-    },
-    "solarAPIComparison": {
-      "status": "<matches|minor_variance|major_discrepancy|no_solar_data>",
-      "areaVariancePercent": <number or null>,
-      "explanation": "<why AREA/PITCH differences exist, which to trust - DO NOT discuss facet count reconciliation>",
-      "notes": "<comparison notes for area and pitch only - Solar API segments are NOT roof facets>"
-    }
+    "overallStatus": "<valid|concerns|issues>",
+    "keyConcerns": ["<list only critical concerns if any>"]
   },
   "flaggedIssues": [
-    {
-      "severity": "<low|medium|high|critical>",
-      "category": "<measurement|condition|cost|consistency>",
-      "issue": "<description of the issue>",
-      "recommendation": "<what should be done about it>",
-      "needsHumanReview": <boolean>
-    }
+    "<Only include issues with severity medium or higher. Brief description with recommendation.>"
   ],
   "overallConfidence": {
-    "measurements": "<low|medium|high>",
-    "condition": "<low|medium|high>",
-    "costs": "<low|medium|high>",
     "combined": "<low|medium|high>",
-    "reasoning": "<why this confidence level>"
+    "reasoning": "<1-2 sentence summary>"
   },
   "finalReport": {
     "executiveSummary": "<CRITICAL: Write a BRIEF 2-3 sentence summary ONLY. Be concise and direct. Maximum 60 words.>",
@@ -216,25 +185,18 @@ Write a 2-3 sentence summary for the homeowner that captures:
     "measurements": {
       "roofArea": <sq ft>,
       "squares": <number>,
-      "facets": <CRITICAL: Use Agent 1's manual count exactly - DO NOT reconcile with Solar API segments>,
+      "facets": <CRITICAL: Use Agent 1's manual count exactly>,
       "pitch": "<e.g. 6/12>",
-      "ridgeLength": <feet>,
-      "valleyLength": <feet>,
       "complexity": "<simple|moderate|complex>",
-      "confidence": "<low|medium|high>",
-      "notes": "<any measurement notes from validation - DO NOT mention Solar API segment reconciliation>"
+      "confidence": "<low|medium|high>"
     },
     "condition": {
-      "material": "<type and subtype>",
+      "material": "<type>",
       "overallCondition": "<new|excellent|good|fair|poor|failing>",
       "age": <years>,
       "remainingLife": <years>,
-      "damagePresent": <boolean>,
-      "damageSeverity": "<none|minor|moderate|severe|critical>",
       "urgency": "<immediate|urgent|planned|monitor|excellent>",
-      "maintenanceNeeds": ["<list>"],
-      "confidence": "<low|medium|high>",
-      "notes": "<any condition notes from validation>"
+      "confidence": "<low|medium|high>"
     },
     "costEstimate": {
       "recommendedMaterial": "<material type>",
@@ -243,51 +205,13 @@ Write a 2-3 sentence summary for the homeowner that captures:
         "mid": <dollar amount>,
         "high": <dollar amount>
       },
-      "breakdown": {
-        "materials": <dollar amount>,
-        "labor": <dollar amount>,
-        "tearOff": <dollar amount>,
-        "other": <dollar amount>
-      },
-      "alternativeOptions": [
-        {
-          "material": "<type>",
-          "costRange": "<low-high>",
-          "expectedLife": <years>,
-          "recommended": <boolean>
-        }
-      ],
-      "confidence": "<low|medium|high>",
-      "notes": "<any cost notes from validation>"
+      "confidence": "<low|medium|high>"
     },
     "recommendations": {
       "primaryRecommendation": "<replace|repair|monitor>",
       "timeline": "<immediate|1-2 years|3-5 years|5-10 years>",
-      "priorityActions": ["<ordered list of actions>"],
-      "nextSteps": ["<what homeowner should do>"],
-      "budgetGuidance": "<budget planning advice>",
-      "notes": "<additional recommendations>"
-    },
-    "disclaimers": [
-      "Analysis based on aerial satellite imagery only",
-      "On-site inspection required for final accuracy",
-      "Hidden damage or structural issues not visible from aerial views",
-      "Costs are estimates and vary by region and contractor",
-      "Weather, permits, and site access may affect final costs"
-    ]
-  },
-  "recommendationsForImprovement": {
-    "needsOnSiteInspection": <boolean>,
-    "specificAreasToInspect": ["<list areas needing closer inspection>"],
-    "additionalDataNeeded": ["<what would improve the assessment>"],
-    "humanExpertReview": <boolean>,
-    "reasonForHumanReview": "<why human review is recommended>"
-  },
-  "agentPerformance": {
-    "measurementAgent": "<excellent|good|fair|poor>",
-    "conditionAgent": "<excellent|good|fair|poor>",
-    "costAgent": "<excellent|good|fair|poor>",
-    "notes": "<any notes on agent performance>"
+      "priorityActions": ["<3-5 key actions>"]
+    }
   },
   "metadata": {
     "analysisTimestamp": "${new Date().toISOString()}",

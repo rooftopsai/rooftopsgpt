@@ -11,7 +11,7 @@ const MODEL_CONFIG = {
       | "gpt-5.1-2025-11-13"
       | "claude-opus-4-5-20251101",
   temperature: 0.3,
-  maxTokens: 4000
+  maxTokens: 2000 // Reduced from 4000 - optimized for concise output
 }
 
 export async function runMeasurementSpecialist({
@@ -155,36 +155,11 @@ Think like a human inspector walking around the property - you're seeing it from
 🔍 CROSS-REFERENCE METHOD:
 Look at the same roof from MULTIPLE angles in your images. If you can see a crease or ridge line from DIFFERENT directions, it's definitely a separate facet boundary.
 
-📚 FACET COUNTING EXAMPLES TO LEARN FROM:
-
-Example 1: SIMPLE GABLE ROOF
-- Main structure: 2 facets (front slope + back slope)
-- 1 garage: +2 facets (garage has 2 slopes)
-- TOTAL: 4 facets
-
-Example 2: HIP ROOF WITH DORMERS
-- Main hip structure: 4 facets (2 main sides + 2 hip ends)
-- 2 gable dormers: +6 facets (each dormer = 3 facets: front + 2 sides)
-- 1 small porch: +2 facets
-- TOTAL: 12 facets
-
-Example 3: COMPLEX L-SHAPED HOUSE
-- Main section (hip): 4 facets
-- L-section (gable): 2 facets
-- 3 dormers: +9 facets (3 × 3)
-- Garage: +2 facets
-- Bay window roof: +2 facets
-- Small porch: +1 facet
-- TOTAL: 20 facets
-
 🎯 CRITICAL COUNTING RULES:
-1. Use the DETAIL (zoomed in) image for primary counting - it shows facet boundaries clearly
-2. Use the CONTEXT image to verify you didn't miss entire sections
-3. Count EVERY visible ridge, hip, or valley line - each represents a facet boundary
-4. If you're unsure between 2 numbers, choose the HIGHER count (better to overcount than undercount)
-5. Trace each facet with your analysis - literally enumerate them: "Facet 1: front main slope, Facet 2: back main slope, Facet 3: north garage slope..." etc.
-
-⚠️ MANDATORY: In your methodology, you MUST list out each facet individually to prove your count.
+1. Use DETAIL image for primary counting - it shows facet boundaries clearly
+2. Use CONTEXT image to verify you didn't miss sections
+3. Count EVERY visible ridge, hip, or valley line
+4. If unsure, choose the HIGHER count (better to overcount than undercount)
 
 STEP 2: MEASURE ROOF AREA (USE SOLAR API AS VALIDATION)
 Using the BRIGHT YELLOW scale bar (20m / 65ft):
@@ -247,39 +222,7 @@ STEP 5: DETERMINE CONFIDENCE
     "complexity": "<simple|moderate|complex>",
     "confidence": "<low|medium|high>"
   },
-  "methodology": "REQUIRED: Document your counting process following Steps A-G above. Show your work for ridge lines, valley lines, hip lines, and lower structures.",
-  "stepByStepCounting": {
-    "stepB_ridgeLines": {
-      "count": <number of ridge lines you see>,
-      "description": "Describe each ridge line location",
-      "facetsImplied": <number - usually count × 2>
-    },
-    "stepC_valleyLines": {
-      "count": <number of valley lines you see>,
-      "description": "Describe each valley line location",
-      "facetsConnected": <number - each valley connects 2 facets>
-    },
-    "stepD_hipLines": {
-      "count": <number of hip lines you see>,
-      "description": "Describe each hip line location",
-      "facetsSeparated": <number - each hip separates 2 facets>
-    },
-    "stepE_lowerStructures": {
-      "count": <number of lower structures (porches, garage, etc)>,
-      "description": "List each structure and its facet count",
-      "facetsTotal": <sum of all lower structure facets>
-    },
-    "stepF_totalCalculation": "Explain how you arrived at your total facet count using the counts above",
-    "stepG_validationCheck": "Did your count seem low? Did you recount? Explain."
-  },
-  "facetBreakdown": {
-    "mainRoofFacets": <number - main structure facets>,
-    "dormerFacets": <number - all dormer facets combined>,
-    "garageFacets": <number - garage roof facets>,
-    "otherFacets": <number - porches, bay windows, etc>,
-    "totalFacets": <number - must match facetCount above>,
-    "enumeratedList": "MANDATORY: List each facet: 'Facet 1: [description], Facet 2: [description], ...' up to your total count. This proves you actually counted each one."
-  },
+  "methodology": "Brief summary (2-3 sentences) of your counting approach and key observations.",
   "observations": "Key structural observations: ridge lines, valley lines, hip lines, dormers, attached structures",
   "uncertainties": "Any aspects you're unsure about or areas that need on-site verification",
   "comparisonToSolarAPI": "${solarData ? `How does your ${Math.round(solarData.totalRoofAreaSqFt || 0)} sq ft Solar API reference compare to your measurement? If significantly different, explain why and which is more reliable.` : "N/A - no Solar API data available"}"

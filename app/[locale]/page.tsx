@@ -3,15 +3,26 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { IconSearch, IconMapPin } from "@tabler/icons-react"
+import {
+  IconPlus,
+  IconWorld,
+  IconArrowUp,
+  IconMap,
+  IconMaximize,
+  IconCalculator,
+  IconFileText,
+  IconMessageCircle,
+  IconHome
+} from "@tabler/icons-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function LandingPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<"chat" | "report">("chat")
+  const [inputValue, setInputValue] = useState("")
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       const supabase = createClient()
       const {
@@ -19,7 +30,6 @@ export default function LandingPage() {
       } = await supabase.auth.getSession()
 
       if (session) {
-        // User is authenticated, redirect to their home workspace
         const { data: homeWorkspace } = await supabase
           .from("workspaces")
           .select("*")
@@ -31,7 +41,6 @@ export default function LandingPage() {
           router.push(`/${homeWorkspace.id}/chat`)
         }
       } else {
-        // User is not authenticated, show landing page
         setIsLoading(false)
       }
     }
@@ -39,185 +48,306 @@ export default function LandingPage() {
     checkAuth()
   }, [router])
 
-  const handleInputClick = () => {
+  const handleRedirectToLogin = () => {
+    router.push("/login")
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
     router.push("/login")
   }
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-950">
+      <div className="flex min-h-full w-full items-center justify-center bg-[#FAFAFA]">
         <div className="flex flex-col items-center gap-4">
-          <div className="size-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="size-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#24BDEB]"></div>
+          <p className="text-gray-500">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-y-auto bg-gradient-to-br from-slate-100 via-blue-50 to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      {/* Map-like background pattern */}
-      <div className="fixed inset-0 opacity-20 dark:opacity-10">
-        <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern
-              id="grid"
-              width="40"
-              height="40"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 40 0 L 0 0 0 40"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-                className="text-gray-400"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
-
-      {/* Blur overlay */}
-      <div className="fixed inset-0 backdrop-blur-[2px]"></div>
-
-      {/* Content */}
-      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-12 lg:px-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4">
+    <div className="relative flex min-h-full w-full flex-col bg-[#FAFAFA]">
+      {/* Header - Full width edge-to-edge */}
+      <header className="sticky top-0 z-50 flex w-full items-center justify-between bg-[#FAFAFA] px-4 py-3 md:px-6">
+        <div
+          className="flex shrink-0 cursor-pointer items-center"
+          onClick={handleRedirectToLogin}
+        >
           <Image
             src="/rooftops-logo-gr-black.png"
             alt="Rooftops AI"
-            width={200}
-            height={47}
-            className="dark:hidden"
+            width={160}
+            height={40}
+            className="h-7 w-auto object-contain sm:h-8 md:h-9"
             priority
           />
-          <Image
-            src="/rooftops-logo-gr-master.png"
-            alt="Rooftops AI"
-            width={200}
-            height={47}
-            className="hidden dark:block"
-            priority
-          />
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400 sm:text-base">
-            Instant property intelligence for roofing professionals
-          </p>
         </div>
 
-        {/* Main Input Area */}
-        <div className="w-full max-w-2xl">
-          <div
-            onClick={handleInputClick}
-            className="group relative cursor-pointer"
-          >
-            {/* Fake Input Box - styled like ChatInput */}
-            <div className="flex w-full items-center gap-3 rounded-2xl border-2 border-gray-300 bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:border-blue-500 hover:shadow-xl dark:border-gray-700 dark:bg-slate-900 sm:px-6 sm:py-5">
-              {/* Icon */}
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 sm:size-12">
-                <IconMapPin className="size-5 text-white sm:size-6" />
-              </div>
-
-              {/* Input Placeholder */}
-              <div className="flex flex-1 flex-col gap-1">
-                <span className="text-base font-medium text-gray-900 dark:text-white sm:text-lg">
-                  Enter a property address
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-                  Generate instant property reports with AI
-                </span>
-              </div>
-
-              {/* Arrow Icon */}
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-100 transition-colors group-hover:bg-blue-100 dark:bg-slate-800 dark:group-hover:bg-slate-700 sm:size-12">
-                <IconSearch className="size-5 text-gray-600 dark:text-gray-400 sm:size-6" />
-              </div>
-            </div>
-
-            {/* Hover effect hint */}
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100">
-              <p className="whitespace-nowrap text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-                Sign up to get started →
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Highlights */}
-        <div className="mt-8 grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
-          <div className="flex flex-col items-center gap-2 rounded-xl bg-white/80 p-4 text-center backdrop-blur-sm dark:bg-slate-900/80 sm:p-6">
-            <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
-              <IconMapPin className="size-6 text-white" />
-            </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              Property Reports
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-              Comprehensive property analysis in seconds
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-2 rounded-xl bg-white/80 p-4 text-center backdrop-blur-sm dark:bg-slate-900/80 sm:p-6">
-            <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
-              <svg
-                className="size-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              AI-Powered
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-              Advanced AI for accurate insights
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center gap-2 rounded-xl bg-white/80 p-4 text-center backdrop-blur-sm dark:bg-slate-900/80 sm:p-6">
-            <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-blue-600">
-              <svg
-                className="size-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              Instant Results
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
-              No more waiting days for reports
-            </p>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mb-8 mt-4 text-center">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
           <button
-            onClick={handleInputClick}
-            className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg transition-all hover:from-cyan-600 hover:to-blue-700 hover:shadow-xl"
+            onClick={handleRedirectToLogin}
+            className="px-2 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 sm:px-3"
           >
-            Get Started Free
+            Sign In
+          </button>
+          <button
+            onClick={handleRedirectToLogin}
+            className="rounded-lg bg-[#1A1A1A] px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black sm:px-4 sm:py-2"
+          >
+            Sign Up
           </button>
         </div>
-      </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex flex-1 flex-col items-center px-4 pb-12 pt-6 sm:pt-10 md:px-6 md:pt-16 lg:pt-20">
+        <div className="relative z-10 w-full max-w-5xl">
+          {/* Hero Heading with Shimmer Effect */}
+          <div className="mb-6 text-center sm:mb-10 md:mb-14">
+            <h1 className="animate-shimmer-text text-2xl leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              A new era of roofing is here.
+            </h1>
+            <div className="mt-4 flex justify-center">
+              <span className="rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-600">
+                Try it for free
+              </span>
+            </div>
+          </div>
+
+          {/* Chat Input */}
+          <div className="mx-auto flex w-full max-w-3xl flex-col px-0 sm:px-4">
+            {/* Tabs Container */}
+            <div className="relative z-10 -mb-[1px] flex items-end gap-0 pl-2 sm:pl-4">
+              {/* Chat Tab */}
+              <div
+                className={`rounded-t-xl transition-all duration-200 ${
+                  activeTab === "chat"
+                    ? "z-20 bg-[#24BDEB] p-[1px] pb-0"
+                    : "mb-[1px] py-[1px]"
+                }`}
+              >
+                <button
+                  onClick={() => setActiveTab("chat")}
+                  className={`flex h-full w-full items-center gap-1.5 whitespace-nowrap rounded-t-[11px] px-3 py-2 text-sm font-medium sm:gap-2 sm:px-4 sm:py-2.5 ${
+                    activeTab === "chat"
+                      ? "border-b border-white bg-white pb-2.5 pt-2 text-gray-900 sm:pb-3 sm:pt-2.5"
+                      : "border border-transparent bg-gray-200 text-gray-600 hover:bg-gray-300 hover:text-gray-900"
+                  }`}
+                >
+                  <IconMessageCircle className="size-4" />
+                  <span>Rooftops Chat</span>
+                </button>
+              </div>
+
+              {/* Report Tab */}
+              <div
+                className={`ml-[-1px] rounded-t-xl transition-all duration-200 ${
+                  activeTab === "report"
+                    ? "z-20 bg-[#4FEBBC] p-[1px] pb-0"
+                    : "mb-[1px] py-[1px]"
+                }`}
+              >
+                <button
+                  onClick={() => setActiveTab("report")}
+                  className={`flex h-full w-full items-center gap-1.5 whitespace-nowrap rounded-t-[11px] px-3 py-2 text-sm font-medium sm:gap-2 sm:px-4 sm:py-2.5 ${
+                    activeTab === "report"
+                      ? "border-b border-white bg-white pb-2.5 pt-2 text-gray-900 sm:pb-3 sm:pt-2.5"
+                      : "border border-transparent bg-gray-200 text-gray-600 hover:bg-gray-300 hover:text-gray-900"
+                  }`}
+                >
+                  <IconHome className="size-4" />
+                  <span>Instant Roof Report</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Input Area with Gradient Border */}
+            <div className="gradient-border relative z-0 rounded-2xl p-[1px] shadow-lg">
+              <form
+                onSubmit={handleSubmit}
+                className="relative rounded-[15px] bg-white p-3 transition-all duration-300 sm:p-4"
+              >
+                <textarea
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  placeholder={
+                    activeTab === "chat"
+                      ? "Ask me anything..."
+                      : "Enter address for instant report..."
+                  }
+                  className="min-h-[60px] w-full resize-none bg-transparent text-base text-gray-900 outline-none placeholder:text-gray-400 sm:min-h-[80px]"
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmit(e)
+                    }
+                  }}
+                />
+
+                <div className="mt-2 flex items-center justify-between">
+                  {/* Left Actions */}
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRedirectToLogin}
+                      className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 sm:p-2"
+                      title="Add attachment"
+                    >
+                      <IconPlus className="size-4 sm:size-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRedirectToLogin}
+                      className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 sm:p-2"
+                      title="Browse internet"
+                    >
+                      <IconWorld className="size-4 sm:size-5" />
+                    </button>
+                    <div className="mx-1 h-4 w-[1px] bg-gray-200" />
+                    <button
+                      type="button"
+                      onClick={handleRedirectToLogin}
+                      className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 sm:gap-2 sm:py-1.5"
+                    >
+                      <svg
+                        className="size-3.5 sm:size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                      </svg>
+                      <span>GPT-5.2</span>
+                    </button>
+                  </div>
+
+                  {/* Send Button */}
+                  <button
+                    type="submit"
+                    className={`flex items-center justify-center rounded-full p-1.5 transition-all duration-200 sm:p-2 ${
+                      inputValue.trim()
+                        ? "scale-100 bg-gray-900 text-white shadow-md"
+                        : "cursor-not-allowed bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    <IconArrowUp className="size-4 sm:size-5" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="mx-auto mt-5 grid w-full max-w-3xl grid-cols-2 gap-2.5 sm:mt-6 sm:gap-3 sm:px-4 md:grid-cols-4">
+            {/* Card 1 - with gradient border */}
+            <button
+              onClick={handleRedirectToLogin}
+              className="group relative h-full rounded-xl bg-gradient-to-r from-[#24BDEB] to-[#4FEBBC]/50 p-[1px] text-left shadow-sm transition-all duration-300 hover:shadow-md"
+            >
+              <div className="flex h-full flex-col justify-between rounded-[11px] bg-white p-3 transition-colors hover:bg-gray-50">
+                <div className="mb-2">
+                  <IconMap className="mb-2 size-5 text-[#24BDEB]" />
+                  <h3 className="text-sm font-bold leading-tight text-[#1A1A1A]">
+                    Generate Instant Roof Report
+                  </h3>
+                </div>
+                <p className="text-xs leading-tight text-gray-500">Reports</p>
+              </div>
+            </button>
+
+            {/* Card 2 */}
+            <button
+              onClick={handleRedirectToLogin}
+              className="group relative h-full rounded-xl border border-gray-200 bg-white text-left shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <div className="flex h-full flex-col justify-between rounded-xl p-3 transition-colors hover:bg-gray-50">
+                <div className="mb-2">
+                  <IconMaximize className="mb-2 size-5 text-[#24BDEB]" />
+                  <h3 className="text-sm font-bold leading-tight text-[#1A1A1A]">
+                    Analyze Your Roof Data
+                  </h3>
+                </div>
+                <p className="text-xs leading-tight text-gray-500">Analysis</p>
+              </div>
+            </button>
+
+            {/* Card 3 */}
+            <button
+              onClick={handleRedirectToLogin}
+              className="group relative h-full rounded-xl border border-gray-200 bg-white text-left shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <div className="flex h-full flex-col justify-between rounded-xl p-3 transition-colors hover:bg-gray-50">
+                <div className="mb-2">
+                  <IconCalculator className="mb-2 size-5 text-[#24BDEB]" />
+                  <h3 className="text-sm font-bold leading-tight text-[#1A1A1A]">
+                    Estimate Project Costs
+                  </h3>
+                </div>
+                <p className="text-xs leading-tight text-gray-500">Estimates</p>
+              </div>
+            </button>
+
+            {/* Card 4 */}
+            <button
+              onClick={handleRedirectToLogin}
+              className="group relative h-full rounded-xl border border-gray-200 bg-white text-left shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <div className="flex h-full flex-col justify-between rounded-xl p-3 transition-colors hover:bg-gray-50">
+                <div className="mb-2">
+                  <IconFileText className="mb-2 size-5 text-[#24BDEB]" />
+                  <h3 className="text-sm font-bold leading-tight text-[#1A1A1A]">
+                    Draft Customer Communications
+                  </h3>
+                </div>
+                <p className="text-xs leading-tight text-gray-500">Marketing</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </main>
+
+      {/* CSS for Shimmer Effect and Gradient Border */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap');
+
+        @keyframes shimmer {
+          0% {
+            background-position: 200% center;
+          }
+          100% {
+            background-position: -200% center;
+          }
+        }
+
+        .animate-shimmer-text {
+          font-family: 'Inter', sans-serif;
+          font-weight: 700;
+          background: linear-gradient(
+            to right,
+            #1a1a1a 0%,
+            #1a1a1a 40%,
+            #24BDEB 47%,
+            #4FEBBC 53%,
+            #1a1a1a 60%,
+            #1a1a1a 100%
+          );
+          background-size: 500% auto;
+          color: #1a1a1a;
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmer 12s linear infinite;
+          padding-bottom: 0.1em;
+        }
+
+        .gradient-border {
+          background: linear-gradient(to right, #24BDEB, #4FEBBC);
+        }
+      `}</style>
     </div>
   )
 }
