@@ -7,12 +7,12 @@ import initTranslations from "@/lib/i18n"
 import { Database } from "@/supabase/types"
 import { createServerClient } from "@supabase/ssr"
 import { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { DM_Sans } from "next/font/google"
 import { cookies } from "next/headers"
 import { ReactNode } from "react"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"] })
 const APP_NAME = "Rooftops AI"
 const APP_DEFAULT_TITLE = "Rooftops AI"
 const APP_TITLE_TEMPLATE = "%s - Rooftops AI"
@@ -90,7 +90,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={dmSans.className}>
         <Providers attribute="class" defaultTheme="light">
           <TranslationsProvider
             namespaces={i18nNamespaces}

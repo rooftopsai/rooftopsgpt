@@ -614,7 +614,7 @@ export const Message: FC<MessageProps> = ({
       onMouseLeave={() => setIsHovering(false)}
       onKeyDown={handleKeyDown}
     >
-      <div className="relative flex w-full flex-col py-4 px-6 sm:w-[550px] sm:px-0 md:w-[650px] lg:w-[650px] xl:w-[700px]">
+      <div className="relative flex w-full flex-col px-6 py-4 sm:w-[550px] sm:px-0 md:w-[650px] lg:w-[650px] xl:w-[700px]">
         <div className="absolute right-5 top-7 sm:right-0">
           <MessageActions
             onCopy={handleCopy}
@@ -654,10 +654,13 @@ export const Message: FC<MessageProps> = ({
                   alt="user image"
                 />
               ) : (
-                <IconMoodSmile
-                  className="bg-primary text-secondary border-primary rounded-full border-DEFAULT p-1"
-                  size={ICON_SIZE}
-                />
+                <div className="flex size-[32px] items-center justify-center rounded-full bg-gradient-to-br from-[#4FEBBC] to-[#24BDEB]">
+                  <IconMoodSmile
+                    className="text-white"
+                    size={20}
+                    stroke={2}
+                  />
+                </div>
               )}
 
               {/* Only show name for user messages, not assistant messages */}
