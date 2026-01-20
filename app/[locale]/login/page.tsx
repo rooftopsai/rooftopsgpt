@@ -288,7 +288,7 @@ export default async function Login({
         {/* Mobile logo */}
         <div className="absolute left-1/2 top-8 -translate-x-1/2 lg:hidden">
           <Image
-            src="/rooftops-logo-gr-master.png"
+            src="/rooftops-logo-gr-black.png"
             alt="Rooftops AI"
             width={150}
             height={35}

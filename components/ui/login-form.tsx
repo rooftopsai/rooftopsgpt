@@ -21,10 +21,10 @@ export function LoginForm({
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup")
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md pt-16 lg:pt-0">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome back
+          {activeTab === "signin" ? "Welcome back" : "Get Started"}
         </h2>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
           {activeTab === "signin"
@@ -156,14 +156,18 @@ export function LoginForm({
         <div className="mt-4 text-center text-xs text-gray-600 dark:text-gray-400">
           By clicking continue, you agree to our{" "}
           <a
-            href="#"
+            href="https://resources.rooftops.ai/tos"
+            target="_blank"
+            rel="noopener noreferrer"
             className="underline hover:text-gray-900 dark:hover:text-white"
           >
             Terms of Service
           </a>{" "}
           and{" "}
           <a
-            href="#"
+            href="https://resources.rooftops.ai/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
             className="underline hover:text-gray-900 dark:hover:text-white"
           >
             Privacy Policy
