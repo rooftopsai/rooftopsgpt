@@ -189,10 +189,10 @@ export default async function Login({
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex min-h-screen w-full">
       {/* Left side - Hero section with background */}
       <div
-        className="relative hidden flex-col justify-between p-12 text-white lg:flex lg:w-1/2"
+        className="relative hidden min-h-screen flex-col justify-between p-12 text-white lg:flex lg:w-1/2"
         style={{
           backgroundImage: "url(/login-background.png)",
           backgroundSize: "cover",
@@ -284,7 +284,7 @@ export default async function Login({
       </div>
 
       {/* Right side - Login form */}
-      <div className="flex w-full flex-col items-center overflow-y-auto bg-white px-4 py-6 sm:px-8 sm:py-8 lg:w-1/2 lg:justify-center lg:py-12 dark:bg-slate-950">
+      <div className="flex min-h-screen w-full flex-col items-center bg-white px-4 py-6 sm:p-8 lg:w-1/2 lg:justify-center lg:py-12 dark:bg-slate-950">
         {/* Mobile logo */}
         <div className="mb-6 flex w-full justify-center lg:hidden">
           <Image
