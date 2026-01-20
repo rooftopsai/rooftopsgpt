@@ -671,7 +671,11 @@ const CombinedReport: FC<CombinedReportProps> = ({
 
   // Get property address from any of the possible paths
   const getPropertyAddress = () => {
-    // First try the standard paths from reportData
+    // First try from the multi-agent report address at top level
+    const topLevelAddress = safeExtract(analysisData, "address", "")
+    if (topLevelAddress) return topLevelAddress
+
+    // Try from the standard paths from reportData
     if (reportData && reportData.jsonData) {
       const data = reportData.jsonData
       const fromReport =
