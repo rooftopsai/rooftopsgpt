@@ -238,12 +238,52 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
             location: "Various"
           })) || []
       },
-      estimate: {
-        base: estimate.totalCost || estimate.total || 20000,
-        low: estimate.low || estimate.totalCost * 0.9 || 18000,
-        high: estimate.high || estimate.totalCost * 1.1 || 22000,
-        perSquare: estimate.costPerSquare || 650
-      },
+      estimate: (() => {
+        // Helper function to calculate estimate based on roof area and material
+        const calculateEstimate = () => {
+          const roofSquares = Math.ceil((measurements.roofArea || measurements.totalArea?.sqft || 1800) / 100)
+          const material = condition.material || "Asphalt Shingles"
+
+          // Cost per square by material type (2025 pricing - includes materials + labor + tearoff)
+          const costPerSquareByMaterial: { [key: string]: number } = {
+            "Asphalt Shingles": 450,
+            "Architectural Shingles": 450,
+            "3-Tab Shingles": 350,
+            "Metal Roofing": 950,
+            "Standing Seam Metal": 1050,
+            "Metal Shingles": 750,
+            "Tile": 950,
+            "Concrete Tile": 950,
+            "Clay Tile": 1400,
+            "Slate": 1900,
+            "Wood Shakes": 750,
+            "TPO": 550,
+            "EPDM": 500,
+            "Modified Bitumen": 500
+          }
+
+          // Find matching material or default to architectural shingles
+          let costPerSquare = 450
+          for (const [key, cost] of Object.entries(costPerSquareByMaterial)) {
+            if (material.toLowerCase().includes(key.toLowerCase())) {
+              costPerSquare = cost
+              break
+            }
+          }
+
+          return roofSquares * costPerSquare
+        }
+
+        const calculatedBase = calculateEstimate()
+        const baseEstimate = estimate.totalCost || estimate.total || calculatedBase
+
+        return {
+          base: baseEstimate,
+          low: estimate.low || baseEstimate * 0.9,
+          high: estimate.high || baseEstimate * 1.1,
+          perSquare: estimate.costPerSquare || 650
+        }
+      })(),
       solar: {
         maxPanels:
           solar.potential?.maxPanels || // New structure
