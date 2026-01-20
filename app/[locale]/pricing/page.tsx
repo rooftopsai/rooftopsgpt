@@ -94,7 +94,7 @@ function PricingContent() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>5 chat messages per day (GPT-4o)</span>
+                <span>5 chat messages per day</span>
               </li>
               <li className="flex items-start gap-2">
                 <X className="mt-0.5 size-5 text-gray-400" />
@@ -146,21 +146,15 @@ function PricingContent() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span className="font-semibold">
-                  1,000 GPT-4.5-mini messages per month
-                </span>
+                <span>1,000 chat messages per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>+ Unlimited GPT-4o messages</span>
+                <span className="font-semibold">Premium Agent Library</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>50 web searches per month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Full agent library access</span>
+                <span>Advanced AI models</span>
               </li>
             </ul>
 
@@ -206,21 +200,19 @@ function PricingContent() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
+                <span>5,000 chat messages per month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-5 text-green-500" />
                 <span className="font-semibold">
-                  5,000 GPT-4.5-mini messages per month
+                  Exclusive Business Agents
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="mt-0.5 size-5 text-green-500" />
-                <span>+ Unlimited GPT-4o messages</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>250 web searches per month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Check className="mt-0.5 size-5 text-green-500" />
-                <span>Full agent library access</span>
+                <span className="text-sm text-gray-600">
+                  all premium agents included
+                </span>
               </li>
             </ul>
 
@@ -264,9 +256,8 @@ function PricingContent() {
                 </summary>
                 <p className="text-muted-foreground mt-2">
                   When you reach your monthly limits, you&apos;ll see a prompt
-                  to upgrade. For chat messages, Premium and Business users
-                  automatically switch to GPT-4o (unlimited) when premium
-                  messages are used.
+                  to upgrade. You can continue using the platform with your
+                  available features or upgrade to increase your limits.
                 </p>
               </details>
               <details className="group rounded-lg border p-4">
