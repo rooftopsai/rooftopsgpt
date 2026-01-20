@@ -75,6 +75,7 @@ ${JSON.stringify(solarData, null, 2)}
 STEP 1: CROSS-VALIDATION CHECKS
 
 A. MEASUREMENT VALIDATION
+   • Does this reflect the same count of facets as a human reviewer would count?
    • Does the facet count make sense for the complexity?
    • Is the roof area reasonable given the property size?
    • Do the measurements align with Solar API data (if available)?
@@ -288,42 +289,40 @@ NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.
 
 BE THOROUGH. BE CRITICAL. BE HONEST ABOUT LIMITATIONS. THE HOMEOWNER DESERVES ACCURATE INFORMATION.`
 
-  // Call OpenAI API with GPT-5.1
-  const openaiResponse = await fetch(
-    "https://api.openai.com/v1/chat/completions",
+  // Call Anthropic API with Claude Opus 4.5
+  const anthropicResponse = await fetch(
+    "https://api.anthropic.com/v1/messages",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "gpt-5.1-2025-11-13",
+        model: "claude-opus-4-5-20251101",
+        max_tokens: 6000, // More tokens for comprehensive synthesis
+        temperature: 0.2, // Very low temperature for precise validation
+        system:
+          "You are a senior quality controller reviewing roof analysis reports. Be critical, thorough, and honest. Respond only with valid JSON.",
         messages: [
-          {
-            role: "system",
-            content:
-              "You are a senior quality controller reviewing roof analysis reports. Be critical, thorough, and honest. Respond only with valid JSON."
-          },
           {
             role: "user",
             content: prompt
           }
-        ],
-        temperature: 0.2, // Very low temperature for precise validation
-        max_completion_tokens: 6000 // More tokens for comprehensive synthesis
+        ]
       })
     }
   )
 
-  if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text()
-    console.error("OpenAI API error:", errorText)
+  if (!anthropicResponse.ok) {
+    const errorText = await anthropicResponse.text()
+    console.error("Anthropic API error:", errorText)
     throw new Error(`Failed to perform quality control: ${errorText}`)
   }
 
-  const data = await openaiResponse.json()
-  const content = data.choices[0]?.message?.content
+  const data = await anthropicResponse.json()
+  const content = data.content[0]?.text
 
   // Parse JSON response
   try {
@@ -336,7 +335,7 @@ BE THOROUGH. BE CRITICAL. BE HONEST ABOUT LIMITATIONS. THE HOMEOWNER DESERVES AC
       success: true,
       agent: "quality_controller",
       data: result,
-      model: "gpt-5.1-2025-11-13",
+      model: "claude-opus-4-5-20251101",
       tokensUsed: data.usage
     }
   } catch (parseError) {

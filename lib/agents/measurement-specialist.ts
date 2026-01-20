@@ -14,18 +14,18 @@ export async function runMeasurementSpecialist({
     throw new Error("No overhead images provided")
   }
 
-  const prompt = `You are Agent 1: MEASUREMENT SPECIALIST - An expert roof measurement technician with 30+ years of experience.
+  const prompt = `You are Agent 1: MEASUREMENT SPECIALIST - A human expert roof measurement technician with 30+ years of experience.
 
-YOUR EXCLUSIVE MISSION: Provide the most accurate roof measurements possible.
+YOUR EXCLUSIVE MISSION: Provide the most accurate roof measurements and facet count possible.
 
 ⚠️ CRITICAL ACCURACY REQUIREMENT ⚠️
-Your facet count accuracy is being measured. You will be evaluated on how close your count is to the actual facet count.
+Do this task the way a human would. Humans would look at all angles of the roof and count each facet. They would know that shadows may be deceiving. They would know that if a tree or something is blocking part of the view they would use other angles to make the best educated guess. Your facet count accuracy is being measured. You will be evaluated on how close your count is to the actual facet count.
 DO NOT RUSH. DO NOT GUESS. COUNT EVERY SINGLE FACET CAREFULLY.
 
 🚨 MANDATORY COUNTING PROCESS 🚨
 You MUST follow this exact step-by-step process. Do NOT skip any step:
 
-STEP A: Use the DETAIL (zoomed in) image. Zoom level is very close - you can see individual shingles and every crease.
+STEP A: Use all of the detailed images of the roof for the property most centered in the image. It is possible a neighboring house is in part of an image but ignore it. You are doing this as if you are a human using their same technique. Zoom level is very close - you can see individual shingles and every crease.
 
 STEP B: Count ALL ridge lines you can see (peaks where two slopes meet at the top). Each ridge line means AT LEAST 2 facets.
 
@@ -293,42 +293,40 @@ NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.`
     })
   })
 
-  // Call OpenAI API with GPT-5.1
-  const openaiResponse = await fetch(
-    "https://api.openai.com/v1/chat/completions",
+  // Call Anthropic API with Claude Opus 4.5
+  const anthropicResponse = await fetch(
+    "https://api.anthropic.com/v1/messages",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "gpt-5.1-2025-11-13",
+        model: "claude-opus-4-5-20251101",
+        max_tokens: 4000,
+        temperature: 0.3,
+        system:
+          "You are a specialized roof measurement expert. Respond only with valid JSON.",
         messages: [
-          {
-            role: "system",
-            content:
-              "You are a specialized roof measurement expert. Respond only with valid JSON."
-          },
           {
             role: "user",
             content: messageContent
           }
-        ],
-        temperature: 0.3,
-        max_completion_tokens: 4000
+        ]
       })
     }
   )
 
-  if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text()
-    console.error("OpenAI API error:", errorText)
+  if (!anthropicResponse.ok) {
+    const errorText = await anthropicResponse.text()
+    console.error("Anthropic API error:", errorText)
     throw new Error(`Failed to analyze measurements: ${errorText}`)
   }
 
-  const data = await openaiResponse.json()
-  const content = data.choices[0]?.message?.content
+  const data = await anthropicResponse.json()
+  const content = data.content[0]?.text
 
   // Parse JSON response
   try {
@@ -341,7 +339,7 @@ NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.`
       success: true,
       agent: "measurement_specialist",
       data: result,
-      model: "gpt-5.1-2025-11-13",
+      model: "claude-opus-4-5-20251101",
       tokensUsed: data.usage
     }
   } catch (parseError) {

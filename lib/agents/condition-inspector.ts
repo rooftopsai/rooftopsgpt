@@ -185,53 +185,61 @@ NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.`
     }
   ]
 
-  // Add all images
+  // Add all images (convert to Anthropic format)
   allImages.forEach((img: any) => {
-    messageContent.push({
-      type: "image_url",
-      image_url: {
-        url: img.imageData,
-        detail: "high"
+    // Extract base64 data from data URL
+    const imageData = img.imageData
+    if (imageData.startsWith("data:")) {
+      const matches = imageData.match(/^data:(.+?);base64,(.+)$/)
+      if (matches) {
+        const mediaType = matches[1]
+        const base64Data = matches[2]
+        messageContent.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType,
+            data: base64Data
+          }
+        })
       }
-    })
+    }
   })
 
-  // Call OpenAI API with GPT-5.1
-  const openaiResponse = await fetch(
-    "https://api.openai.com/v1/chat/completions",
+  // Call Anthropic API with Claude Opus 4.5
+  const anthropicResponse = await fetch(
+    "https://api.anthropic.com/v1/messages",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "gpt-5.1-2025-11-13",
+        model: "claude-opus-4-5-20251101",
+        max_tokens: 4000,
+        temperature: 0.4, // Slightly higher for condition assessment nuance
+        system:
+          "You are a specialized roof condition inspector. Respond only with valid JSON.",
         messages: [
-          {
-            role: "system",
-            content:
-              "You are a specialized roof condition inspector. Respond only with valid JSON."
-          },
           {
             role: "user",
             content: messageContent
           }
-        ],
-        temperature: 0.4, // Slightly higher for condition assessment nuance
-        max_completion_tokens: 4000
+        ]
       })
     }
   )
 
-  if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text()
-    console.error("OpenAI API error:", errorText)
+  if (!anthropicResponse.ok) {
+    const errorText = await anthropicResponse.text()
+    console.error("Anthropic API error:", errorText)
     throw new Error(`Failed to analyze condition: ${errorText}`)
   }
 
-  const data = await openaiResponse.json()
-  const content = data.choices[0]?.message?.content
+  const data = await anthropicResponse.json()
+  const content = data.content[0]?.text
 
   // Parse JSON response
   try {
@@ -244,7 +252,7 @@ NO MARKDOWN. NO CODE BLOCKS. JUST RAW JSON.`
       success: true,
       agent: "condition_inspector",
       data: result,
-      model: "gpt-5.1-2025-11-13",
+      model: "claude-opus-4-5-20251101",
       tokensUsed: data.usage
     }
   } catch (parseError) {

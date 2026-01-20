@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
     const finalReport = {
       success: true,
       multiAgent: true,
-      model: "gpt-5.1-2025-11-13",
+      model: "claude-opus-4-5-20251101",
 
       // Property info at top level for easy access
       address: address,
