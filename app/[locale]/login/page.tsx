@@ -122,12 +122,16 @@ export default async function Login({
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
+    const headersList = headers()
+    const host = headersList.get("host")
+    const protocol = headersList.get("x-forwarded-proto") || "https"
+    const origin = `${protocol}://${host}`
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
-        // emailRedirectTo: `${origin}/auth/callback`
+        emailRedirectTo: `${origin}/auth/callback`
       }
     })
 

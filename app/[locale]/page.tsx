@@ -30,6 +30,19 @@ export default function LandingPage() {
       } = await supabase.auth.getSession()
 
       if (session) {
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("has_onboarded")
+          .eq("user_id", session.user.id)
+          .single()
+
+        // If user hasn't onboarded, send them to setup
+        if (!profile || !profile.has_onboarded) {
+          router.push("/setup")
+          return
+        }
+
         const { data: homeWorkspace } = await supabase
           .from("workspaces")
           .select("*")
@@ -111,7 +124,8 @@ export default function LandingPage() {
               A new era of roofing is here.
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-[Inter] text-sm font-normal text-gray-600 sm:text-base md:text-lg">
-              Instantly analyze roof conditions, generate professional reports, and close deals faster with our AI-powered platform.
+              Instantly analyze roof conditions, generate professional reports,
+              and close deals faster with our AI-powered platform.
             </p>
             <div className="mt-4 flex justify-center">
               <span className="rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-600">
