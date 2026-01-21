@@ -177,8 +177,14 @@ function PricingContent() {
                   <X className="size-3 text-gray-400" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-400">
-                  View agents only (locked)
+                  Advanced AI models
                 </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                  <X className="size-3 text-gray-400" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-400">Agent Library</span>
               </div>
             </div>
 
@@ -349,6 +355,14 @@ function PricingContent() {
                   </span>
                 </div>
               </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <Check className="size-3 text-green-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Advanced AI models
+                </span>
+              </div>
             </div>
 
             <button
@@ -417,7 +431,7 @@ function PricingContent() {
             <p className="mt-2 text-gray-600">
               Need a custom enterprise plan?{" "}
               <a
-                href="mailto:support@rooftopsgpt.com"
+                href="mailto:team@rooftops.ai"
                 className="font-medium text-cyan-600 hover:underline"
               >
                 Contact us
