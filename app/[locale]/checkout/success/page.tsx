@@ -188,7 +188,7 @@ function CheckoutSuccessContent() {
           <p>
             Need help getting started?{" "}
             <a
-              href="mailto:support@rooftopsgpt.com"
+              href="mailto:team@rooftops.ai"
               className="font-medium text-cyan-600 hover:underline"
             >
               Contact our support team
