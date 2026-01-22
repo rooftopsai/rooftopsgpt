@@ -76,12 +76,18 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
 }) => {
   const { profile, setPipedreamDataSources, setPipedreamConnected } =
     useChatbotUI()
+  const [mounted, setMounted] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const [dataSources, setDataSources] = useState<DataSource[]>([])
   const [connectedAccounts, setConnectedAccounts] = useState<
     ConnectedAccount[]
   >([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const [isOpen, setIsOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState<string | null>(null)
 
@@ -307,6 +313,9 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
   }
 
   const enabledCount = dataSources.filter(ds => ds.enabled).length
+
+  // Prevent hydration mismatch - don't render until mounted on client
+  if (!mounted) return null
 
   if (!profile) return null
 
