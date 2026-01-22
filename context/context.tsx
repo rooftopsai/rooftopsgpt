@@ -578,7 +578,15 @@ export function useChatbotUI() {
       setChatMessages: () =>
         console.error("setChatMessages called outside provider"),
       userInput: "",
-      setUserInput: () => console.error("setUserInput called outside provider")
+      setUserInput: () => console.error("setUserInput called outside provider"),
+
+      // PIPEDREAM STORE fallbacks
+      pipedreamConnected: false,
+      setPipedreamConnected: () =>
+        console.error("setPipedreamConnected called outside provider"),
+      pipedreamDataSources: [],
+      setPipedreamDataSources: () =>
+        console.error("setPipedreamDataSources called outside provider")
 
       // Add minimal implementations for other required properties
       // This is just a fallback to prevent crashes
