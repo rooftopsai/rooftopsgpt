@@ -37,7 +37,8 @@ export async function getPipedreamHeaders(
   return {
     Authorization: `Bearer ${accessToken}`,
     "x-pd-project-id": projectId,
-    "x-pd-environment": process.env.PIPEDREAM_PROJECT_ENVIRONMENT || "development",
+    "x-pd-environment":
+      process.env.PIPEDREAM_PROJECT_ENVIRONMENT || "development",
     "x-pd-external-user-id": externalUserId,
     "x-pd-tool-mode": "full-config",
     "x-pd-app-discovery": "true"

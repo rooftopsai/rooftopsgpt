@@ -44,7 +44,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
   // Determine user's plan type
   const planType =
-    userSubscription && (userSubscription.status === "active" || userSubscription.status === "trialing")
+    userSubscription &&
+    (userSubscription.status === "active" ||
+      userSubscription.status === "trialing")
       ? (userSubscription.plan_type as "free" | "premium" | "business") ||
         "free"
       : "free"

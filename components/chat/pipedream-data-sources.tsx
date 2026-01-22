@@ -74,10 +74,13 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
   className,
   chatId
 }) => {
-  const { profile, setPipedreamDataSources, setPipedreamConnected } = useChatbotUI()
+  const { profile, setPipedreamDataSources, setPipedreamConnected } =
+    useChatbotUI()
   const [isConnected, setIsConnected] = useState(false)
   const [dataSources, setDataSources] = useState<DataSource[]>([])
-  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([])
+  const [connectedAccounts, setConnectedAccounts] = useState<
+    ConnectedAccount[]
+  >([])
   const [isLoading, setIsLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState<string | null>(null)
@@ -94,19 +97,17 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
   // Check connection status, sync accounts, and fetch data sources
   useEffect(() => {
     const fetchAndSync = async () => {
-      console.log("[PipedreamDataSources] fetchAndSync called, profile:", !!profile)
       if (!profile) return
 
       setIsLoading(true)
       try {
         // First, sync accounts from Pipedream (this also updates our database)
-        console.log("[PipedreamDataSources] Fetching accounts from /api/pipedream/accounts")
         const accountsRes = await fetch("/api/pipedream/accounts")
         const accountsData = await accountsRes.json()
 
         if (accountsData.accounts && accountsData.accounts.length > 0) {
           setIsConnected(true)
-          setPipedreamConnected(true)
+          setPipedreamConnected?.(true)
           setConnectedAccounts(accountsData.accounts)
 
           // Now fetch the data sources from our database
@@ -115,9 +116,8 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
           )
           const sourcesData = await sourcesRes.json()
           const sources = sourcesData.dataSources || []
-          console.log("[PipedreamDataSources] Loaded sources:", sources)
           setDataSources(sources)
-          setPipedreamDataSources(sources)
+          setPipedreamDataSources?.(sources)
         } else {
           // Check if we have any existing data sources even if no accounts synced
           const sourcesRes = await fetch(
@@ -126,20 +126,20 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
           const sourcesData = await sourcesRes.json()
           if (sourcesData.dataSources && sourcesData.dataSources.length > 0) {
             setIsConnected(true)
-            setPipedreamConnected(true)
+            setPipedreamConnected?.(true)
             setDataSources(sourcesData.dataSources)
-            setPipedreamDataSources(sourcesData.dataSources)
+            setPipedreamDataSources?.(sourcesData.dataSources)
           } else {
             setIsConnected(false)
-            setPipedreamConnected(false)
-            setPipedreamDataSources([])
+            setPipedreamConnected?.(false)
+            setPipedreamDataSources?.([])
           }
         }
       } catch (error) {
         console.error("Error fetching Pipedream status:", error)
         setIsConnected(false)
-        setPipedreamConnected(false)
-        setPipedreamDataSources([])
+        setPipedreamConnected?.(false)
+        setPipedreamDataSources?.([])
       } finally {
         setIsLoading(false)
       }
@@ -173,7 +173,6 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
     return () => clearTimeout(timer)
   }, [browseOpen, search])
 
-
   const handleToggle = async (sourceId: string, enabled: boolean) => {
     try {
       const res = await fetch("/api/pipedream/data-sources", {
@@ -190,7 +189,7 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
         ds.id === sourceId ? { ...ds, enabled } : ds
       )
       setDataSources(updatedSources)
-      setPipedreamDataSources(updatedSources)
+      setPipedreamDataSources?.(updatedSources)
 
       toast.success(`${enabled ? "Enabled" : "Disabled"} data source`)
     } catch (error) {
@@ -272,9 +271,9 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
               const sourcesData = await sourcesRes.json()
               const sources = sourcesData.dataSources || []
               setDataSources(sources)
-              setPipedreamDataSources(sources)
+              setPipedreamDataSources?.(sources)
               setIsConnected(true)
-              setPipedreamConnected(true)
+              setPipedreamConnected?.(true)
             } catch (error) {
               console.error("Error syncing accounts:", error)
             }
@@ -293,7 +292,13 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
         setIsConnecting(null)
       }
     },
-    [profile, tokenCallback, chatId, setPipedreamDataSources, setPipedreamConnected]
+    [
+      profile,
+      tokenCallback,
+      chatId,
+      setPipedreamDataSources,
+      setPipedreamConnected
+    ]
   )
 
   const openAppBrowser = () => {
@@ -301,20 +306,9 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
     setBrowseOpen(true)
   }
 
-
   const enabledCount = dataSources.filter(ds => ds.enabled).length
 
-  console.log("[PipedreamDataSources] Render state:", {
-    hasProfile: !!profile,
-    isLoading,
-    isConnected,
-    dataSourcesCount: dataSources.length,
-    enabledCount
-  })
-
-  if (!profile) {
-    console.log("[PipedreamDataSources] No profile, returning null")
-    return null
+  if (!profile) return null
   }
 
   // Loading state
@@ -383,7 +377,9 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
                     size={20}
                     className={cn(
                       "transition-colors",
-                      enabledCount > 0 ? "text-primary" : "text-muted-foreground"
+                      enabledCount > 0
+                        ? "text-primary"
+                        : "text-muted-foreground"
                     )}
                   />
                   {enabledCount > 0 && (
@@ -391,7 +387,10 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
                       {enabledCount}
                     </span>
                   )}
-                  <IconChevronDown size={14} className="text-muted-foreground" />
+                  <IconChevronDown
+                    size={14}
+                    className="text-muted-foreground"
+                  />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
@@ -442,8 +441,8 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
               {connectedAccounts.map(account => (
                 <DropdownMenuItem
                   key={account.id}
-                  className="flex items-center gap-2 cursor-default"
-                  onSelect={(e) => e.preventDefault()}
+                  className="flex cursor-default items-center gap-2"
+                  onSelect={e => e.preventDefault()}
                 >
                   {account.iconUrl ? (
                     <img
@@ -455,7 +454,9 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
                     <IconPlug size={20} className="text-muted-foreground" />
                   )}
                   <div className="flex-1">
-                    <span className="text-sm font-medium">{account.appName}</span>
+                    <span className="text-sm font-medium">
+                      {account.appName}
+                    </span>
                     {account.name && (
                       <span className="text-muted-foreground ml-1 text-xs">
                         ({account.name})
@@ -508,7 +509,7 @@ function AppBrowserDialog({
 }: AppBrowserDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Connect an App</DialogTitle>
           <DialogDescription>
@@ -524,7 +525,7 @@ function AppBrowserDialog({
           />
           <Input
             placeholder="Search apps..."
-            className="pl-9 pr-9"
+            className="px-9"
             value={search}
             onChange={e => onSearchChange(e.target.value)}
           />
@@ -542,7 +543,10 @@ function AppBrowserDialog({
         <div className="mt-4 flex-1 overflow-y-auto pr-2">
           {searchLoading ? (
             <div className="flex items-center justify-center py-12">
-              <IconLoader size={24} className="text-muted-foreground animate-spin" />
+              <IconLoader
+                size={24}
+                className="text-muted-foreground animate-spin"
+              />
             </div>
           ) : apps.length === 0 ? (
             <div className="text-muted-foreground py-12 text-center">
@@ -557,7 +561,7 @@ function AppBrowserDialog({
                   disabled={connectingApp === app.name_slug}
                   className="hover:bg-muted flex items-center gap-3 rounded-lg border p-3 text-left transition-colors disabled:opacity-50"
                 >
-                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded bg-white p-1">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded bg-white p-1">
                     {app.img_src ? (
                       <img
                         src={app.img_src}
@@ -592,4 +596,3 @@ function AppBrowserDialog({
     </Dialog>
   )
 }
-

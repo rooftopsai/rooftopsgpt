@@ -8,7 +8,10 @@ import {
   generateSessionId,
   isPipedreamConfigured
 } from "@/lib/pipedream/mcp-session"
-import { requiresConfirmation, getConfirmationMessage } from "@/lib/pipedream/action-rules"
+import {
+  requiresConfirmation,
+  getConfirmationMessage
+} from "@/lib/pipedream/action-rules"
 import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 
@@ -98,15 +101,18 @@ export async function POST(request: Request) {
 
     if (!dataSources || dataSources.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No apps connected. Please connect an app first." }),
+        JSON.stringify({
+          message: "No apps connected. Please connect an app first."
+        }),
         { status: 400 }
       )
     }
 
     // Filter to enabled apps (or use provided list)
-    const appsToUse = enabledApps?.length > 0
-      ? enabledApps
-      : dataSources.filter(ds => ds.enabled).map(ds => ds.app_slug)
+    const appsToUse =
+      enabledApps?.length > 0
+        ? enabledApps
+        : dataSources.filter(ds => ds.enabled).map(ds => ds.app_slug)
 
     if (appsToUse.length === 0) {
       return new Response(
@@ -126,11 +132,17 @@ export async function POST(request: Request) {
 
     // Get available tools
     const mcpTools = await mcpSession.listTools()
-    console.log(`[Pipedream Chat] Available tools:`, mcpTools.map((t: any) => t.name))
+    console.log(
+      `[Pipedream Chat] Available tools:`,
+      mcpTools.map((t: any) => t.name)
+    )
 
     // Filter out configuration tools and convert to OpenAI format
     const openaiTools = convertMCPToolsToOpenAI(mcpTools)
-    console.log(`[Pipedream Chat] Usable tools:`, openaiTools.map(t => t.function.name))
+    console.log(
+      `[Pipedream Chat] Usable tools:`,
+      openaiTools.map(t => t.function.name)
+    )
 
     if (openaiTools.length === 0) {
       // No executable tools - might need configuration
@@ -138,7 +150,8 @@ export async function POST(request: Request) {
       mcpSession.close()
       return new Response(
         JSON.stringify({
-          message: "The connected apps require configuration. Try asking a specific question about your data."
+          message:
+            "The connected apps require configuration. Try asking a specific question about your data."
         }),
         { status: 400 }
       )
@@ -160,7 +173,9 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
     })
 
     // First completion to determine tool calls
-    console.log(`[Pipedream Chat] Making initial completion with ${openaiTools.length} tools`)
+    console.log(
+      `[Pipedream Chat] Making initial completion with ${openaiTools.length} tools`
+    )
     const firstResponse = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
       messages: messagesWithContext,
@@ -171,7 +186,10 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
     const message = firstResponse.choices[0].message
     const toolCalls = message.tool_calls || []
 
-    console.log(`[Pipedream Chat] Tool calls:`, toolCalls.map(tc => tc.function.name))
+    console.log(
+      `[Pipedream Chat] Tool calls:`,
+      toolCalls.map(tc => tc.function.name)
+    )
 
     // If no tool calls, return the message directly as stream
     if (toolCalls.length === 0) {
@@ -205,7 +223,9 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
       try {
         args = JSON.parse(toolCall.function.arguments || "{}")
       } catch (e) {
-        console.error(`[Pipedream Chat] Failed to parse args for ${functionName}`)
+        console.error(
+          `[Pipedream Chat] Failed to parse args for ${functionName}`
+        )
       }
 
       console.log(`[Pipedream Chat] Processing tool: ${functionName}`, args)
@@ -213,7 +233,9 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
       // Check if this action requires confirmation
       if (requiresConfirmation(functionName)) {
         const appName = appsToUse.find(app =>
-          functionName.toLowerCase().includes(app.toLowerCase().replace("_", ""))
+          functionName
+            .toLowerCase()
+            .includes(app.toLowerCase().replace("_", ""))
         )
 
         pendingConfirmations.push({
@@ -240,18 +262,25 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
         try {
           console.log(`[Pipedream Chat] Executing tool: ${functionName}`)
           const result = await mcpSession.callTool(functionName, args)
-          console.log(`[Pipedream Chat] Tool result:`, JSON.stringify(result).substring(0, 500))
+          console.log(
+            `[Pipedream Chat] Tool result:`,
+            JSON.stringify(result).substring(0, 500)
+          )
 
           const parsedResult = parseToolResult(result)
 
           // Check if the result indicates configuration is needed
-          if (parsedResult.includes("configuration mode") || parsedResult.includes("configure_props")) {
+          if (
+            parsedResult.includes("configuration mode") ||
+            parsedResult.includes("configure_props")
+          ) {
             toolMessages.push({
               tool_call_id: toolCall.id,
               role: "tool",
               content: JSON.stringify({
                 status: "needs_configuration",
-                message: "This tool requires additional configuration. Please specify which resource you want to access.",
+                message:
+                  "This tool requires additional configuration. Please specify which resource you want to access.",
                 hint: "Ask the user to specify the exact document, spreadsheet, or resource name."
               })
             })
@@ -268,8 +297,12 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
             tool_call_id: toolCall.id,
             role: "tool",
             content: JSON.stringify({
-              error: error instanceof Error ? error.message : "Failed to execute tool",
-              suggestion: "Try rephrasing your request or specifying more details."
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to execute tool",
+              suggestion:
+                "Try rephrasing your request or specifying more details."
             })
           })
         }
@@ -282,7 +315,8 @@ If a tool requires configuration (like selecting a specific spreadsheet or datab
     // If there are pending confirmations, include them in response headers
     const responseHeaders: Record<string, string> = {}
     if (pendingConfirmations.length > 0) {
-      responseHeaders["X-Pipedream-Confirmations"] = JSON.stringify(pendingConfirmations)
+      responseHeaders["X-Pipedream-Confirmations"] =
+        JSON.stringify(pendingConfirmations)
     }
 
     // Final response after tool execution

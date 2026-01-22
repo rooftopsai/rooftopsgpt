@@ -9,7 +9,10 @@ import {
   getPendingConfirmation,
   parseToolResult
 } from "@/lib/pipedream/tool-handler"
-import { requiresConfirmation, getConfirmationMessage } from "@/lib/pipedream/action-rules"
+import {
+  requiresConfirmation,
+  getConfirmationMessage
+} from "@/lib/pipedream/action-rules"
 
 export const runtime = "nodejs"
 
@@ -30,7 +33,9 @@ export async function GET(request: NextRequest) {
     // Get optional enabled apps filter from query params
     const searchParams = request.nextUrl.searchParams
     const enabledAppsParam = searchParams.get("enabled_apps")
-    const enabledApps = enabledAppsParam ? enabledAppsParam.split(",") : undefined
+    const enabledApps = enabledAppsParam
+      ? enabledAppsParam.split(",")
+      : undefined
 
     // Check if connected
     if (!pipedreamManager.isConnected(user.id)) {
@@ -90,7 +95,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { action, toolName, arguments: args, confirmationId, appSlug, appName } = body
+    const {
+      action,
+      toolName,
+      arguments: args,
+      confirmationId,
+      appSlug,
+      appName
+    } = body
 
     // Handle different actions
     if (action === "confirm") {
@@ -113,7 +125,9 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        result: result.result ? parseToolResult(result.result) : "Action completed"
+        result: result.result
+          ? parseToolResult(result.result)
+          : "Action completed"
       })
     }
 
@@ -153,10 +167,7 @@ export async function POST(request: NextRequest) {
 
     // Default action: execute tool
     if (!toolName) {
-      return NextResponse.json(
-        { error: "Missing tool name" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Missing tool name" }, { status: 400 })
     }
 
     // Check if connected
@@ -208,7 +219,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      result: result.result ? parseToolResult(result.result) : "Action completed"
+      result: result.result
+        ? parseToolResult(result.result)
+        : "Action completed"
     })
   } catch (error: any) {
     console.error("Error executing Pipedream tool:", error)

@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
         pipedream_project_id: projectId,
         mcp_server_url: `https://mcp.pipedream.com/sse`,
         api_key: "",
-        connected_apps: account ? [account.app?.name_slug || account.app_slug] : []
+        connected_apps: account
+          ? [account.app?.name_slug || account.app_slug]
+          : []
       })
     } else if (account) {
       // Update connected apps list

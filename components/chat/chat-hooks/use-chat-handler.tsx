@@ -387,7 +387,9 @@ export const useChatHandler = () => {
 
         // Determine plan type (default to free if no subscription)
         const planType =
-          userSubscription && (userSubscription.status === "active" || userSubscription.status === "trialing")
+          userSubscription &&
+          (userSubscription.status === "active" ||
+            userSubscription.status === "trialing")
             ? (userSubscription.plan_type as "free" | "premium" | "business") ||
               "free"
             : "free"
@@ -495,12 +497,8 @@ export const useChatHandler = () => {
           .filter((ds: { enabled: boolean; app_slug: string }) => ds.enabled)
           .map((ds: { app_slug: string }) => ds.app_slug)
 
-        console.log("[Chat] Pipedream data sources:", pipedreamDataSources)
-        console.log("[Chat] Enabled Pipedream apps:", enabledPipedreamApps)
-
         if (enabledPipedreamApps.length > 0) {
           // Route to Pipedream endpoint when user has connected apps
-          console.log("[Chat] Routing to Pipedream endpoint with apps:", enabledPipedreamApps)
           setToolInUse("Pipedream")
           const formatted = await buildFinalMessages(
             payload,

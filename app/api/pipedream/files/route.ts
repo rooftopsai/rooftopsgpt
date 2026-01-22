@@ -47,7 +47,9 @@ export async function GET(request: NextRequest) {
     const appSlug = searchParams.get("app") || "google_drive"
     const query = searchParams.get("q") || ""
 
-    console.log(`[Files API] Listing files for app: ${appSlug}, query: ${query}`)
+    console.log(
+      `[Files API] Listing files for app: ${appSlug}, query: ${query}`
+    )
 
     // Use Pipedream SDK
     const { PipedreamClient } = require("@pipedream/sdk")
@@ -91,7 +93,8 @@ export async function GET(request: NextRequest) {
     if (!selectedAccount) {
       return NextResponse.json({
         files: [],
-        message: "No Google account connected. Please connect Google Drive, Sheets, or Docs first."
+        message:
+          "No Google account connected. Please connect Google Drive, Sheets, or Docs first."
       })
     }
 
@@ -109,11 +112,16 @@ export async function GET(request: NextRequest) {
     // Build the Google Drive API URL
     const driveApiUrl = new URL("https://www.googleapis.com/drive/v3/files")
     driveApiUrl.searchParams.set("q", driveQuery)
-    driveApiUrl.searchParams.set("fields", "files(id,name,mimeType,webViewLink,modifiedTime)")
+    driveApiUrl.searchParams.set(
+      "fields",
+      "files(id,name,mimeType,webViewLink,modifiedTime)"
+    )
     driveApiUrl.searchParams.set("orderBy", "modifiedTime desc")
     driveApiUrl.searchParams.set("pageSize", "50")
 
-    console.log(`[Files API] Calling Google API via proxy: ${driveApiUrl.toString()}`)
+    console.log(
+      `[Files API] Calling Google API via proxy: ${driveApiUrl.toString()}`
+    )
 
     // Try SDK proxy first, then fall back to direct HTTP
     let driveResponse: any
@@ -127,13 +135,22 @@ export async function GET(request: NextRequest) {
           accountId: selectedAccount.id,
           url: driveApiUrl.toString()
         })
-        console.log(`[Files API] SDK proxy response:`, JSON.stringify(driveResponse).substring(0, 500))
+        console.log(
+          `[Files API] SDK proxy response:`,
+          JSON.stringify(driveResponse).substring(0, 500)
+        )
       } catch (sdkError: any) {
-        console.error(`[Files API] SDK proxy failed, trying direct HTTP:`, sdkError.message)
+        console.error(
+          `[Files API] SDK proxy failed, trying direct HTTP:`,
+          sdkError.message
+        )
         driveResponse = null
       }
     } else {
-      console.log(`[Files API] SDK proxy not available, pd.proxy:`, typeof pd.proxy)
+      console.log(
+        `[Files API] SDK proxy not available, pd.proxy:`,
+        typeof pd.proxy
+      )
     }
 
     // Fallback to direct HTTP if SDK didn't work
@@ -145,12 +162,16 @@ export async function GET(request: NextRequest) {
       console.log(`[Files API] Got access token:`, !!accessToken)
 
       // URL encode the target URL for the proxy endpoint
-      const encodedUrl = Buffer.from(driveApiUrl.toString()).toString("base64url")
+      const encodedUrl = Buffer.from(driveApiUrl.toString()).toString(
+        "base64url"
+      )
 
       // Build proxy URL
       const proxyUrl = `https://api.pipedream.com/v1/connect/${projectId}/proxy/${selectedAccount.id}/${encodedUrl}`
 
-      console.log(`[Files API] Direct proxy URL: ${proxyUrl.substring(0, 100)}...`)
+      console.log(
+        `[Files API] Direct proxy URL: ${proxyUrl.substring(0, 100)}...`
+      )
 
       const proxyResponse = await fetch(proxyUrl, {
         method: "GET",
@@ -162,7 +183,10 @@ export async function GET(request: NextRequest) {
 
       if (!proxyResponse.ok) {
         const errorText = await proxyResponse.text()
-        console.error(`[Files API] Direct proxy failed: ${proxyResponse.status}`, errorText)
+        console.error(
+          `[Files API] Direct proxy failed: ${proxyResponse.status}`,
+          errorText
+        )
         return NextResponse.json({
           files: [],
           error: `Proxy request failed: ${proxyResponse.status}`,
@@ -171,7 +195,10 @@ export async function GET(request: NextRequest) {
       }
 
       driveResponse = await proxyResponse.json()
-      console.log(`[Files API] Direct proxy response:`, JSON.stringify(driveResponse).substring(0, 500))
+      console.log(
+        `[Files API] Direct proxy response:`,
+        JSON.stringify(driveResponse).substring(0, 500)
+      )
     }
 
     // Handle response
@@ -179,9 +206,14 @@ export async function GET(request: NextRequest) {
 
     if (responseData?.error) {
       console.error(`[Files API] API error:`, responseData.error)
-      const errorMessage = responseData.error.message || JSON.stringify(responseData.error)
+      const errorMessage =
+        responseData.error.message || JSON.stringify(responseData.error)
 
-      if (errorMessage.includes("403") || errorMessage.includes("Forbidden") || errorMessage.includes("insufficient")) {
+      if (
+        errorMessage.includes("403") ||
+        errorMessage.includes("Forbidden") ||
+        errorMessage.includes("insufficient")
+      ) {
         return NextResponse.json({
           files: [],
           error: "The connected account doesn't have permission to list files.",

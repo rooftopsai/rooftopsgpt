@@ -54,11 +54,15 @@ export const Sidebar: FC<SidebarProps> = ({
   // Determine crown icon based on subscription
   const isPremium =
     userSubscription?.plan_type === "premium" &&
-    (userSubscription?.status === "active" || userSubscription?.status === "trialing")
+    (userSubscription?.status === "active" ||
+      userSubscription?.status === "trialing")
   const isBusiness =
     userSubscription?.plan_type === "business" &&
-    (userSubscription?.status === "active" || userSubscription?.status === "trialing")
-  const hasActiveSubscription = userSubscription?.status === "active" || userSubscription?.status === "trialing"
+    (userSubscription?.status === "active" ||
+      userSubscription?.status === "trialing")
+  const hasActiveSubscription =
+    userSubscription?.status === "active" ||
+    userSubscription?.status === "trialing"
 
   const renderSidebarContent = (
     contentType: ContentType,

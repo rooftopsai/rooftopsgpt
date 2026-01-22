@@ -38,9 +38,7 @@ function generateConfirmationId(): string {
 /**
  * Convert MCP tools to OpenAI-compatible function format
  */
-export function convertToolsToOpenAIFormat(
-  tools: Tool[]
-): Array<{
+export function convertToolsToOpenAIFormat(tools: Tool[]): Array<{
   type: "function"
   function: {
     name: string

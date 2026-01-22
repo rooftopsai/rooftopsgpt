@@ -63,7 +63,8 @@ export default function ChatPage() {
       userSubscription?.plan_type === "premium_annual" ||
       userSubscription?.plan_type === "business_monthly" ||
       userSubscription?.plan_type === "business_annual") &&
-    (userSubscription?.status === "active" || userSubscription?.status === "trialing")
+    (userSubscription?.status === "active" ||
+      userSubscription?.status === "trialing")
   const { handleNewChat, handleSendMessage, handleFocusChatInput } =
     useChatHandler()
   const { theme } = useTheme()

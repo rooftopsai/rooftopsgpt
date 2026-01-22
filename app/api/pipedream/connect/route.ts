@@ -57,8 +57,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Get allowed origins for CORS
-    const allowedOrigin =
-      process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+    const allowedOrigin = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
 
     // Create a connect token for this user
     const tokenResponse = await pd.tokens.create({
@@ -68,7 +67,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       token: tokenResponse.token,
-      expiresAt: tokenResponse.expiresAt?.toISOString?.() || tokenResponse.expiresAt,
+      expiresAt:
+        tokenResponse.expiresAt?.toISOString?.() || tokenResponse.expiresAt,
       connectLinkUrl: tokenResponse.connectLinkUrl,
       appSlug: appSlug || null,
       externalUserId: user.id

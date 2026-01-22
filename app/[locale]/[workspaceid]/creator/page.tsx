@@ -118,7 +118,8 @@ export default function CreatorStudioPage() {
       userTier === "premium_annual" ||
       userTier === "business_monthly" ||
       userTier === "business_annual") &&
-    (userSubscription?.status === "active" || userSubscription?.status === "trialing")
+    (userSubscription?.status === "active" ||
+      userSubscription?.status === "trialing")
 
   // 3) extract all unique categories
   const allCategories = Array.from(

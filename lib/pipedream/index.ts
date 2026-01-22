@@ -2,7 +2,10 @@
 // Export all pipedream-related functionality
 
 export { pipedreamManager } from "./pipedream-mcp-manager"
-export type { PipedreamConnection, ConnectOptions } from "./pipedream-mcp-manager"
+export type {
+  PipedreamConnection,
+  ConnectOptions
+} from "./pipedream-mcp-manager"
 
 export {
   requiresConfirmation,

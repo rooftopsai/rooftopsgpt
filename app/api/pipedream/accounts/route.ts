@@ -66,7 +66,9 @@ export async function GET() {
       })
     }
 
-    console.log(`[Pipedream] Found ${accounts.length} accounts for user ${user.id}`)
+    console.log(
+      `[Pipedream] Found ${accounts.length} accounts for user ${user.id}`
+    )
 
     // Update our database with the connected apps
     if (accounts.length > 0) {

@@ -150,7 +150,8 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleOpenApps = () => setShowAppsBrowser(true)
     window.addEventListener("open-pipedream-apps", handleOpenApps)
-    return () => window.removeEventListener("open-pipedream-apps", handleOpenApps)
+    return () =>
+      window.removeEventListener("open-pipedream-apps", handleOpenApps)
   }, [])
 
   async function fetchWorkspaceData(wsId: string) {
@@ -204,7 +205,11 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
           setUserSubscription(subscription)
           // Determine plan type for model validation
           // Normalize plan_type (e.g., "premium_monthly" -> "premium")
-          if ((subscription.status === "active" || subscription.status === "trialing") && subscription.plan_type) {
+          if (
+            (subscription.status === "active" ||
+              subscription.status === "trialing") &&
+            subscription.plan_type
+          ) {
             const rawPlan = subscription.plan_type.toLowerCase()
             if (rawPlan.startsWith("business")) {
               userPlanType = "business"
@@ -348,10 +353,7 @@ function InnerWorkspaceLoader({ children }: { children: ReactNode }) {
           open={showOnboarding}
           onOpenChange={setShowOnboarding}
         />
-        <AppsBrowser
-          open={showAppsBrowser}
-          onOpenChange={setShowAppsBrowser}
-        />
+        <AppsBrowser open={showAppsBrowser} onOpenChange={setShowAppsBrowser} />
       </Dashboard>
     </>
   )

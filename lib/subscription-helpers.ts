@@ -38,7 +38,10 @@ export async function checkUserFeatureAccess(
   const subscription = await getSubscriptionByUserId(userId)
 
   let planType: PlanType = "free"
-  if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
+  if (
+    subscription &&
+    (subscription.status === "active" || subscription.status === "trialing")
+  ) {
     // Normalize plan type (e.g., "premium_monthly" -> "premium")
     planType = normalizePlanType(subscription.plan_type)
   }
