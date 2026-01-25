@@ -7,9 +7,12 @@ export const STRIPE_PRICE_IDS = {
   premium_annual: "price_1SrqwALa49gFMOt6kzWLdoh2", // Rooftops AI Premium - $25/month billed annually ($300/year)
   business_monthly: "price_1SWUMvLa49gFMOt6AZ7XpwLO", // Rooftops AI Business - $99/month
   business_annual: "price_1SrqyXLa49gFMOt6pGxKOn5u", // Rooftops AI Business - $84/month billed annually ($1008/year)
+  ai_employee_monthly: process.env.STRIPE_AI_EMPLOYEE_MONTHLY_PRICE_ID || "", // AI Employee Pro - $199/month (set in env)
+  ai_employee_annual: process.env.STRIPE_AI_EMPLOYEE_ANNUAL_PRICE_ID || "", // AI Employee Pro - $169/month billed annually ($2028/year)
   // Backwards compatibility
   premium: "price_1SWUJsLa49gFMOt641Bw8rZw",
-  business: "price_1SWUMvLa49gFMOt6AZ7XpwLO"
+  business: "price_1SWUMvLa49gFMOt6AZ7XpwLO",
+  ai_employee: process.env.STRIPE_AI_EMPLOYEE_MONTHLY_PRICE_ID || ""
 }
 
 // Plan configurations
@@ -47,6 +50,30 @@ export const PLANS = {
       weatherLookups: "unlimited",
       documentGenerations: "unlimited",
       teamMembers: 10
+    }
+  },
+  AI_EMPLOYEE: {
+    name: "AI Employee Pro",
+    priceMonthly: 199,
+    stripeId: "ai_employee",
+    features: {
+      chatMessages: "unlimited",
+      propertyReports: "unlimited",
+      weatherLookups: "unlimited",
+      documentGenerations: "unlimited",
+      teamMembers: "unlimited",
+      // AI Employee specific features
+      voiceMinutes: 500,
+      smsMessages: 1000,
+      followUpSequences: "unlimited",
+      crmContacts: "unlimited",
+      activeJobs: "unlimited",
+      crewManagement: true,
+      invoicePayments: true,
+      reviewManagement: true,
+      twoWayConversations: true,
+      speedToLead: true,
+      knowledgeBase: "unlimited"
     }
   }
 } as const

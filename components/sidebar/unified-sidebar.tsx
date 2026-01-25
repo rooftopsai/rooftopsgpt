@@ -61,6 +61,13 @@ const primaryNavigationItems: NavItem[] = [
     route: (workspaceId: string) => `/${workspaceId}/chat`
   },
   {
+    id: "agent",
+    label: "AI Agent",
+    icon: IconSparkles,
+    route: (workspaceId: string) => `/${workspaceId}/agent`,
+    badge: "premium"
+  },
+  {
     id: "explore",
     label: "AI Property Reports",
     icon: IconHome,
@@ -473,6 +480,11 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
                     toggleSidebar={onToggle}
                   />
                 )
+              }
+
+              if (pathname.includes("/agent") && !searchParams.get("tab")) {
+                // Agent page has its own internal sidebar, so we return null here
+                return null
               }
 
               if (searchParams.get("tab") === "files") {

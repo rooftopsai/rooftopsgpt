@@ -66,18 +66,18 @@ function PricingContent() {
     }
   }
 
-  const getPriceId = (plan: "premium" | "business") => {
+  const getPriceId = (plan: "premium" | "business" | "ai_employee") => {
     if (billingPeriod === "annual") {
-      return plan === "premium"
-        ? STRIPE_PRICE_IDS.premium_annual
-        : STRIPE_PRICE_IDS.business_annual
+      if (plan === "premium") return STRIPE_PRICE_IDS.premium_annual
+      if (plan === "business") return STRIPE_PRICE_IDS.business_annual
+      return STRIPE_PRICE_IDS.ai_employee_annual
     }
-    return plan === "premium"
-      ? STRIPE_PRICE_IDS.premium_monthly
-      : STRIPE_PRICE_IDS.business_monthly
+    if (plan === "premium") return STRIPE_PRICE_IDS.premium_monthly
+    if (plan === "business") return STRIPE_PRICE_IDS.business_monthly
+    return STRIPE_PRICE_IDS.ai_employee_monthly
   }
 
-  const getPlanType = (plan: "premium" | "business") => {
+  const getPlanType = (plan: "premium" | "business" | "ai_employee") => {
     return billingPeriod === "annual" ? `${plan}_annual` : `${plan}_monthly`
   }
 
@@ -126,11 +126,37 @@ function PricingContent() {
             </span>
           </div>
           <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
-            Choose Your Plan
+            Invest in Winning More Jobs
           </h1>
           <p className="text-lg text-gray-600">
-            Try any paid plan free for 3 days. Cancel anytime.
+            Most roofers make back their subscription cost in the first week.
           </p>
+        </div>
+
+        {/* ROI Calculator Banner */}
+        <div className="mx-auto mb-10 max-w-3xl rounded-xl bg-gradient-to-r from-cyan-50 via-green-50 to-purple-50 p-6 text-center">
+          <p className="mb-2 text-sm font-medium text-gray-600">Average ROI for AI Employee Pro users:</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+            <div>
+              <div className="text-3xl font-bold text-cyan-600">20+ hrs</div>
+              <div className="text-xs text-gray-500">saved per week</div>
+            </div>
+            <div className="hidden h-10 w-px bg-gray-200 sm:block"></div>
+            <div>
+              <div className="text-3xl font-bold text-green-600">+45%</div>
+              <div className="text-xs text-gray-500">more jobs closed</div>
+            </div>
+            <div className="hidden h-10 w-px bg-gray-200 sm:block"></div>
+            <div>
+              <div className="text-3xl font-bold text-purple-600">24/7</div>
+              <div className="text-xs text-gray-500">call answering</div>
+            </div>
+            <div className="hidden h-10 w-px bg-gray-200 sm:block"></div>
+            <div>
+              <div className="text-3xl font-bold text-cyan-600">60 sec</div>
+              <div className="text-xs text-gray-500">lead response</div>
+            </div>
+          </div>
         </div>
 
         {/* Billing Toggle */}
@@ -163,11 +189,12 @@ function PricingContent() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+        <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Free Plan */}
           <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
             <div className="mb-6">
-              <h3 className="mb-2 text-2xl font-bold text-gray-900">Free</h3>
+              <h3 className="mb-1 text-2xl font-bold text-gray-900">Starter</h3>
+              <p className="mb-2 text-sm text-gray-500">Try before you buy</p>
               <p className="text-4xl font-bold text-gray-900">
                 $0
                 <span className="text-base font-normal text-gray-500">
@@ -181,35 +208,35 @@ function PricingContent() {
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">1 property report</span>
+                <span className="text-sm text-gray-700">1 roof report to test</span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  5 chat messages per day
+                  5 AI chat messages/day
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
                   <X className="size-3 text-gray-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-400">No web searches</span>
+                <span className="text-sm text-gray-400">No cost estimates</span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
                   <X className="size-3 text-gray-400" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-400">
-                  Advanced AI models
+                  No proposal generation
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-gray-100">
                   <X className="size-3 text-gray-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-400">Agent Library</span>
+                <span className="text-sm text-gray-400">Basic AI only</span>
               </div>
             </div>
 
@@ -245,7 +272,8 @@ function PricingContent() {
             )}
 
             <div className="mb-6">
-              <h3 className="mb-2 text-2xl font-bold text-gray-900">Premium</h3>
+              <h3 className="mb-1 text-2xl font-bold text-gray-900">Pro</h3>
+              <p className="mb-2 text-sm text-gray-500">For solo roofers & small crews</p>
               <p className="text-4xl font-bold text-gray-900">
                 {billingPeriod === "annual" ? "$25" : "$29"}
                 <span className="text-base font-normal text-gray-500">
@@ -269,7 +297,7 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  20 property reports per month
+                  <strong>20 roof reports</strong> per month
                 </span>
               </div>
               <div className="flex items-start gap-3">
@@ -277,15 +305,7 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  1,000 chat messages per month
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
-                  <Check className="size-3 text-green-600" strokeWidth={3} />
-                </div>
-                <span className="text-sm font-semibold text-gray-900">
-                  Premium Agent Library
+                  AI cost estimates included
                 </span>
               </div>
               <div className="flex items-start gap-3">
@@ -293,7 +313,15 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  Advanced AI models
+                  1,000 AI chat messages
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <Check className="size-3 text-green-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  GPT-5 powered analysis
                 </span>
               </div>
             </div>
@@ -337,9 +365,10 @@ function PricingContent() {
             </div>
 
             <div className="mb-6">
-              <h3 className="mb-2 text-2xl font-bold text-gray-900">
+              <h3 className="mb-1 text-2xl font-bold text-gray-900">
                 Business
               </h3>
+              <p className="mb-2 text-sm text-gray-500">For growing roofing companies</p>
               <p className="text-4xl font-bold text-gray-900">
                 {billingPeriod === "annual" ? "$84" : "$99"}
                 <span className="text-base font-normal text-gray-500">
@@ -363,7 +392,7 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  100 property reports per month
+                  <strong>100 roof reports</strong> per month
                 </span>
               </div>
               <div className="flex items-start gap-3">
@@ -371,7 +400,15 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  5,000 chat messages per month
+                  AI proposals & follow-ups
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <Check className="size-3 text-green-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  5,000 AI chat messages
                 </span>
               </div>
               <div className="flex items-start gap-3">
@@ -380,10 +417,10 @@ function PricingContent() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-gray-900">
-                    Exclusive Business Agents
+                    Full AI Agent Suite
                   </span>
                   <span className="text-xs text-gray-500">
-                    all premium agents included
+                    Estimates, proposals, lead nurturing
                   </span>
                 </div>
               </div>
@@ -392,7 +429,7 @@ function PricingContent() {
                   <Check className="size-3 text-green-600" strokeWidth={3} />
                 </div>
                 <span className="text-sm text-gray-700">
-                  Advanced AI models
+                  Solar analysis included
                 </span>
               </div>
             </div>
@@ -413,6 +450,129 @@ function PricingContent() {
             {billingPeriod === "annual" && (
               <p className="mt-2 text-center text-xs font-medium text-green-600">
                 Save $180/year
+              </p>
+            )}
+          </div>
+
+          {/* AI Employee Pro Plan */}
+          <div
+            className={`relative flex flex-col rounded-xl border-2 bg-gradient-to-b from-purple-50 to-white p-8 shadow-sm ${
+              suggestedPlan === "ai_employee"
+                ? "border-purple-500 ring-2 ring-purple-500/20"
+                : "border-purple-400"
+            }`}
+          >
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs font-bold text-white">
+                24/7 AI EMPLOYEE
+              </span>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="mb-1 text-2xl font-bold text-gray-900">
+                AI Employee Pro
+              </h3>
+              <p className="mb-2 text-sm text-gray-500">Your AI office admin that never sleeps</p>
+              <p className="text-4xl font-bold text-gray-900">
+                {billingPeriod === "annual" ? "$169" : "$199"}
+                <span className="text-base font-normal text-gray-500">
+                  /month
+                </span>
+              </p>
+              <p className="mt-1 text-sm font-medium text-purple-600">
+                3 days free, then {billingPeriod === "annual" ? "$169" : "$199"}
+                /mo
+              </p>
+              {billingPeriod === "annual" && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Billed annually ($2,028/year)
+                </p>
+              )}
+            </div>
+
+            <div className="mb-8 grow space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  <strong>Everything in Business</strong>, plus:
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  <strong>500 voice minutes</strong> - AI answers calls 24/7
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  <strong>1,000 SMS messages</strong> - Auto follow-ups
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Speed-to-lead response in 60 seconds
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Unlimited follow-up sequences
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Crew scheduling & production management
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Invoice generation & payment reminders
+                </span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                </div>
+                <span className="text-sm text-gray-700">
+                  Review requests & reputation management
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() =>
+                handleSubscribe(getPlanType("ai_employee"), getPriceId("ai_employee"))
+              }
+              disabled={loadingPlan !== null || currentTier === "ai_employee"}
+              className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 text-base font-semibold text-white transition-all hover:from-purple-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {currentTier === "ai_employee"
+                ? "Current Plan"
+                : loadingPlan?.includes("ai_employee")
+                  ? "Redirecting..."
+                  : "Start Free Trial"}
+            </button>
+            {billingPeriod === "annual" && (
+              <p className="mt-2 text-center text-xs font-medium text-purple-600">
+                Save $360/year
               </p>
             )}
           </div>
@@ -453,6 +613,18 @@ function PricingContent() {
                 <p className="mt-2 text-gray-600">
                   No, limits reset on the 1st of each month. We recommend
                   choosing a plan that fits your typical monthly usage.
+                </p>
+              </details>
+              <details className="group rounded-lg border border-gray-200 p-4">
+                <summary className="cursor-pointer font-semibold text-gray-900">
+                  What is the AI Employee Pro plan?
+                </summary>
+                <p className="mt-2 text-gray-600">
+                  AI Employee Pro gives you a 24/7 AI assistant that answers phone calls,
+                  responds to leads within 60 seconds, sends automated follow-ups, schedules
+                  crews, generates invoices, and requests reviews. It&apos;s like having a
+                  full-time office admin that never takes a day off—for less than the cost of
+                  a part-time employee.
                 </p>
               </details>
             </div>

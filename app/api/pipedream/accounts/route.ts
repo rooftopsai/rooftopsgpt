@@ -33,14 +33,18 @@ export async function GET() {
     // Use require to avoid Next.js bundling issues
     const { PipedreamClient } = require("@pipedream/sdk")
 
+    // Determine environment
+    const projectEnvironment = process.env.PIPEDREAM_PROJECT_ENVIRONMENT || "development"
+
     const pd = new PipedreamClient({
       clientId,
       clientSecret,
-      projectId
+      projectId,
+      projectEnvironment
     })
 
-    // Get accounts for this user - returns a paginated async iterator
-    const accountsPage = await pd.accounts.list({
+    // Get accounts for this user
+    const accountsResponse = await pd.accounts.list({
       externalUserId: user.id,
       includeCredentials: false
     })
@@ -55,15 +59,45 @@ export async function GET() {
       createdAt?: string
     }> = []
 
-    for await (const account of accountsPage) {
-      accounts.push({
-        id: account.id || "",
-        name: account.name,
-        appSlug: account.app?.nameSlug || "",
-        appName: account.app?.name || "",
-        iconUrl: account.app?.imgSrc,
-        createdAt: account.createdAt?.toISOString()
-      })
+    // Handle paginated async iterator or direct response
+    const accountsData = accountsResponse.data || accountsResponse
+
+    // Check if it's an async iterator
+    if (accountsData[Symbol.asyncIterator]) {
+      for await (const account of accountsData) {
+        accounts.push({
+          id: account.id || "",
+          name: account.name,
+          appSlug: account.app?.nameSlug || "",
+          appName: account.app?.name || "",
+          iconUrl: account.app?.imgSrc,
+          createdAt: account.createdAt?.toISOString?.() || account.createdAt
+        })
+      }
+    } else if (Array.isArray(accountsData)) {
+      // Direct array response
+      for (const account of accountsData) {
+        accounts.push({
+          id: account.id || "",
+          name: account.name,
+          appSlug: account.app?.nameSlug || account.app?.name_slug || "",
+          appName: account.app?.name || "",
+          iconUrl: account.app?.imgSrc || account.app?.img_src,
+          createdAt: account.createdAt || account.created_at
+        })
+      }
+    } else if (accountsData.accounts) {
+      // Response with accounts property
+      for (const account of accountsData.accounts) {
+        accounts.push({
+          id: account.id || "",
+          name: account.name,
+          appSlug: account.app?.nameSlug || account.app?.name_slug || "",
+          appName: account.app?.name || "",
+          iconUrl: account.app?.imgSrc || account.app?.img_src,
+          createdAt: account.createdAt || account.created_at
+        })
+      }
     }
 
     console.log(
@@ -72,7 +106,7 @@ export async function GET() {
 
     // Update our database with the connected apps
     if (accounts.length > 0) {
-      const appSlugs = accounts.map(acc => acc.appSlug)
+      const appSlugs = accounts.map(acc => acc.appSlug).filter(Boolean)
 
       // Check if connection exists
       const { data: existingConnection } = await supabase
@@ -103,6 +137,8 @@ export async function GET() {
 
       // Create/update data source entries for each account
       for (const account of accounts) {
+        if (!account.appSlug) continue
+
         // Use a combination insert approach - try insert, if fails due to constraint, update
         const { error: insertError } = await supabase
           .from("pipedream_data_sources")
@@ -117,7 +153,6 @@ export async function GET() {
 
         if (insertError) {
           // If insert failed (likely duplicate), try to update instead
-          // Also ensure enabled is true when syncing
           await supabase
             .from("pipedream_data_sources")
             .update({

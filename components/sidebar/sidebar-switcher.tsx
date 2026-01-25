@@ -26,7 +26,7 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
 }) => {
   return (
     <div className="flex h-full flex-col justify-between border-r border-gray-800/50 bg-black py-3">
-      <TabsList className="grid h-auto grid-rows-6 gap-1 bg-transparent p-1">
+      <TabsList className="grid h-auto grid-rows-7 gap-1 bg-transparent p-1">
         <SidebarSwitchItem
           icon={
             <IconMessageCircle
@@ -35,6 +35,14 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
             />
           }
           contentType="chats"
+          onContentTypeChange={onContentTypeChange}
+        />
+
+        <SidebarSwitchItem
+          icon={
+            <IconSparkles size={SIDEBAR_ICON_SIZE} className="text-gray-200" />
+          }
+          contentType="agent"
           onContentTypeChange={onContentTypeChange}
         />
 

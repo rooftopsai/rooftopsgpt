@@ -10,3 +10,4 @@ export type ContentType =
   | "explore"
   | "creator"
   | "reports"
+  | "agent"

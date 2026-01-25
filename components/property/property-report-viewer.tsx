@@ -15,8 +15,10 @@ import {
   IconRobot,
   IconSun,
   IconPackage,
-  IconMessageCircle
+  IconMessageCircle,
+  IconFileText
 } from "@tabler/icons-react"
+import { ProposalTemplates } from "./proposal-templates"
 
 // ============================================================================
 // ROOFTOPS AI - INTERACTIVE ROOF REPORT VIEWER
@@ -45,6 +47,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
   const [estimateItems, setEstimateItems] = useState<any[]>([])
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({})
   const [showPriceEditor, setShowPriceEditor] = useState<string | null>(null)
+  const [showProposalModal, setShowProposalModal] = useState(false)
 
   // AI Chat state
   const [chatMessages, setChatMessages] = useState<
@@ -121,14 +124,24 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
         {}
       : reportData?.structuredData || reportData?.measurements || {}
 
+    // NOTE: Removed Solar API fallback - segments should come from LLM analysis only
     const segments = isAgentMode
       ? reportData?.agents?.measurement?.roofSegments ||
         reportData?.finalReport?.roofSegments ||
-        solarData?.solarPotential?.roofSegmentStats ||
         []
       : reportData?.roofSegments ||
-        solarData?.solarPotential?.roofSegmentStats ||
         []
+
+    // Log segment source for debugging
+    console.log("[PropertyReportViewer] Segment data source:", {
+      isAgentMode,
+      fromAgentMeasurement: !!reportData?.agents?.measurement?.roofSegments,
+      fromFinalReport: !!reportData?.finalReport?.roofSegments,
+      fromRoofSegments: !!reportData?.roofSegments,
+      segmentCount: segments.length,
+      facetCountFromMeasurements: measurements.facetCount,
+      finalSegmentCountUsed: measurements.facetCount || segments.length || 0
+    })
 
     const condition = isAgentMode
       ? reportData?.agents?.condition ||
@@ -1743,249 +1756,408 @@ Answer questions about this property clearly and concisely. Use specific numbers
           <div>
             {/* Estimate Total Header */}
             <div
-              className="sticky top-[85px] z-50 mb-4 rounded-2xl p-5 shadow-sm"
+              className="sticky top-[85px] z-50 mb-4 overflow-hidden rounded-2xl shadow-lg"
               style={{
                 background:
                   estimateItems.length > 0
                     ? `linear-gradient(135deg, ${theme.primary} 0%, ${theme.primaryDark} 100%)`
-                    : theme.gray100,
-                color: estimateItems.length > 0 ? theme.white : theme.gray900
+                    : theme.gray100
               }}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="mb-1 text-xs opacity-90">
-                    Your Estimate Total
+              <div className="p-5" style={{ color: estimateItems.length > 0 ? theme.white : theme.gray900 }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="mb-1 flex items-center gap-2 text-xs opacity-90">
+                      <IconCash className="size-4" />
+                      Your Estimate Total
+                    </div>
+                    <div className="text-[32px] font-extrabold tracking-tight">
+                      {formatCurrency(calculateEstimateTotal())}
+                    </div>
                   </div>
-                  <div className="text-[28px] font-extrabold">
-                    {formatCurrency(calculateEstimateTotal())}
+                  <div className="text-right">
+                    <div className="rounded-lg bg-white/10 px-3 py-2">
+                      <div className="text-[20px] font-bold">
+                        {estimateItems.length}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-wide opacity-80">items</div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[11px] opacity-80">
-                    {estimateItems.length} items
-                  </div>
-                  <div className="text-xs opacity-90">
-                    {roofData.measurements.roofingSquares} squares
-                  </div>
+
+                {/* Roof size reminder */}
+                <div className="mt-3 flex items-center gap-4 text-xs opacity-80">
+                  <span>📐 {roofData.measurements.roofingSquares} squares</span>
+                  <span>📏 {roofData.measurements.totalArea?.toLocaleString() || "N/A"} sq ft</span>
+                  <span>📊 {roofData.measurements.pitch || "N/A"} pitch</span>
                 </div>
               </div>
+
               {estimateItems.length > 0 && (
                 <div
-                  className="mt-3 flex gap-2 pt-3"
-                  style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}
+                  className="flex gap-2 bg-black/10 p-3"
                 >
                   <button
                     onClick={() => setEstimateItems([])}
-                    className="flex-1 cursor-pointer rounded-lg p-2.5 text-[13px] font-semibold"
+                    className="cursor-pointer rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-all hover:bg-white/10"
                     style={{
                       border: "1px solid rgba(255,255,255,0.3)",
                       background: "transparent",
                       color: theme.white
                     }}
                   >
-                    Clear All
+                    Clear
                   </button>
                   <button
                     onClick={handleShareEstimate}
-                    className="flex-[2] cursor-pointer rounded-lg p-2.5 text-[13px] font-bold"
+                    className="flex-1 cursor-pointer rounded-lg p-2.5 text-[13px] font-semibold transition-all hover:bg-white/10"
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      background: "transparent",
+                      color: theme.white
+                    }}
+                  >
+                    Share
+                  </button>
+                  <button
+                    onClick={() => setShowProposalModal(true)}
+                    className="flex-[2] flex cursor-pointer items-center justify-center gap-2 rounded-lg p-2.5 text-[13px] font-bold shadow-md transition-all hover:shadow-lg"
                     style={{
                       background: theme.white,
                       color: theme.primary,
                       border: "none"
                     }}
                   >
-                    Share Estimate →
+                    <IconFileText className="size-4" />
+                    Create Proposal
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Quick Add Buttons */}
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  const essentials = estimateCategories
-                    .flatMap(c => c.items)
-                    .filter(i =>
-                      [
-                        "tearoff",
-                        "disposal",
-                        "shingles",
-                        "underlayment",
-                        "starter",
-                        "ridgecap",
-                        "drip",
-                        "install"
-                      ].includes(i.id)
-                    )
-                  setEstimateItems(essentials)
-                }}
-                className="cursor-pointer rounded-full px-4 py-2.5 text-[13px] font-semibold"
-                style={{
-                  border: `1px solid ${theme.primary}`,
-                  background: theme.primaryBg,
-                  color: theme.primary
-                }}
-              >
-                + Basic Replacement
-              </button>
-              <button
-                onClick={() => {
-                  const all = estimateCategories
-                    .flatMap(c => c.items)
-                    .filter(i => i.qty > 0)
-                  setEstimateItems(all)
-                }}
-                className="cursor-pointer rounded-full px-4 py-2.5 text-[13px] font-semibold"
-                style={{
-                  border: `1px solid ${theme.gray300}`,
-                  background: theme.white,
-                  color: theme.gray700
-                }}
-              >
-                + Full Package
-              </button>
+            {/* Quick Add Presets - Job Templates */}
+            <div className="mb-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Quick Start Templates
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <button
+                  onClick={() => {
+                    const essentials = estimateCategories
+                      .flatMap(c => c.items)
+                      .filter(i =>
+                        [
+                          "tearoff",
+                          "disposal",
+                          "shingles",
+                          "underlayment",
+                          "starter",
+                          "ridgecap",
+                          "drip",
+                          "install"
+                        ].includes(i.id)
+                      )
+                    setEstimateItems(essentials)
+                  }}
+                  className="flex cursor-pointer flex-col items-center gap-1 rounded-xl p-3 transition-all hover:scale-[1.02]"
+                  style={{
+                    border: `2px solid ${theme.primary}`,
+                    background: theme.primaryBg
+                  }}
+                >
+                  <span className="text-lg">🏠</span>
+                  <span className="text-xs font-semibold" style={{ color: theme.primary }}>Basic Replacement</span>
+                  <span className="text-[10px] text-gray-500">Tear-off + Install</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const premium = estimateCategories
+                      .flatMap(c => c.items)
+                      .filter(i =>
+                        [
+                          "tearoff",
+                          "disposal",
+                          "cleanup",
+                          "shingles",
+                          "underlayment",
+                          "starter",
+                          "ridgecap",
+                          "icewater",
+                          "drip",
+                          "vents",
+                          "pipeboots",
+                          "install"
+                        ].includes(i.id)
+                      )
+                    setEstimateItems(premium)
+                  }}
+                  className="flex cursor-pointer flex-col items-center gap-1 rounded-xl p-3 transition-all hover:scale-[1.02]"
+                  style={{
+                    border: `2px solid ${theme.accent}`,
+                    background: "#FFFBEB"
+                  }}
+                >
+                  <span className="text-lg">⭐</span>
+                  <span className="text-xs font-semibold" style={{ color: theme.accent }}>Premium Package</span>
+                  <span className="text-[10px] text-gray-500">Full protection</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const all = estimateCategories
+                      .flatMap(c => c.items)
+                      .filter(i => i.qty > 0)
+                    setEstimateItems(all)
+                  }}
+                  className="flex cursor-pointer flex-col items-center gap-1 rounded-xl p-3 transition-all hover:scale-[1.02]"
+                  style={{
+                    border: `2px solid ${theme.gray300}`,
+                    background: theme.gray50
+                  }}
+                >
+                  <span className="text-lg">📋</span>
+                  <span className="text-xs font-semibold text-gray-700">Complete Job</span>
+                  <span className="text-[10px] text-gray-500">Everything included</span>
+                </button>
+                <button
+                  onClick={() => setEstimateItems([])}
+                  className="flex cursor-pointer flex-col items-center gap-1 rounded-xl p-3 transition-all hover:scale-[1.02]"
+                  style={{
+                    border: `2px dashed ${theme.gray300}`,
+                    background: theme.white
+                  }}
+                >
+                  <span className="text-lg">✨</span>
+                  <span className="text-xs font-semibold text-gray-600">Custom Build</span>
+                  <span className="text-[10px] text-gray-500">Pick your items</span>
+                </button>
+              </div>
             </div>
 
-            {/* Categories */}
-            {estimateCategories.map((category, catIdx) => (
-              <div
-                key={catIdx}
-                className="mb-4 rounded-2xl border bg-white p-5 shadow-sm"
-                style={{ borderColor: theme.gray100 }}
-              >
-                <div className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-                  <span>{category.icon}</span> {category.name}
+            {/* Quick Stats Bar */}
+            {estimateItems.length > 0 && (
+              <div className="mb-4 grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-gray-50 p-3 text-center">
+                  <div className="text-xs text-gray-500">Materials</div>
+                  <div className="text-sm font-bold text-gray-800">
+                    {formatCurrency(estimateItems
+                      .filter(i => ["shingles", "underlayment", "starter", "ridgecap", "icewater", "drip", "vents", "pipeboots", "flashing", "nails"].includes(i.id))
+                      .reduce((sum, i) => sum + getPrice(i.id, i.defaultPrice) * i.qty, 0))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {category.items.map(item => {
-                    const selected = isItemSelected(item.id)
-                    const price = getPrice(item.id, item.defaultPrice)
-                    const lineTotal = price * item.qty
-
-                    return (
-                      <div key={item.id}>
-                        <div
-                          className="flex cursor-pointer items-center gap-2.5 rounded-lg p-3 transition-all"
-                          style={{
-                            border: `2px solid ${selected ? theme.primary : theme.gray200}`,
-                            background: selected ? theme.primaryBg : theme.white
-                          }}
-                          onClick={() => toggleEstimateItem(item)}
-                        >
-                          {/* Checkbox */}
-                          <div
-                            className="flex size-6 shrink-0 items-center justify-center rounded-md"
-                            style={{
-                              border: `2px solid ${selected ? theme.primary : theme.gray300}`,
-                              background: selected ? theme.primary : theme.white
-                            }}
-                          >
-                            {selected && (
-                              <span className="text-sm text-white">✓</span>
-                            )}
-                          </div>
-
-                          {/* Item Info */}
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {item.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {item.description}
-                            </div>
-                            <div className="mt-0.5 text-[11px] text-gray-400">
-                              {item.qty} {item.unit} × ${price.toFixed(2)}/
-                              {item.unit}
-                            </div>
-                          </div>
-
-                          {/* Price */}
-                          <div className="shrink-0 text-right">
-                            <div
-                              className="text-[15px] font-bold"
-                              style={{
-                                color: selected ? theme.primary : theme.gray700
-                              }}
-                            >
-                              {formatCurrency(lineTotal)}
-                            </div>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation()
-                                setShowPriceEditor(
-                                  showPriceEditor === item.id ? null : item.id
-                                )
-                              }}
-                              className="cursor-pointer px-1 py-0.5 text-[11px]"
-                              style={{
-                                color: theme.primary,
-                                background: "none",
-                                border: "none"
-                              }}
-                            >
-                              Edit Price
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Price Editor */}
-                        {showPriceEditor === item.id && (
-                          <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                            <div className="mb-2 text-[13px] font-semibold">
-                              Custom price for: {item.name}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">$</span>
-                              <input
-                                type="number"
-                                value={getPrice(item.id, item.defaultPrice)}
-                                onChange={e =>
-                                  setCustomPrices({
-                                    ...customPrices,
-                                    [item.id]: parseFloat(e.target.value) || 0
-                                  })
-                                }
-                                className="flex-1 rounded-lg p-2.5 text-base outline-none"
-                                style={{ border: `1px solid ${theme.gray300}` }}
-                              />
-                              <span className="text-[13px] text-gray-500">
-                                /{item.unit}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  const newPrices = { ...customPrices }
-                                  delete newPrices[item.id]
-                                  setCustomPrices(newPrices)
-                                }}
-                                className="cursor-pointer rounded-lg px-3 py-2.5 text-xs"
-                                style={{
-                                  background: theme.gray200,
-                                  border: "none"
-                                }}
-                              >
-                                Reset
-                              </button>
-                              <button
-                                onClick={() => setShowPriceEditor(null)}
-                                className="cursor-pointer rounded-lg px-3 py-2.5 text-xs text-white"
-                                style={{
-                                  background: theme.primary,
-                                  border: "none"
-                                }}
-                              >
-                                Done
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                <div className="rounded-lg bg-gray-50 p-3 text-center">
+                  <div className="text-xs text-gray-500">Labor</div>
+                  <div className="text-sm font-bold text-gray-800">
+                    {formatCurrency(estimateItems
+                      .filter(i => ["tearoff", "install", "complexity", "steeppitch", "cleanup"].includes(i.id))
+                      .reduce((sum, i) => sum + getPrice(i.id, i.defaultPrice) * i.qty, 0))}
+                  </div>
+                </div>
+                <div className="rounded-lg p-3 text-center" style={{ background: theme.primaryBg }}>
+                  <div className="text-xs" style={{ color: theme.primary }}>Per Square</div>
+                  <div className="text-sm font-bold" style={{ color: theme.primaryDark }}>
+                    {formatCurrency(calculateEstimateTotal() / (roofData.measurements.roofingSquares || 1))}
+                  </div>
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Categories */}
+            {estimateCategories.map((category, catIdx) => {
+              const categoryItems = category.items
+              const selectedInCategory = categoryItems.filter(item => isItemSelected(item.id))
+              const categoryTotal = selectedInCategory.reduce(
+                (sum, item) => sum + getPrice(item.id, item.defaultPrice) * item.qty,
+                0
+              )
+
+              return (
+                <div
+                  key={catIdx}
+                  className="mb-4 overflow-hidden rounded-2xl border bg-white shadow-sm transition-all"
+                  style={{ borderColor: selectedInCategory.length > 0 ? theme.primary + "40" : theme.gray100 }}
+                >
+                  {/* Category Header */}
+                  <div
+                    className="flex items-center justify-between p-4"
+                    style={{
+                      background: selectedInCategory.length > 0 ? theme.primaryBg : theme.gray50,
+                      borderBottom: `1px solid ${theme.gray100}`
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{category.icon}</span>
+                      <div>
+                        <div className="text-sm font-bold text-gray-900">{category.name}</div>
+                        <div className="text-[11px] text-gray-500">
+                          {categoryItems.length} items • {selectedInCategory.length} selected
+                        </div>
+                      </div>
+                    </div>
+                    {categoryTotal > 0 && (
+                      <div className="rounded-lg px-3 py-1.5" style={{ background: theme.primary + "15" }}>
+                        <div className="text-xs text-gray-500">Subtotal</div>
+                        <div className="text-sm font-bold" style={{ color: theme.primary }}>
+                          {formatCurrency(categoryTotal)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category Items */}
+                  <div className="divide-y divide-gray-100 p-2">
+                    {category.items.map(item => {
+                      const selected = isItemSelected(item.id)
+                      const price = getPrice(item.id, item.defaultPrice)
+                      const lineTotal = price * item.qty
+                      const hasCustomPrice = customPrices[item.id] !== undefined
+
+                      return (
+                        <div key={item.id} className="py-1">
+                          <div
+                            className="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-gray-50"
+                            style={{
+                              border: `2px solid ${selected ? theme.primary : "transparent"}`,
+                              background: selected ? theme.primaryBg : "transparent"
+                            }}
+                            onClick={() => toggleEstimateItem(item)}
+                          >
+                            {/* Checkbox */}
+                            <div
+                              className="flex size-6 shrink-0 items-center justify-center rounded-full transition-all"
+                              style={{
+                                border: `2px solid ${selected ? theme.primary : theme.gray300}`,
+                                background: selected ? theme.primary : theme.white
+                              }}
+                            >
+                              {selected && (
+                                <IconCheck className="size-4 text-white" />
+                              )}
+                            </div>
+
+                            {/* Item Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-900">
+                                  {item.name}
+                                </span>
+                                {hasCustomPrice && (
+                                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                                    Custom
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {item.description}
+                              </div>
+                              <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-400">
+                                <span className="rounded bg-gray-100 px-1.5 py-0.5">
+                                  {item.qty} {item.unit}
+                                </span>
+                                <span>×</span>
+                                <span>${price.toFixed(2)}/{item.unit}</span>
+                              </div>
+                            </div>
+
+                            {/* Price & Edit */}
+                            <div className="shrink-0 text-right">
+                              <div
+                                className="text-base font-bold"
+                                style={{
+                                  color: selected ? theme.primary : theme.gray700
+                                }}
+                              >
+                                {formatCurrency(lineTotal)}
+                              </div>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  setShowPriceEditor(
+                                    showPriceEditor === item.id ? null : item.id
+                                  )
+                                }}
+                                className="mt-1 cursor-pointer rounded px-2 py-1 text-[11px] font-medium transition-colors hover:bg-gray-100"
+                                style={{
+                                  color: theme.primary,
+                                  background: "none",
+                                  border: "none"
+                                }}
+                              >
+                                ✏️ Edit
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Price Editor - Enhanced */}
+                          {showPriceEditor === item.id && (
+                            <div
+                              className="mx-3 mb-2 mt-1 rounded-xl p-4"
+                              style={{ background: theme.gray50, border: `1px solid ${theme.gray200}` }}
+                            >
+                              <div className="mb-3 flex items-center justify-between">
+                                <div className="text-sm font-semibold text-gray-800">
+                                  Edit: {item.name}
+                                </div>
+                                <button
+                                  onClick={() => setShowPriceEditor(null)}
+                                  className="text-gray-400 hover:text-gray-600"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex flex-1 items-center rounded-lg bg-white" style={{ border: `2px solid ${theme.primary}` }}>
+                                  <span className="px-3 text-lg font-semibold text-gray-400">$</span>
+                                  <input
+                                    type="number"
+                                    value={getPrice(item.id, item.defaultPrice)}
+                                    onChange={e =>
+                                      setCustomPrices({
+                                        ...customPrices,
+                                        [item.id]: parseFloat(e.target.value) || 0
+                                      })
+                                    }
+                                    className="w-full rounded-lg p-3 text-lg font-bold outline-none"
+                                    style={{ color: theme.primary }}
+                                  />
+                                  <span className="px-3 text-sm text-gray-500">/{item.unit}</span>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="text-xs text-gray-500">
+                                  Default: ${item.defaultPrice.toFixed(2)}/{item.unit}
+                                </div>
+                                <div className="flex gap-2">
+                                  {hasCustomPrice && (
+                                    <button
+                                      onClick={() => {
+                                        const newPrices = { ...customPrices }
+                                        delete newPrices[item.id]
+                                        setCustomPrices(newPrices)
+                                      }}
+                                      className="cursor-pointer rounded-lg px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-200"
+                                      style={{ background: theme.gray200, border: "none" }}
+                                    >
+                                      Reset to Default
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => setShowPriceEditor(null)}
+                                    className="cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold text-white"
+                                    style={{ background: theme.primary, border: "none" }}
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
 
             <Disclaimer />
           </div>
@@ -2684,6 +2856,23 @@ Answer questions about this property clearly and concisely. Use specific numbers
           </button>
         ))}
       </nav>
+
+      {/* Proposal Templates Modal */}
+      {showProposalModal && (
+        <ProposalTemplates
+          estimateItems={estimateItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            qty: item.qty,
+            unit: item.unit,
+            price: getPrice(item.id, item.defaultPrice)
+          }))}
+          estimateTotal={calculateEstimateTotal()}
+          propertyAddress={roofData.property.address}
+          roofSize={roofData.measurements.roofingSquares}
+          onClose={() => setShowProposalModal(false)}
+        />
+      )}
     </div>
   )
 }

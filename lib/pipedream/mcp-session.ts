@@ -4,6 +4,13 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 const MCP_BASE_URL =
   process.env.PIPEDREAM_MCP_URL || "https://remote.mcp.pipedream.net"
 
+// Session cache with TTL
+const sessionCache = new Map<
+  string,
+  { session: MCPSessionManager; lastUsed: number }
+>()
+const SESSION_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
 interface PipedreamHeaders {
   Authorization: string
   "x-pd-project-id": string
@@ -26,10 +33,13 @@ export async function getPipedreamHeaders(
   // Use require to avoid Next.js bundling issues
   const { PipedreamClient } = require("@pipedream/sdk")
 
+  const projectEnvironment = process.env.PIPEDREAM_PROJECT_ENVIRONMENT || "development"
+
   const pd = new PipedreamClient({
     clientId,
     clientSecret,
-    projectId
+    projectId,
+    projectEnvironment
   })
 
   const accessToken = await pd.rawAccessToken
@@ -54,6 +64,8 @@ export class MCPSessionManager {
   private connectionPromise: Promise<void> | null = null
   private chatId: string
   private userId: string
+  private isConnected: boolean = false
+  private lastError: Error | null = null
 
   constructor(userId: string, chatId: string) {
     this.serverUrl = MCP_BASE_URL
@@ -62,15 +74,36 @@ export class MCPSessionManager {
   }
 
   /**
+   * Check if the session is healthy
+   */
+  public isHealthy(): boolean {
+    return this.isConnected && this.client !== null && this.lastError === null
+  }
+
+  /**
+   * Get the last error if any
+   */
+  public getLastError(): Error | null {
+    return this.lastError
+  }
+
+  /**
    * Connects to the MCP server
    */
   public async connect(): Promise<void> {
+    // If already connected and healthy, return
+    if (this.isConnected && this.client) {
+      return
+    }
+
+    // If connection in progress, wait for it
     if (this.connectionPromise) {
       return this.connectionPromise
     }
 
     this.connectionPromise = new Promise(async (resolve, reject) => {
       try {
+        console.log(`[MCP] Connecting for user ${this.userId}...`)
         const headers = await getPipedreamHeaders(this.userId)
 
         const transport = new StreamableHTTPClientTransport(
@@ -96,12 +129,16 @@ export class MCPSessionManager {
         )
 
         await this.client.connect(transport)
+        this.isConnected = true
+        this.lastError = null
         console.log("[MCP] Connection established")
         resolve()
       } catch (error) {
         console.error("[MCP] Connection error:", error)
+        this.lastError = error instanceof Error ? error : new Error(String(error))
+        this.isConnected = false
         this.close()
-        reject(new Error("Failed to establish MCP connection"))
+        reject(new Error(`Failed to establish MCP connection: ${this.lastError.message}`))
       }
     })
 
@@ -109,21 +146,44 @@ export class MCPSessionManager {
   }
 
   /**
+   * Reconnect to the MCP server (force new connection)
+   */
+  public async reconnect(): Promise<void> {
+    console.log("[MCP] Forcing reconnection...")
+    this.close()
+    return this.connect()
+  }
+
+  /**
    * Disconnects from the MCP server
    */
   public close(): void {
     if (this.client) {
-      this.client.close()
+      try {
+        this.client.close()
+      } catch (e) {
+        // Ignore close errors
+      }
       this.client = null
     }
     this.connectionPromise = null
+    this.isConnected = false
+  }
+
+  /**
+   * Ensure connection is healthy, reconnect if needed
+   */
+  private async ensureConnection(): Promise<void> {
+    if (!this.isHealthy()) {
+      await this.reconnect()
+    }
   }
 
   /**
    * Selects which apps to enable tools for
    */
   public async selectApps(appSlugs: string[]): Promise<void> {
-    await this.connect()
+    await this.ensureConnection()
 
     if (!this.client) {
       throw new Error("MCP client not initialized")
@@ -137,7 +197,13 @@ export class MCPSessionManager {
       })
     } catch (error) {
       console.error("[MCP] Failed to select apps:", error)
-      throw error
+      this.lastError = error instanceof Error ? error : new Error(String(error))
+      // Try reconnecting once
+      await this.reconnect()
+      await this.client!.callTool({
+        name: "select_apps",
+        arguments: { apps: appSlugs }
+      })
     }
   }
 
@@ -145,18 +211,25 @@ export class MCPSessionManager {
    * Lists available tools from the MCP server
    */
   public async listTools(): Promise<any[]> {
-    await this.connect()
+    await this.ensureConnection()
 
     if (!this.client) {
       throw new Error("MCP client not initialized")
     }
 
-    const mcpTools = await this.client.listTools()
-    console.log(
-      "[MCP] Available tools:",
-      mcpTools.tools.map((t: any) => t.name).join(", ")
-    )
-    return mcpTools.tools
+    try {
+      const mcpTools = await this.client.listTools()
+      const toolNames = mcpTools.tools.map((t: any) => t.name)
+      console.log(`[MCP] Available tools (${toolNames.length}):`, toolNames.slice(0, 10).join(", "), toolNames.length > 10 ? "..." : "")
+      return mcpTools.tools
+    } catch (error) {
+      console.error("[MCP] Failed to list tools:", error)
+      this.lastError = error instanceof Error ? error : new Error(String(error))
+      // Try reconnecting once
+      await this.reconnect()
+      const mcpTools = await this.client!.listTools()
+      return mcpTools.tools
+    }
   }
 
   /**
@@ -166,19 +239,32 @@ export class MCPSessionManager {
     name: string,
     args: Record<string, unknown>
   ): Promise<any> {
-    await this.connect()
+    await this.ensureConnection()
 
     if (!this.client) {
       throw new Error("MCP client not initialized")
     }
 
-    console.log(`[MCP] Calling tool: ${name}`, args)
-    const result = await this.client.callTool({
-      name,
-      arguments: args
-    })
+    console.log(`[MCP] Calling tool: ${name}`, JSON.stringify(args).slice(0, 200))
 
-    return result
+    try {
+      const result = await this.client.callTool({
+        name,
+        arguments: args
+      })
+      return result
+    } catch (error) {
+      console.error(`[MCP] Tool call failed for ${name}:`, error)
+      this.lastError = error instanceof Error ? error : new Error(String(error))
+
+      // Try reconnecting and retrying once
+      await this.reconnect()
+      const result = await this.client!.callTool({
+        name,
+        arguments: args
+      })
+      return result
+    }
   }
 
   /**
@@ -213,4 +299,63 @@ export function isPipedreamConfigured(): boolean {
     process.env.PIPEDREAM_CLIENT_SECRET &&
     process.env.PIPEDREAM_PROJECT_ID
   )
+}
+
+/**
+ * Get or create an MCP session for a user
+ * Uses caching with TTL to avoid creating too many connections
+ */
+export async function getOrCreateMCPSession(
+  userId: string,
+  chatId: string
+): Promise<MCPSessionManager> {
+  const cacheKey = `${userId}-${chatId}`
+  const cached = sessionCache.get(cacheKey)
+  const now = Date.now()
+
+  // Return cached session if healthy and not expired
+  if (cached && cached.session.isHealthy() && now - cached.lastUsed < SESSION_TTL_MS) {
+    cached.lastUsed = now
+    return cached.session
+  }
+
+  // Clean up old session if exists
+  if (cached) {
+    cached.session.close()
+    sessionCache.delete(cacheKey)
+  }
+
+  // Create new session
+  const session = new MCPSessionManager(userId, chatId)
+  await session.connect()
+
+  sessionCache.set(cacheKey, { session, lastUsed: now })
+
+  // Cleanup old sessions periodically
+  cleanupStaleSessions()
+
+  return session
+}
+
+/**
+ * Clean up stale sessions from cache
+ */
+function cleanupStaleSessions(): void {
+  const now = Date.now()
+  for (const [key, value] of sessionCache.entries()) {
+    if (now - value.lastUsed > SESSION_TTL_MS) {
+      value.session.close()
+      sessionCache.delete(key)
+    }
+  }
+}
+
+/**
+ * Close all MCP sessions (useful for cleanup)
+ */
+export function closeAllSessions(): void {
+  for (const [key, value] of sessionCache.entries()) {
+    value.session.close()
+  }
+  sessionCache.clear()
 }

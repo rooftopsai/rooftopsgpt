@@ -54,7 +54,7 @@ export function invalidateUserCache(userId: string): void {
   clearUserCache(userId)
 }
 
-export type Tier = "free" | "premium" | "business"
+export type Tier = "free" | "premium" | "business" | "ai_employee"
 
 /**
  * Normalize tier/plan_type to base tier (remove _monthly/_annual suffix)
@@ -65,6 +65,7 @@ function normalizeTier(tier: string | null | undefined): Tier {
 
   const normalized = tier.toLowerCase()
 
+  if (normalized.startsWith("ai_employee") || normalized.startsWith("ai-employee")) return "ai_employee"
   if (normalized.startsWith("business")) return "business"
   if (normalized.startsWith("premium")) return "premium"
 
@@ -72,7 +73,8 @@ function normalizeTier(tier: string | null | undefined): Tier {
   if (
     normalized === "free" ||
     normalized === "premium" ||
-    normalized === "business"
+    normalized === "business" ||
+    normalized === "ai_employee"
   ) {
     return normalized as Tier
   }
@@ -87,21 +89,76 @@ export const TIER_LIMITS = {
     chatMessagesDaily: 5, // 5 per day on GPT-4o
     chatMessagesMonthly: -1, // Not applicable for free tier
     webSearches: 0,
-    agents: false
+    agents: false,
+    // AI Employee features (not available)
+    voiceMinutes: 0,
+    smsMessages: 0,
+    followUpSequences: 0,
+    crmContacts: 0,
+    activeJobs: 0,
+    crewManagement: false,
+    invoicePayments: false,
+    reviewManagement: false,
+    twoWayConversations: false,
+    speedToLead: false,
+    knowledgeBaseItems: 0
   },
   premium: {
     reports: 20,
     chatMessagesDaily: -1, // Not applicable for premium tier
     chatMessagesMonthly: 1000, // 1000 per month on GPT-5-mini
     webSearches: 50,
-    agents: true
+    agents: true,
+    // AI Employee features (limited)
+    voiceMinutes: 0,
+    smsMessages: 0,
+    followUpSequences: 1,
+    crmContacts: 100,
+    activeJobs: 20,
+    crewManagement: false,
+    invoicePayments: false,
+    reviewManagement: false,
+    twoWayConversations: false,
+    speedToLead: false,
+    knowledgeBaseItems: 50
   },
   business: {
     reports: 100,
     chatMessagesDaily: -1, // Not applicable for business tier
     chatMessagesMonthly: 5000, // 5000 per month on GPT-5-mini
     webSearches: 250,
-    agents: true
+    agents: true,
+    // AI Employee features (limited)
+    voiceMinutes: 0,
+    smsMessages: 0,
+    followUpSequences: 1,
+    crmContacts: 100,
+    activeJobs: 20,
+    crewManagement: false,
+    invoicePayments: false,
+    reviewManagement: false,
+    twoWayConversations: false,
+    speedToLead: false,
+    knowledgeBaseItems: 50
+  },
+  ai_employee: {
+    reports: -1, // Unlimited
+    chatMessagesDaily: -1, // Not applicable
+    chatMessagesMonthly: -1, // Unlimited
+    webSearches: -1, // Unlimited
+    agents: true,
+    // AI Employee features (full access)
+    voiceMinutes: 500, // 500 minutes per month
+    smsMessages: 1000, // 1000 SMS per month
+    followUpSequences: -1, // Unlimited
+    crmContacts: -1, // Unlimited
+    activeJobs: -1, // Unlimited
+    crewManagement: true,
+    invoicePayments: true,
+    reviewManagement: true,
+    twoWayConversations: true,
+    speedToLead: true,
+    knowledgeBaseItems: -1 // Unlimited
   }
 } as const
 
@@ -132,23 +189,34 @@ export async function getUserTier(userId: string): Promise<Tier> {
   const cacheKey = `${userId}:tier`
   const cached = getCached<Tier>(cacheKey)
   if (cached) {
+    console.log("[getUserTier] Returning cached tier for", userId, ":", cached)
     return cached
   }
 
   try {
+    console.log("[getUserTier] Fetching subscription for user:", userId)
     const subscription = await getSubscriptionByUserId(userId)
 
     // No subscription = free tier
     if (!subscription) {
+      console.log("[getUserTier] No subscription found for user:", userId)
       const tier = "free"
       setCache(cacheKey, tier)
       return tier
     }
 
+    console.log("[getUserTier] Subscription found:", {
+      tier: subscription.tier,
+      plan_type: subscription.plan_type,
+      status: subscription.status,
+      cancel_at_period_end: subscription.cancel_at_period_end
+    })
+
     // Check tier (or fall back to plan_type for backward compatibility)
     // Normalize the tier/plan_type (e.g., "premium_monthly" -> "premium")
     const rawTier = subscription.tier || subscription.plan_type || "free"
     const tier = normalizeTier(rawTier)
+    console.log("[getUserTier] Normalized tier:", rawTier, "->", tier)
 
     // Handle past_due status with grace period
     if (subscription.status === "past_due") {
@@ -303,6 +371,15 @@ export async function checkReportLimit(
   const used = usage.reports_generated
   const limit = limits.reports
 
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
   return {
     allowed: used < limit,
     remaining: Math.max(0, limit - used),
@@ -385,6 +462,16 @@ export async function checkChatLimit(
     }
   }
 
+  // AI Employee tier: Unlimited messages on GPT-5-mini
+  if (tier === "ai_employee") {
+    return {
+      allowed: true,
+      remaining: -1, // Unlimited
+      limit: -1,
+      model: "gpt-5-mini"
+    }
+  }
+
   // Fallback (should never reach here)
   return {
     allowed: false,
@@ -416,6 +503,15 @@ export async function checkWebSearchLimit(
   const used = usage.web_searches
   const limit = limits.webSearches
 
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
   return {
     allowed: used < limit,
     remaining: Math.max(0, limit - used),
@@ -427,9 +523,15 @@ export async function checkWebSearchLimit(
  * Check if user can access agents
  */
 export async function checkAgentAccess(userId: string): Promise<boolean> {
-  const tier = await getUserTier(userId)
-  const limits = TIER_LIMITS[tier]
-  return limits.agents
+  try {
+    const tier = await getUserTier(userId)
+    const limits = TIER_LIMITS[tier]
+    console.log("[checkAgentAccess] User:", userId, "Tier:", tier, "agents:", limits.agents)
+    return limits.agents
+  } catch (error) {
+    console.error("[checkAgentAccess] Error checking access:", error)
+    return false
+  }
 }
 
 /**
@@ -454,14 +556,28 @@ export async function getUserUsageStats(userId: string) {
       chat_messages_premium: 0,
       chat_messages_free: 0,
       web_searches: 0,
-      daily_chat_count: dailyChatCount
+      daily_chat_count: dailyChatCount,
+      voice_minutes_used: 0,
+      sms_messages_sent: 0
     },
     limits: {
       reports: limits.reports,
       chatMessagesDaily: limits.chatMessagesDaily,
       chatMessagesMonthly: limits.chatMessagesMonthly,
       webSearches: limits.webSearches,
-      agents: limits.agents
+      agents: limits.agents,
+      // AI Employee limits
+      voiceMinutes: limits.voiceMinutes,
+      smsMessages: limits.smsMessages,
+      followUpSequences: limits.followUpSequences,
+      crmContacts: limits.crmContacts,
+      activeJobs: limits.activeJobs,
+      crewManagement: limits.crewManagement,
+      invoicePayments: limits.invoicePayments,
+      reviewManagement: limits.reviewManagement,
+      twoWayConversations: limits.twoWayConversations,
+      speedToLead: limits.speedToLead,
+      knowledgeBaseItems: limits.knowledgeBaseItems
     }
   }
 }
@@ -494,5 +610,325 @@ export async function getScheduledDowngradeInfo(userId: string): Promise<{
     scheduledTier:
       scheduledTier.charAt(0).toUpperCase() + scheduledTier.slice(1),
     effectiveDate: subscription.current_period_end
+  }
+}
+
+// ============================================================================
+// AI EMPLOYEE FEATURE CHECKS
+// ============================================================================
+
+/**
+ * Check if user has AI Employee tier
+ */
+export async function hasAIEmployeeTier(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return tier === "ai_employee"
+}
+
+/**
+ * Check voice minutes limit
+ */
+export async function checkVoiceMinutesLimit(
+  userId: string
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+
+  if (limits.voiceMinutes === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  const usage = await getOrCreateUserUsage(userId)
+  const used = (usage as any).voice_minutes_used || 0
+  const limit = limits.voiceMinutes
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  return {
+    allowed: used < limit,
+    remaining: Math.max(0, limit - used),
+    limit
+  }
+}
+
+/**
+ * Check SMS messages limit
+ */
+export async function checkSmsLimit(
+  userId: string
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+
+  if (limits.smsMessages === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  const usage = await getOrCreateUserUsage(userId)
+  const used = (usage as any).sms_messages_sent || 0
+  const limit = limits.smsMessages
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  return {
+    allowed: used < limit,
+    remaining: Math.max(0, limit - used),
+    limit
+  }
+}
+
+/**
+ * Check if user can create more sequences
+ */
+export async function checkSequenceLimit(
+  userId: string,
+  currentSequenceCount: number
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+  const limit = limits.followUpSequences
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  return {
+    allowed: currentSequenceCount < limit,
+    remaining: Math.max(0, limit - currentSequenceCount),
+    limit
+  }
+}
+
+/**
+ * Check if user can add more CRM contacts
+ */
+export async function checkCrmContactLimit(
+  userId: string,
+  currentContactCount: number
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+  const limit = limits.crmContacts
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  return {
+    allowed: currentContactCount < limit,
+    remaining: Math.max(0, limit - currentContactCount),
+    limit
+  }
+}
+
+/**
+ * Check if user can create more active jobs
+ */
+export async function checkActiveJobLimit(
+  userId: string,
+  currentActiveJobCount: number
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+  const limit = limits.activeJobs
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  return {
+    allowed: currentActiveJobCount < limit,
+    remaining: Math.max(0, limit - currentActiveJobCount),
+    limit
+  }
+}
+
+/**
+ * Check if user has access to crew management
+ */
+export async function checkCrewManagementAccess(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return TIER_LIMITS[tier].crewManagement
+}
+
+/**
+ * Check if user has access to invoice/payments
+ */
+export async function checkInvoiceAccess(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return TIER_LIMITS[tier].invoicePayments
+}
+
+/**
+ * Check if user has access to review management
+ */
+export async function checkReviewManagementAccess(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return TIER_LIMITS[tier].reviewManagement
+}
+
+/**
+ * Check if user has access to two-way conversations
+ */
+export async function checkTwoWayConversationsAccess(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return TIER_LIMITS[tier].twoWayConversations
+}
+
+/**
+ * Check if user has access to speed-to-lead
+ */
+export async function checkSpeedToLeadAccess(userId: string): Promise<boolean> {
+  const tier = await getUserTier(userId)
+  return TIER_LIMITS[tier].speedToLead
+}
+
+/**
+ * Check knowledge base items limit
+ */
+export async function checkKnowledgeBaseLimit(
+  userId: string,
+  currentItemCount: number
+): Promise<LimitCheckResult> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+  const limit = limits.knowledgeBaseItems
+
+  // -1 means unlimited
+  if (limit === -1) {
+    return {
+      allowed: true,
+      remaining: -1,
+      limit: -1
+    }
+  }
+
+  if (limit === 0) {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0
+    }
+  }
+
+  return {
+    allowed: currentItemCount < limit,
+    remaining: Math.max(0, limit - currentItemCount),
+    limit
+  }
+}
+
+/**
+ * Get all AI Employee feature access for a user
+ */
+export async function getAIEmployeeFeatureAccess(userId: string): Promise<{
+  tier: Tier
+  voiceMinutes: { limit: number; hasAccess: boolean }
+  smsMessages: { limit: number; hasAccess: boolean }
+  followUpSequences: { limit: number; hasAccess: boolean }
+  crmContacts: { limit: number; hasAccess: boolean }
+  activeJobs: { limit: number; hasAccess: boolean }
+  crewManagement: boolean
+  invoicePayments: boolean
+  reviewManagement: boolean
+  twoWayConversations: boolean
+  speedToLead: boolean
+  knowledgeBaseItems: { limit: number; hasAccess: boolean }
+}> {
+  const tier = await getUserTier(userId)
+  const limits = TIER_LIMITS[tier]
+
+  return {
+    tier,
+    voiceMinutes: {
+      limit: limits.voiceMinutes,
+      hasAccess: limits.voiceMinutes !== 0
+    },
+    smsMessages: {
+      limit: limits.smsMessages,
+      hasAccess: limits.smsMessages !== 0
+    },
+    followUpSequences: {
+      limit: limits.followUpSequences,
+      hasAccess: limits.followUpSequences !== 0
+    },
+    crmContacts: {
+      limit: limits.crmContacts,
+      hasAccess: limits.crmContacts !== 0
+    },
+    activeJobs: {
+      limit: limits.activeJobs,
+      hasAccess: limits.activeJobs !== 0
+    },
+    crewManagement: limits.crewManagement,
+    invoicePayments: limits.invoicePayments,
+    reviewManagement: limits.reviewManagement,
+    twoWayConversations: limits.twoWayConversations,
+    speedToLead: limits.speedToLead,
+    knowledgeBaseItems: {
+      limit: limits.knowledgeBaseItems,
+      hasAccess: limits.knowledgeBaseItems !== 0
+    }
   }
 }

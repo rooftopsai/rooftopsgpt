@@ -1482,12 +1482,26 @@ ${result.finalReport?.recommendations?.budgetGuidance || ""}
 ${referenceSection}
 
   ═══════════════════════════════════════════════════════════════════
+  ⚠️ CRITICAL REQUIREMENT: YOU MUST ANALYZE ALL ${validViews.length} IMAGES PROVIDED
+  ═══════════════════════════════════════════════════════════════════
+
+  Before giving ANY facet count, you MUST:
+  1. Look at EVERY image provided (there are ${validViews.length} images)
+  2. Note which images you examined in your analysis
+  3. Cross-reference your count across multiple views
+  4. If you only looked at 1-2 images, GO BACK and examine the others
+
+  Facets that are hidden in the overhead view may be visible in angled views!
+  YOUR FINAL FACET COUNT MUST ACCOUNT FOR ALL VISIBLE PLANES FROM ALL ANGLES.
+
+  ═══════════════════════════════════════════════════════════════════
   🎯 YOUR MISSION AS AN EXPERT ROOFER
   ═══════════════════════════════════════════════════════════════════
 
-  You've been provided 6 optimized aerial views of this property:
-  • 2 overhead views (wide context + zoomed detail)
-  • 4 angled views from each cardinal direction (N, E, S, W)
+  You've been provided ${validViews.length} optimized aerial views of this property:
+  • 1 overhead view (zoomed detail)
+  • 1 street view (from road level - shows front-facing roof planes)
+  • 4 angled views from each cardinal direction (N, E, S, W at 60° tilt)
 
   Each view has been captured at the OPTIMAL ZOOM LEVEL to maximize detail while keeping the entire roof visible. The zoom levels were calculated based on the property's actual dimensions and viewing angle - so trust that you're seeing the best possible view from each perspective.
 
@@ -1507,7 +1521,14 @@ ${referenceSection}
   {
     "userSummary": "A 2-3 sentence executive summary for the property owner describing the roof in plain language",
     "structuredData": {
-      "facetCount": <number of distinct roof planes>,
+      "facetCount": <number of distinct roof planes - COUNT CAREFULLY FROM ALL IMAGES>,
+      "facetBreakdown": {
+        "mainRoof": <number of main roof planes>,
+        "dormers": <number of dormer facets>,
+        "garage": <number of garage/attachment facets>,
+        "porches": <number of porch/overhang facets>
+      },
+      "imagesAnalyzed": <number of images you actually examined - MUST equal ${validViews.length}>,
       "roofArea": <total area in square feet>,
       "roofAreaRange": [<min_estimate>, <max_estimate>],
       "squares": <roofing squares (area/100)>,
@@ -1519,22 +1540,24 @@ ${referenceSection}
       "material": "<observed roofing material>",
       "condition": "<observed condition>"
     },
-    "detailedAnalysis": "Your complete technical analysis with all measurements, observations, and recommendations"
+    "detailedAnalysis": "Your complete technical analysis with all measurements, observations, and recommendations. MUST include notes on what you observed from each of the ${validViews.length} images."
   }
 
   ═══════════════════════════════════════════════════════════════════
   🔍 EXPERT ROOFER'S ANALYSIS WORKFLOW
   ═══════════════════════════════════════════════════════════════════
 
-  Think like you're doing a site visit. You wouldn't just glance at the roof - you'd walk around the entire property, look from every angle, and mentally map out every plane, valley, and ridge. Do that same process with these 6 images.
+  Think like you're doing a site visit. You wouldn't just glance at the roof - you'd walk around the entire property, look from every angle, and mentally map out every plane, valley, and ridge. Do that same process with these ${validViews.length} images.
 
-  IMAGE SEQUENCE PROVIDED:
-  1️⃣ Overhead Context - Wide view showing property in neighborhood
-  2️⃣ Overhead Detail - Zoomed in for precise measurements (YOUR PRIMARY MEASUREMENT IMAGE)
-  3️⃣ North View - 60° angled view from north side
-  4️⃣ East View - 60° angled view from east side
-  5️⃣ South View - 60° angled view from south side
-  6️⃣ West View - 60° angled view from west side
+  IMAGE SEQUENCE PROVIDED (${validViews.length} TOTAL - ANALYZE ALL OF THEM):
+  1️⃣ Overhead Detail - Top-down view zoomed for precise measurements (YOUR PRIMARY MEASUREMENT IMAGE)
+  2️⃣ Street View - From road level showing front-facing roof planes and dormers
+  3️⃣ North View - 60° angled aerial view from north side (reveals back-facing facets)
+  4️⃣ East View - 60° angled aerial view from east side
+  5️⃣ South View - 60° angled aerial view from south side
+  6️⃣ West View - 60° angled aerial view from west side
+
+  ⚠️ FACETS HIDDEN IN OVERHEAD MAY BE VISIBLE IN ANGLED VIEWS - CHECK ALL IMAGES!
 
   ═══════════════════════════════════════════════════════════════════
   📐 STEP 1: UNDERSTAND THE ROOF STRUCTURE
@@ -1770,6 +1793,12 @@ ${referenceSection}
         workspaceId: workspaceId
       }
 
+      // Always log image details for debugging facet counting
+      console.log(`[RoofAnalysis] Sending ${validViews.length} images to ${selectedModel}:`)
+      validViews.forEach((view, idx) => {
+        console.log(`  Image ${idx + 1}: ${view.viewName || 'Unknown'} - ${Math.round((view.imageData?.length || 0) / 1024)} KB`)
+      })
+
       if (isDebugMode) {
         // Log payload size
         const payloadSize = JSON.stringify(payload).length
@@ -1834,6 +1863,15 @@ ${referenceSection}
                   hasDetailedAnalysis: !!detailedAnalysisText
                 }
               }
+              // Log facet analysis details for debugging
+              console.log("[RoofAnalysis] LLM Response Analysis:", {
+                facetCount: parsed.structuredData?.facetCount,
+                facetBreakdown: parsed.structuredData?.facetBreakdown,
+                imagesAnalyzed: parsed.structuredData?.imagesAnalyzed,
+                imagesSent: validViews.length,
+                allImagesReviewed: parsed.structuredData?.imagesAnalyzed === validViews.length
+              })
+
               logDebug("Successfully parsed structured JSON response", {
                 hasDetailedAnalysis: !!detailedAnalysisText,
                 analysisLength: detailedAnalysisText?.length || 0

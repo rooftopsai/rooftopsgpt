@@ -49,27 +49,43 @@ export async function POST(request: NextRequest) {
     // Use require to avoid Next.js bundling issues
     const { PipedreamClient } = require("@pipedream/sdk")
 
-    // Create Pipedream client
+    // Get allowed origins for CORS
+    const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
+    const allowedOrigins = [baseUrl.replace(/\/$/, "")]
+
+    // Determine environment
+    const projectEnvironment = process.env.PIPEDREAM_PROJECT_ENVIRONMENT || "development"
+
+    // Create Pipedream client with correct options
     const pd = new PipedreamClient({
       clientId,
       clientSecret,
-      projectId
+      projectId,
+      projectEnvironment
     })
-
-    // Get allowed origins for CORS
-    const allowedOrigin = process.env.NEXT_PUBLIC_URL || "http://localhost:3000"
 
     // Create a connect token for this user
+    // The SDK's tokens.create() method handles the OAuth and returns a token response
     const tokenResponse = await pd.tokens.create({
       externalUserId: user.id,
-      allowedOrigins: [allowedOrigin]
+      allowedOrigins
     })
 
+    // Extract the data from the response
+    const tokenData = tokenResponse.data || tokenResponse
+
+    // Build the connect URL - if appSlug is provided, append it
+    let connectUrl = tokenData.connectLinkUrl
+    if (appSlug && connectUrl) {
+      const url = new URL(connectUrl)
+      url.searchParams.set("app", appSlug)
+      connectUrl = url.toString()
+    }
+
     return NextResponse.json({
-      token: tokenResponse.token,
-      expiresAt:
-        tokenResponse.expiresAt?.toISOString?.() || tokenResponse.expiresAt,
-      connectLinkUrl: tokenResponse.connectLinkUrl,
+      token: tokenData.token,
+      expiresAt: tokenData.expiresAt,
+      connectLinkUrl: connectUrl,
       appSlug: appSlug || null,
       externalUserId: user.id
     })
