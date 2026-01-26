@@ -26,7 +26,8 @@ import {
   IconWand,
   IconChevronDown,
   IconDots,
-  IconGrid3x3
+  IconGrid3x3,
+  IconUsers
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 import { ContentType } from "@/types"
@@ -66,6 +67,13 @@ const primaryNavigationItems: NavItem[] = [
     icon: IconSparkles,
     route: (workspaceId: string) => `/${workspaceId}/agent`,
     badge: "premium"
+  },
+  {
+    id: "crm",
+    label: "AI Employee CRM",
+    icon: IconUsers,
+    route: (workspaceId: string) => `/${workspaceId}/crm`,
+    badge: "pro"
   },
   {
     id: "explore",
