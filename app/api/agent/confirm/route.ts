@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "confirm") {
       // Get the pending tool execution
-      const { data: toolExecution } = await supabase
+      const { data: toolExecution, error: toolError } = await supabase
         .from("agent_tool_executions")
         .select("*")
         .eq("session_id", session_id)
@@ -105,9 +105,22 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single()
 
+      console.log("[Confirm] Looking for pending execution in session:", session_id)
+      console.log("[Confirm] Tool execution query result:", { toolExecution, toolError })
+
       if (!toolExecution) {
+        // Debug: Check what executions exist for this session
+        const { data: allExecutions } = await supabase
+          .from("agent_tool_executions")
+          .select("id, tool_name, status, created_at")
+          .eq("session_id", session_id)
+          .order("created_at", { ascending: false })
+          .limit(5)
+
+        console.log("[Confirm] All recent executions for session:", allExecutions)
+
         return NextResponse.json(
-          { error: "No pending action found" },
+          { error: "No pending action found", debug: { allExecutions } },
           { status: 404 }
         )
       }
