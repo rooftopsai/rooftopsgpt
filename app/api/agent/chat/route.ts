@@ -545,16 +545,32 @@ export async function POST(request: NextRequest) {
             ])
 
             // Save tool execution record with MCP flag
-            await supabase.from("agent_tool_executions").insert([
-              {
-                session_id,
-                user_id: user.id,
-                tool_name: toolName,
-                tool_input: { ...toolArgs, _isMCP: isToolMCP },
-                status: "pending",
-                requires_confirmation: true
-              }
-            ])
+            const { error: execInsertError } = await supabase
+              .from("agent_tool_executions")
+              .insert([
+                {
+                  session_id,
+                  user_id: user.id,
+                  tool_name: toolName,
+                  tool_input: { ...toolArgs, _isMCP: isToolMCP },
+                  status: "pending",
+                  requires_confirmation: true
+                }
+              ])
+
+            if (execInsertError) {
+              console.error(
+                "[Agent] Failed to insert pending tool execution:",
+                execInsertError
+              )
+            } else {
+              console.log(
+                "[Agent] Saved pending tool execution for:",
+                toolName,
+                "session:",
+                session_id
+              )
+            }
           } else {
             // Execute the tool - MCP or built-in
             let result: Record<string, unknown>
