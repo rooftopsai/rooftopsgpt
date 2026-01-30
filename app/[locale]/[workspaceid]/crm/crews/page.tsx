@@ -362,7 +362,10 @@ function CrewModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="max-h-[calc(90vh-130px)] overflow-y-auto p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="max-h-[calc(90vh-130px)] overflow-y-auto p-6"
+        >
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm text-gray-600">

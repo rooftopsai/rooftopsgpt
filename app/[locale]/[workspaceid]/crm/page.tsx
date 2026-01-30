@@ -257,7 +257,7 @@ export default function CRMDashboardPage() {
                 <div className="mt-0.5 rounded-full bg-gray-100 p-2">
                   {getActivityIcon(activity.type)}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     {activity.customerName}
                   </p>
@@ -328,7 +328,13 @@ export default function CRMDashboardPage() {
   )
 }
 
-function IconMailForward({ size, className }: { size: number; className?: string }) {
+function IconMailForward({
+  size,
+  className
+}: {
+  size: number
+  className?: string
+}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

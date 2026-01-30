@@ -201,9 +201,7 @@ export default function SequencesPage() {
 
   const handleToggleActive = (sequenceId: string) => {
     setSequences(prev =>
-      prev.map(s =>
-        s.id === sequenceId ? { ...s, isActive: !s.isActive } : s
-      )
+      prev.map(s => (s.id === sequenceId ? { ...s, isActive: !s.isActive } : s))
     )
   }
 
@@ -513,7 +511,10 @@ function SequenceModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="max-h-[calc(90vh-130px)] overflow-y-auto p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="max-h-[calc(90vh-130px)] overflow-y-auto p-6"
+        >
           <div className="space-y-6">
             {/* Basic Info */}
             <div className="space-y-4">
@@ -621,11 +622,7 @@ function SequenceModal({
                         <select
                           value={step.channel}
                           onChange={e =>
-                            handleStepChange(
-                              step.id,
-                              "channel",
-                              e.target.value
-                            )
+                            handleStepChange(step.id, "channel", e.target.value)
                           }
                           className="w-full rounded border border-gray-200 px-2 py-1.5 text-sm focus:border-purple-500 focus:outline-none"
                         >

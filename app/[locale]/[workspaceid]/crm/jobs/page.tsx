@@ -69,7 +69,11 @@ export type JobStatus =
 
 const pipelineStages: { status: JobStatus; label: string; color: string }[] = [
   { status: "lead", label: "Leads", color: "bg-gray-500" },
-  { status: "estimate_scheduled", label: "Est. Scheduled", color: "bg-blue-500" },
+  {
+    status: "estimate_scheduled",
+    label: "Est. Scheduled",
+    color: "bg-blue-500"
+  },
   { status: "estimate_sent", label: "Est. Sent", color: "bg-yellow-500" },
   { status: "sold", label: "Sold", color: "bg-green-500" },
   { status: "scheduled", label: "Scheduled", color: "bg-purple-500" },
@@ -254,7 +258,7 @@ export default function JobsPage() {
                   : "text-gray-600 hover:bg-gray-50"
               )}
             >
-              <IconLayoutKanban size={18} className="inline mr-1" />
+              <IconLayoutKanban size={18} className="mr-1 inline" />
               Pipeline
             </button>
             <button
@@ -266,7 +270,7 @@ export default function JobsPage() {
                   : "text-gray-600 hover:bg-gray-50"
               )}
             >
-              <IconList size={18} className="inline mr-1" />
+              <IconList size={18} className="mr-1 inline" />
               List
             </button>
           </div>
@@ -320,9 +324,7 @@ export default function JobsPage() {
                 {/* Stage Header */}
                 <div className="flex items-center justify-between p-3">
                   <div className="flex items-center gap-2">
-                    <div
-                      className={cn("size-2 rounded-full", stage.color)}
-                    />
+                    <div className={cn("size-2 rounded-full", stage.color)} />
                     <span className="font-medium text-gray-900">
                       {stage.label}
                     </span>
@@ -349,7 +351,7 @@ export default function JobsPage() {
                         className="cursor-pointer rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="mb-2 flex items-start justify-between">
-                          <h4 className="font-medium text-gray-900 line-clamp-1">
+                          <h4 className="line-clamp-1 font-medium text-gray-900">
                             {job.title}
                           </h4>
                           {job.jobNumber && (
@@ -472,11 +474,14 @@ export default function JobsPage() {
                         value={job.status}
                         onChange={e => {
                           e.stopPropagation()
-                          handleStatusChange(job.id, e.target.value as JobStatus)
+                          handleStatusChange(
+                            job.id,
+                            e.target.value as JobStatus
+                          )
                         }}
                         onClick={e => e.stopPropagation()}
                         className={cn(
-                          "rounded-full px-2.5 py-1 text-xs font-medium border-0 cursor-pointer",
+                          "cursor-pointer rounded-full border-0 px-2.5 py-1 text-xs font-medium",
                           statusColors[job.status]
                         )}
                       >
@@ -497,10 +502,7 @@ export default function JobsPage() {
                       {job.crew?.name || "-"}
                     </td>
                     <td className="px-4 py-3">
-                      <IconChevronRight
-                        size={16}
-                        className="text-gray-400"
-                      />
+                      <IconChevronRight size={16} className="text-gray-400" />
                     </td>
                   </tr>
                 ))

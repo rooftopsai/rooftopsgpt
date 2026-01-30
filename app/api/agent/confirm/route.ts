@@ -105,8 +105,14 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single()
 
-      console.log("[Confirm] Looking for pending execution in session:", session_id)
-      console.log("[Confirm] Tool execution query result:", { toolExecution, toolError })
+      console.log(
+        "[Confirm] Looking for pending execution in session:",
+        session_id
+      )
+      console.log("[Confirm] Tool execution query result:", {
+        toolExecution,
+        toolError
+      })
 
       if (!toolExecution) {
         // Debug: Check what executions exist for this session
@@ -117,7 +123,10 @@ export async function POST(request: NextRequest) {
           .order("created_at", { ascending: false })
           .limit(5)
 
-        console.log("[Confirm] All recent executions for session:", allExecutions)
+        console.log(
+          "[Confirm] All recent executions for session:",
+          allExecutions
+        )
 
         return NextResponse.json(
           { error: "No pending action found", debug: { allExecutions } },

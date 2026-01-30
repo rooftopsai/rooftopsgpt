@@ -92,12 +92,7 @@ const materialOptions = [
   { value: "other", label: "Other" }
 ]
 
-export function JobModal({
-  job,
-  workspaceId,
-  onSave,
-  onClose
-}: JobModalProps) {
+export function JobModal({ job, workspaceId, onSave, onClose }: JobModalProps) {
   const [formData, setFormData] = useState<Partial<Job>>({
     title: "",
     jobNumber: "",
@@ -129,7 +124,9 @@ export function JobModal({
   const [crews, setCrews] = useState<Crew[]>([])
   const [customerSearch, setCustomerSearch] = useState("")
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  )
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -269,7 +266,10 @@ export function JobModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="max-h-[calc(90vh-130px)] overflow-y-auto p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="max-h-[calc(90vh-130px)] overflow-y-auto p-6"
+        >
           <div className="space-y-6">
             {/* Basic Info */}
             <div>

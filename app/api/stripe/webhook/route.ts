@@ -24,14 +24,27 @@ function getPlanTypeFromPriceId(priceId: string): string {
     priceId === STRIPE_PRICE_IDS.business
   ) {
     return "business"
+  } else if (
+    (STRIPE_PRICE_IDS.ai_employee_monthly &&
+      priceId === STRIPE_PRICE_IDS.ai_employee_monthly) ||
+    (STRIPE_PRICE_IDS.ai_employee_annual &&
+      priceId === STRIPE_PRICE_IDS.ai_employee_annual) ||
+    (STRIPE_PRICE_IDS.ai_employee && priceId === STRIPE_PRICE_IDS.ai_employee)
+  ) {
+    return "ai_employee"
   }
   return "free"
 }
 
 // Determine if a plan change is an upgrade
 function isUpgrade(oldPlan: string, newPlan: string): boolean {
-  const tierOrder = { free: 0, premium: 1, business: 2 }
-  return tierOrder[newPlan] > tierOrder[oldPlan]
+  const tierOrder: Record<string, number> = {
+    free: 0,
+    premium: 1,
+    business: 2,
+    ai_employee: 3
+  }
+  return (tierOrder[newPlan] || 0) > (tierOrder[oldPlan] || 0)
 }
 
 export async function POST(req: Request) {
@@ -72,7 +85,12 @@ export async function POST(req: Request) {
           if (planType === "free" && session.metadata?.planType) {
             // Normalize metadata planType (e.g., "premium_annual" -> "premium")
             const metaPlan = session.metadata.planType.toLowerCase()
-            if (metaPlan.startsWith("business")) {
+            if (
+              metaPlan.startsWith("ai_employee") ||
+              metaPlan.includes("ai-employee")
+            ) {
+              planType = "ai_employee"
+            } else if (metaPlan.startsWith("business")) {
               planType = "business"
             } else if (metaPlan.startsWith("premium")) {
               planType = "premium"

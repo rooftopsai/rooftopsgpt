@@ -96,14 +96,18 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">("all")
+  const [statusFilter, setStatusFilter] = useState<CustomerStatus | "all">(
+    "all"
+  )
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
 
   const [showModal, setShowModal] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  )
   const [showDetailPanel, setShowDetailPanel] = useState(false)
 
   const fetchCustomers = useCallback(async () => {
@@ -222,7 +226,7 @@ export default function CustomersPage() {
 
         {/* Search and Filters */}
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative min-w-[200px] flex-1">
             <IconSearch
               size={18}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"

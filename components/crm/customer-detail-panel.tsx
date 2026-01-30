@@ -442,7 +442,8 @@ export function CustomerDetailPanel({
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-medium",
-                        jobStatusColors[job.status] || "bg-gray-100 text-gray-700"
+                        jobStatusColors[job.status] ||
+                          "bg-gray-100 text-gray-700"
                       )}
                     >
                       {job.status.replace(/_/g, " ")}
@@ -475,7 +476,7 @@ export function CustomerDetailPanel({
                   <div className="mt-0.5 rounded-full bg-gray-100 p-1.5">
                     {getActivityIcon(activity.type)}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-700">
                       {activity.description}
                     </p>

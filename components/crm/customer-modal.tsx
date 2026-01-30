@@ -243,7 +243,9 @@ export function CustomerModal({
 
             {/* Address */}
             <div>
-              <h3 className="mb-3 text-sm font-medium text-gray-700">Address</h3>
+              <h3 className="mb-3 text-sm font-medium text-gray-700">
+                Address
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="mb-1 block text-sm text-gray-600">
@@ -367,7 +369,7 @@ export function CustomerModal({
             {/* Tags */}
             <div>
               <h3 className="mb-3 text-sm font-medium text-gray-700">Tags</h3>
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="mb-2 flex flex-wrap gap-2">
                 {formData.tags?.map(tag => (
                   <span
                     key={tag}
@@ -389,7 +391,9 @@ export function CustomerModal({
                   type="text"
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
-                  onKeyPress={e => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
+                  onKeyPress={e =>
+                    e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                  }
                   className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                   placeholder="Add a tag..."
                 />

@@ -580,6 +580,45 @@ export async function POST(request: NextRequest) {
                 content: pendingContent
               })
 
+              // Save tool message for pending confirmation
+              await supabase.from("agent_messages").insert([
+                {
+                  session_id,
+                  user_id: user.id,
+                  role: "tool",
+                  content: pendingContent,
+                  tool_call_id: tc.id
+                }
+              ])
+
+              // Save pending tool execution to database so confirm endpoint can find it
+              const { error: execInsertError } = await supabase
+                .from("agent_tool_executions")
+                .insert([
+                  {
+                    session_id,
+                    user_id: user.id,
+                    tool_name: toolName,
+                    tool_input: { ...toolArgs, _isMCP: isToolMCP },
+                    status: "pending",
+                    requires_confirmation: true
+                  }
+                ])
+
+              if (execInsertError) {
+                console.error(
+                  "[Agent Stream] Failed to insert pending tool execution:",
+                  execInsertError
+                )
+              } else {
+                console.log(
+                  "[Agent Stream] Saved pending tool execution for:",
+                  toolName,
+                  "session:",
+                  session_id
+                )
+              }
+
               await sendEvent("tool_pending", {
                 id: tc.id,
                 name: toolName
@@ -674,17 +713,45 @@ export async function POST(request: NextRequest) {
               } else {
                 // Dynamic import to avoid circular deps
                 const { executeBuiltinTool } = await import("../route")
-                result = await executeBuiltinTool(toolName, toolArgs)
+                result = await executeBuiltinTool(toolName, toolArgs, {
+                  workspaceId: session.workspace_id,
+                  userId: user.id
+                })
               }
 
               toolCallRecord.status = "completed"
               ;(toolCallRecord as any).result = result
 
+              const toolResultContent = JSON.stringify(result)
+
               conversationHistory.push({
                 role: "tool",
                 tool_call_id: tc.id,
-                content: JSON.stringify(result)
+                content: toolResultContent
               })
+
+              // Save tool response message to database
+              await supabase.from("agent_messages").insert([
+                {
+                  session_id,
+                  user_id: user.id,
+                  role: "tool",
+                  content: toolResultContent,
+                  tool_call_id: tc.id
+                }
+              ])
+
+              // Log completed tool execution
+              await supabase.from("agent_tool_executions").insert([
+                {
+                  session_id,
+                  user_id: user.id,
+                  tool_name: toolName,
+                  tool_input: toolArgs,
+                  tool_output: result,
+                  status: "completed"
+                }
+              ])
 
               await sendEvent("tool_complete", {
                 id: tc.id,
