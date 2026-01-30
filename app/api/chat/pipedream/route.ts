@@ -157,10 +157,29 @@ export async function POST(request: Request) {
       )
     }
 
-    // Add system context about available tools
+    // Build tool descriptions for better AI understanding
+    const toolDescriptions = openaiTools
+      .slice(0, 15) // Limit to prevent token overflow
+      .map(t => `- ${t.function.name}: ${t.function.description?.slice(0, 100) || "Execute this action"}`)
+      .join("\n")
+
+    // Add comprehensive system context about available tools
     const toolContext = `You have access to the following connected apps: ${appsToUse.join(", ")}.
-Use the available tools to query data and perform actions. When a user asks about their data, use the appropriate tool to fetch real information.
-If a tool requires configuration (like selecting a specific spreadsheet or database), ask the user for clarification.`
+
+## Available Tools
+${toolDescriptions}
+${openaiTools.length > 15 ? `\n...and ${openaiTools.length - 15} more tools` : ""}
+
+## Instructions
+1. When the user asks about their data (emails, files, calendar, etc.), USE the appropriate tool to fetch real information
+2. DO NOT say you can't access their data - you CAN through these tools
+3. For Gmail: search for emails, list recent messages, read specific emails
+4. For Google Calendar: list events, create events
+5. For Google Sheets: read or write spreadsheet data
+6. For Google Docs: read document content
+7. If a tool returns an error about configuration, explain what additional info is needed
+
+IMPORTANT: Always try to use the tools when the user asks about their connected app data. Never claim you can't access something without first attempting to use the available tools.`
 
     const messagesWithContext = [
       { role: "system", content: toolContext },

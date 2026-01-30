@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/crm/sequences/process",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "functions": {
     "app/api/chat/**": {
       "maxDuration": 300,
@@ -7,6 +13,9 @@
     "app/api/property-reports/**": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "app/api/crm/sequences/process": {
+      "maxDuration": 60
     }
   },
   "headers": [

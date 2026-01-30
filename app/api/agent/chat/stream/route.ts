@@ -294,40 +294,66 @@ export async function POST(request: NextRequest) {
       const conversationHistory: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
         []
 
-      // Add existing messages
+      // Add existing messages - track which tool_call_ids have been seen
+      // to ensure tool messages only appear after their corresponding assistant message
       if (existingMessages) {
+        const seenToolCallIds = new Set<string>()
+
         for (const msg of existingMessages) {
-          if (msg.role === "tool" && msg.tool_call_id) {
-            conversationHistory.push({
-              role: "tool",
-              content: msg.content,
-              tool_call_id: msg.tool_call_id
-            })
-          } else if (msg.role === "assistant" && msg.tool_calls) {
+          if (msg.role === "assistant" && msg.tool_calls) {
+            // This is an assistant message with tool calls
             const toolCallsArray = Array.isArray(msg.tool_calls)
               ? msg.tool_calls
               : []
-            const formattedToolCalls = toolCallsArray.map((tc: any) => ({
-              id: tc.id,
-              type: "function" as const,
-              function: {
-                name: tc.name || tc.function?.name,
-                arguments:
-                  typeof tc.arguments === "string"
-                    ? tc.arguments
-                    : JSON.stringify(
-                        tc.arguments || tc.function?.arguments || {}
-                      )
+
+            // Only include if we have valid tool calls
+            if (toolCallsArray.length > 0) {
+              const formattedToolCalls = toolCallsArray.map((tc: any) => {
+                const tcId = tc.id || tc.tool_call_id
+                if (tcId) seenToolCallIds.add(tcId)
+                return {
+                  id: tcId,
+                  type: "function" as const,
+                  function: {
+                    name: tc.name || tc.function?.name,
+                    arguments:
+                      typeof tc.arguments === "string"
+                        ? tc.arguments
+                        : JSON.stringify(
+                            tc.arguments || tc.function?.arguments || {}
+                          )
+                  }
+                }
+              }).filter((tc: any) => tc.id && tc.function.name)
+
+              if (formattedToolCalls.length > 0) {
+                conversationHistory.push({
+                  role: "assistant",
+                  content: msg.content || null,
+                  tool_calls: formattedToolCalls
+                })
               }
-            }))
+            }
+          } else if (msg.role === "tool" && msg.tool_call_id) {
+            // Only add tool messages if we've seen their corresponding tool_call
+            if (seenToolCallIds.has(msg.tool_call_id)) {
+              conversationHistory.push({
+                role: "tool",
+                content: msg.content || "Tool execution completed",
+                tool_call_id: msg.tool_call_id
+              })
+            } else {
+              console.log(`[Agent Stream] Skipping orphan tool message with tool_call_id: ${msg.tool_call_id}`)
+            }
+          } else if (msg.role === "user") {
+            conversationHistory.push({
+              role: "user",
+              content: msg.content
+            })
+          } else if (msg.role === "assistant" && !msg.tool_calls) {
+            // Regular assistant message without tool calls
             conversationHistory.push({
               role: "assistant",
-              content: msg.content || null,
-              tool_calls: formattedToolCalls
-            })
-          } else if (msg.role === "user" || msg.role === "assistant") {
-            conversationHistory.push({
-              role: msg.role,
               content: msg.content
             })
           }

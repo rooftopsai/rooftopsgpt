@@ -1,34 +1,52 @@
 <svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="elenaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    <linearGradient id="elenaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="elenaSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFDBB4"/>
+      <stop offset="100%" stop-color="#EEC39A"/>
     </linearGradient>
   </defs>
   <!-- Background circle -->
-  <circle cx="200" cy="200" r="180" fill="url(#elenaGradient)" opacity="0.1"/>
-  <!-- Professional figure with calculator and blueprint -->
-  <g transform="translate(200, 200)">
-    <!-- Head -->
-    <circle cx="0" cy="-60" r="35" fill="url(#elenaGradient)"/>
-    <!-- Body -->
-    <ellipse cx="0" cy="20" rx="45" ry="60" fill="url(#elenaGradient)"/>
-    <!-- Calculator -->
-    <rect x="-55" y="-5" width="40" height="55" rx="3" fill="#ffffff" stroke="url(#elenaGradient)" stroke-width="3"/>
-    <rect x="-50" y="0" width="30" height="15" rx="2" fill="url(#elenaGradient)" opacity="0.3"/>
-    <circle cx="-45" cy="22" r="3" fill="url(#elenaGradient)"/>
-    <circle cx="-35" cy="22" r="3" fill="url(#elenaGradient)"/>
-    <circle cx="-45" cy="32" r="3" fill="url(#elenaGradient)"/>
-    <circle cx="-35" cy="32" r="3" fill="url(#elenaGradient)"/>
-    <circle cx="-45" cy="42" r="3" fill="url(#elenaGradient)"/>
-    <circle cx="-35" cy="42" r="3" fill="url(#elenaGradient)"/>
-    <!-- Blueprint roll -->
-    <rect x="20" y="5" width="50" height="12" rx="6" fill="#ffffff" stroke="url(#elenaGradient)" stroke-width="3"/>
-    <line x1="30" y1="8" x2="60" y2="8" stroke="url(#elenaGradient)" stroke-width="1.5"/>
-    <line x1="30" y1="11" x2="55" y2="11" stroke="url(#elenaGradient)" stroke-width="1.5"/>
-    <line x1="30" y1="14" x2="60" y2="14" stroke="url(#elenaGradient)" stroke-width="1.5"/>
-    <!-- Arms -->
-    <ellipse cx="-35" cy="15" rx="12" ry="40" fill="url(#elenaGradient)" transform="rotate(-25 -35 15)"/>
-    <ellipse cx="35" cy="15" rx="12" ry="40" fill="url(#elenaGradient)" transform="rotate(25 35 15)"/>
-  </g>
+  <circle cx="200" cy="200" r="200" fill="url(#elenaBg)"/>
+  <!-- Shoulders/blazer -->
+  <ellipse cx="200" cy="380" rx="120" ry="80" fill="#581c87"/>
+  <!-- Blouse -->
+  <path d="M140 310 L200 350 L260 310 L260 400 L140 400 Z" fill="#f0abfc"/>
+  <!-- Neck -->
+  <ellipse cx="200" cy="295" rx="30" ry="20" fill="url(#elenaSkin)"/>
+  <!-- Head -->
+  <ellipse cx="200" cy="180" rx="90" ry="100" fill="url(#elenaSkin)"/>
+  <!-- Hair - long wavy brown -->
+  <ellipse cx="200" cy="95" rx="85" ry="45" fill="#4a3728"/>
+  <path d="M115 120 Q200 60 285 120 Q290 80 200 50 Q110 80 115 120" fill="#4a3728"/>
+  <!-- Side hair flowing down -->
+  <path d="M110 140 Q90 200 95 280 Q100 320 130 320 Q120 280 115 200 Q115 160 120 140" fill="#4a3728"/>
+  <path d="M290 140 Q310 200 305 280 Q300 320 270 320 Q280 280 285 200 Q285 160 280 140" fill="#4a3728"/>
+  <!-- Glasses -->
+  <rect x="130" y="165" rx="8" ry="8" width="55" height="35" fill="none" stroke="#1e1e1e" stroke-width="3"/>
+  <rect x="215" y="165" rx="8" ry="8" width="55" height="35" fill="none" stroke="#1e1e1e" stroke-width="3"/>
+  <line x1="185" y1="182" x2="215" y2="182" stroke="#1e1e1e" stroke-width="3"/>
+  <!-- Eyes behind glasses -->
+  <ellipse cx="157" cy="182" rx="14" ry="10" fill="#ffffff"/>
+  <ellipse cx="243" cy="182" rx="14" ry="10" fill="#ffffff"/>
+  <circle cx="160" cy="182" r="7" fill="#5d4037"/>
+  <circle cx="246" cy="182" r="7" fill="#5d4037"/>
+  <circle cx="162" cy="180" r="2" fill="#ffffff"/>
+  <circle cx="248" cy="180" r="2" fill="#ffffff"/>
+  <!-- Eyebrows -->
+  <path d="M135 155 Q155 148 178 155" stroke="#3d2a1e" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M222 155 Q245 148 265 155" stroke="#3d2a1e" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M200 175 L200 210 Q196 218 200 218 Q204 218 200 210" stroke="#d4a574" stroke-width="2" fill="none"/>
+  <!-- Friendly smile -->
+  <path d="M165 245 Q200 265 235 245" stroke="#c17171" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Ears -->
+  <ellipse cx="108" cy="180" rx="10" ry="16" fill="url(#elenaSkin)"/>
+  <ellipse cx="292" cy="180" rx="10" ry="16" fill="url(#elenaSkin)"/>
+  <!-- Earrings -->
+  <circle cx="108" cy="200" r="5" fill="#fbbf24"/>
+  <circle cx="292" cy="200" r="5" fill="#fbbf24"/>
 </svg>

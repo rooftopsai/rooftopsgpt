@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { IconX, IconLoader2 } from "@tabler/icons-react"
+import { IconX, IconLoader2, IconMicrophone, IconPlayerStop } from "@tabler/icons-react"
+import { VoiceInput } from "./voice-input"
 
 interface Customer {
   id?: string
@@ -144,27 +145,58 @@ export function CustomerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-900">
+        {/* Header - fixed */}
+        <div className="flex shrink-0 items-center justify-between border-b px-6 py-4 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {customer ? "Edit Customer" : "Add Customer"}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
           >
             <IconX size={20} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-6">
+        {/* Form - scrollable */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           <div className="space-y-6">
+            {/* Voice Input - AI-native feature */}
+            {!customer && (
+              <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-950">
+                <div className="mb-2 flex items-center gap-2">
+                  <IconMicrophone className="text-purple-600" size={20} />
+                  <h3 className="font-medium text-purple-900 dark:text-purple-100">
+                    Quick Add with Voice
+                  </h3>
+                </div>
+                <p className="mb-3 text-sm text-purple-700 dark:text-purple-300">
+                  Speak the customer details and AI will fill the form automatically.
+                </p>
+                <VoiceInput
+                  onTranscript={(text) => console.log("Transcript:", text)}
+                  onParsedData={(data) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      ...data,
+                      // Preserve existing values for fields not in voice input
+                      status: data.status || prev.status,
+                      preferredContactMethod: data.preferredContactMethod || prev.preferredContactMethod
+                    }))
+                  }}
+                  placeholder="Speak customer details"
+                  parsePrompt={`Extract customer information from the voice transcript.
+Return JSON with: name, phone, email, address, city, state, zip, notes, propertyType, source, status.
+Only include fields that are clearly mentioned. Format phone as +1 XXX-XXX-XXXX.`}
+                />
+              </div>
+            )}
+
             {/* Basic Info */}
             <div>
-              <h3 className="mb-3 text-sm font-medium text-gray-700">
+              <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Basic Information
               </h3>
               <div className="grid grid-cols-2 gap-4">
