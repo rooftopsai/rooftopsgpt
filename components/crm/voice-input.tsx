@@ -163,7 +163,7 @@ export function VoiceInput({
       )}
 
       {transcript && !isListening && !isParsing && (
-        <p className="max-w-xs truncate text-sm text-gray-500 italic">
+        <p className="max-w-xs truncate text-sm italic text-gray-500">
           "{transcript.slice(0, 50)}..."
         </p>
       )}

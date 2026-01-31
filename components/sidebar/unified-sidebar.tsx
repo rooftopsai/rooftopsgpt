@@ -54,6 +54,11 @@ interface UnifiedSidebarProps {
   onToggle: () => void
 }
 
+// Feature flags for launch - hide features still in development
+const SHOW_AGENT_FEATURES = false // AI Agent - coming soon
+const SHOW_CRM_FEATURES = false // CRM - coming soon
+const SHOW_AGENT_LIBRARY = false // Agent Library - coming soon
+
 const primaryNavigationItems: NavItem[] = [
   {
     id: "chat",
@@ -61,20 +66,30 @@ const primaryNavigationItems: NavItem[] = [
     icon: IconMessageCircle,
     route: (workspaceId: string) => `/${workspaceId}/chat`
   },
-  {
-    id: "agent",
-    label: "AI Agent",
-    icon: IconSparkles,
-    route: (workspaceId: string) => `/${workspaceId}/agent`,
-    badge: "premium"
-  },
-  {
-    id: "crm",
-    label: "AI Employee CRM",
-    icon: IconUsers,
-    route: (workspaceId: string) => `/${workspaceId}/crm`,
-    badge: "pro"
-  },
+  // Hidden for launch - AI Agent
+  ...(SHOW_AGENT_FEATURES
+    ? [
+        {
+          id: "agent",
+          label: "AI Agent",
+          icon: IconSparkles,
+          route: (workspaceId: string) => `/${workspaceId}/agent`,
+          badge: "premium" as const
+        }
+      ]
+    : []),
+  // Hidden for launch - CRM
+  ...(SHOW_CRM_FEATURES
+    ? [
+        {
+          id: "crm",
+          label: "AI Employee CRM",
+          icon: IconUsers,
+          route: (workspaceId: string) => `/${workspaceId}/crm`,
+          badge: "pro" as const
+        }
+      ]
+    : []),
   {
     id: "explore",
     label: "AI Property Reports",
@@ -82,13 +97,18 @@ const primaryNavigationItems: NavItem[] = [
     route: (workspaceId: string) => `/${workspaceId}/explore`,
     badge: "premium"
   },
-  {
-    id: "creator",
-    label: "Agent Library",
-    icon: IconWand,
-    route: (workspaceId: string) => `/${workspaceId}/creator`,
-    badge: "premium"
-  }
+  // Hidden for launch - Agent Library
+  ...(SHOW_AGENT_LIBRARY
+    ? [
+        {
+          id: "creator",
+          label: "Agent Library",
+          icon: IconWand,
+          route: (workspaceId: string) => `/${workspaceId}/creator`,
+          badge: "premium" as const
+        }
+      ]
+    : [])
 ]
 
 const secondaryNavigationItems: NavItem[] = [
