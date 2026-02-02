@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { IconX, IconMail, IconRocket } from "@tabler/icons-react"
+import { toast } from "sonner"
 
 interface ExitIntentPopupProps {
   onSignup: () => void
@@ -11,6 +12,7 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     let shown = false
@@ -43,15 +45,41 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
     }
   }, [submitted])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) {
-      // In production, send to your email service
-      setSubmitted(true)
-      setTimeout(() => {
-        setIsVisible(false)
-        onSignup()
-      }, 2000)
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("/api/send-coupon", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSubmitted(true)
+        toast.success("Coupon sent! Check your email.")
+        setTimeout(() => {
+          setIsVisible(false)
+          onSignup()
+        }, 3000)
+      } else {
+        toast.error(data.error || "Failed to send coupon. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error sending coupon:", error)
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -73,10 +101,10 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
           <div className="bg-gradient-to-r from-[#24BDEB] to-[#4FEBBC] p-6 text-center">
             <IconRocket className="mx-auto mb-3 size-10 text-white" />
             <h3 className="text-xl font-bold text-white">
-              Wait! Don't Leave Empty-Handed
+              Wait! Get 1 Month FREE
             </h3>
             <p className="mt-1 text-sm text-white/90">
-              Get 5 free roof reports + our AI Roofing Toolkit
+              $29 off coupon + 5 free roof reports
             </p>
           </div>
 
@@ -85,6 +113,14 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
             {!submitted ? (
               <>
                 <div className="mb-4 space-y-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <div className="flex size-5 items-center justify-center rounded-full bg-green-100">
+                      <svg className="size-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span><strong>1 Month FREE</strong> of Rooftops Premium ($29 value)</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <div className="flex size-5 items-center justify-center rounded-full bg-green-100">
                       <svg className="size-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -100,14 +136,6 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
                       </svg>
                     </div>
                     <span>The 7-Day Roofing AI Quick-Start Guide</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-5 items-center justify-center rounded-full bg-green-100">
-                      <svg className="size-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span>Proposal templates that close deals</span>
                   </div>
                 </div>
 
@@ -125,9 +153,20 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
                   </div>
                   <button
                     type="submit"
-                    className="w-full rounded-lg bg-gradient-to-r from-[#24BDEB] to-[#4FEBBC] py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
+                    disabled={isLoading}
+                    className="w-full rounded-lg bg-gradient-to-r from-[#24BDEB] to-[#4FEBBC] py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send Me The Free Toolkit
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin size-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Sending...
+                      </span>
+                    ) : (
+                      "Get My Free Month + Toolkit"
+                    )}
                   </button>
                 </form>
 
@@ -142,9 +181,12 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h4 className="text-lg font-bold text-gray-900">You're In!</h4>
+                <h4 className="text-lg font-bold text-gray-900">Check Your Email!</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Check your email for your free toolkit and 5 roof report credits.
+                  We just sent your <strong>$29 coupon code</strong> and free toolkit to your inbox.
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  (Don't forget to check your spam folder)
                 </p>
               </div>
             )}
