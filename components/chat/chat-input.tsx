@@ -36,6 +36,10 @@ import { FilePickerDropdown } from "./file-picker-dropdown"
 import { WebSearchToggle } from "./web-search-toggle"
 import { ModelSelector } from "./model-selector"
 import { PipedreamDataSources } from "./pipedream-data-sources"
+import { FeatureTabs } from "@/components/ui/feature-tabs"
+
+// Feature flag - hide connectors for launch
+const SHOW_CONNECTORS = false
 
 interface ChatInputProps {
   onVoiceModeClick?: () => void
@@ -410,8 +414,12 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
           <ChatCommandInput />
         </div>
 
-        {/* Main input container */}
-        <div className="bg-background flex w-full flex-col rounded-2xl border shadow-lg">
+        {/* Navigation Tabs */}
+        <FeatureTabs activeTab="chat" className="pl-2 sm:pl-4" />
+
+        {/* Main input container with gradient border effect */}
+        <div className="gradient-border relative z-0 rounded-2xl p-[1px] shadow-lg">
+          <div className="bg-background flex w-full flex-col rounded-[15px]">
           {/* Web Search Pill Indicator */}
           {profile?.web_search_enabled && (
             <div className="px-4 pt-3">
@@ -494,12 +502,15 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
               {/* Web Search Toggle */}
               <WebSearchToggle />
 
-              {/* Pipedream Data Sources */}
-              <PipedreamDataSources chatId={selectedChat?.id} />
+              {/* Pipedream Data Sources - hidden for launch */}
+              {SHOW_CONNECTORS && (
+                <PipedreamDataSources chatId={selectedChat?.id} />
+              )}
 
               {/* Model Selector */}
               <ModelSelector />
             </div>
+          </div>
           </div>
         </div>
 

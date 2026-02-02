@@ -23,7 +23,13 @@ import {
   IconChevronRight,
   IconRobot,
   IconFileAnalytics,
-  IconSend
+  IconSend,
+  IconUserBolt,
+  IconSparkles,
+  IconBrandInstagram,
+  IconMail,
+  IconCheck,
+  IconRocket
 } from "@tabler/icons-react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -612,6 +618,111 @@ export default function LandingPage() {
                   Upsell solar with built-in potential analysis and savings
                   estimates.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Employees Coming Soon Section */}
+          <div className="mx-auto mt-20 w-full max-w-4xl px-4">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8 sm:p-12">
+              {/* Background decoration */}
+              <div className="absolute -right-20 -top-20 size-64 rounded-full bg-gradient-to-br from-teal-500/20 to-cyan-500/20 blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 size-64 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-500/20 blur-3xl" />
+
+              <div className="relative z-10">
+                {/* Coming Soon Badge */}
+                <div className="mb-6 flex justify-center sm:justify-start">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/20 px-4 py-1.5 ring-1 ring-teal-500/30">
+                    <IconRocket className="size-4 text-teal-400" />
+                    <span className="text-sm font-semibold text-teal-300">
+                      Coming Soon
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
+                  {/* Left Content */}
+                  <div className="flex-1 text-center sm:text-left">
+                    <h2 className="text-3xl font-bold text-white sm:text-4xl">
+                      AI Employees for Your{" "}
+                      <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                        Roofing Business
+                      </span>
+                    </h2>
+                    <p className="mt-4 text-gray-300">
+                      Hire AI-powered team members that work 24/7 to handle sales follow-ups,
+                      content creation, customer communication, and more. Scale without scaling payroll.
+                    </p>
+
+                    {/* Feature bullets */}
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      {[
+                        { icon: IconMail, text: "Automated lead follow-up" },
+                        { icon: IconFileText, text: "Content & SEO creation" },
+                        { icon: IconBrandInstagram, text: "Social media management" },
+                        { icon: IconMessageCircle, text: "24/7 customer responses" }
+                      ].map(item => (
+                        <div
+                          key={item.text}
+                          className="flex items-center gap-2 text-sm text-gray-300"
+                        >
+                          <item.icon className="size-4 text-teal-400" />
+                          {item.text}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Price and CTA */}
+                    <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
+                      <div className="text-center sm:text-left">
+                        <div className="text-sm text-gray-400">Starting at</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-bold text-white">$199</span>
+                          <span className="text-gray-400">/month</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRedirectToLogin}
+                        className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:shadow-teal-500/25"
+                      >
+                        <IconUserBolt className="size-5" />
+                        Join the Waitlist
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right - AI Employee Cards */}
+                  <div className="flex flex-shrink-0 flex-col gap-3">
+                    {[
+                      { name: "Marcus", role: "Sales", color: "bg-emerald-500" },
+                      { name: "Aisha", role: "Marketing", color: "bg-pink-500" },
+                      { name: "Elena", role: "Estimating", color: "bg-blue-500" },
+                      { name: "Ryan", role: "Insurance", color: "bg-amber-500" }
+                    ].map((emp, idx) => (
+                      <div
+                        key={emp.name}
+                        className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10 backdrop-blur-sm"
+                        style={{
+                          animationDelay: `${idx * 100}ms`,
+                          transform: `translateX(${idx * 8}px)`
+                        }}
+                      >
+                        <div
+                          className={`flex size-8 items-center justify-center rounded-lg ${emp.color} text-sm font-bold text-white`}
+                        >
+                          {emp.name[0]}
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            {emp.name}
+                          </div>
+                          <div className="text-xs text-gray-400">{emp.role}</div>
+                        </div>
+                        <IconSparkles className="ml-auto size-4 text-yellow-400" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

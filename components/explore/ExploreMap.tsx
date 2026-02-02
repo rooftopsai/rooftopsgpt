@@ -912,23 +912,54 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       }
 
       // Improved html2canvas settings for higher quality captures
-      const canvas = await html2canvas(containerRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        logging: isDebugMode,
-        scale: 2.5, // Increased to 2.5 for better quality before cropping (640x480 -> 1600x1200)
-        backgroundColor: null, // Preserve transparency
-        imageTimeout: 0, // No timeout for better handling of complex maps
-        removeContainer: false, // Keep the original container
-        ignoreElements: element => {
-          // Ignore Google Maps tooltips and UI controls
-          return (
-            element.classList.contains("gm-style-iw") ||
-            element.classList.contains("gm-ui-hover-effect") ||
-            element.classList.contains("gm-style-iw-t")
-          )
+      // Use retry logic to handle transient "cloned iframe" errors
+      let canvas: HTMLCanvasElement | null = null
+      let retries = 3
+
+      while (retries > 0 && !canvas) {
+        try {
+          canvas = await html2canvas(containerRef.current, {
+            useCORS: true,
+            allowTaint: true,
+            logging: isDebugMode,
+            scale: retries === 3 ? 2.5 : 2, // Lower scale on retry for better compatibility
+            backgroundColor: "#1a1a2e", // Use solid background instead of null
+            imageTimeout: 15000, // 15 second timeout
+            removeContainer: false, // Keep the original container
+            foreignObjectRendering: false, // Disable foreign object rendering for better compatibility
+            ignoreElements: element => {
+              // Ignore Google Maps tooltips and UI controls that may cause issues
+              const classList = element.classList
+              return (
+                classList?.contains("gm-style-iw") ||
+                classList?.contains("gm-ui-hover-effect") ||
+                classList?.contains("gm-style-iw-t") ||
+                classList?.contains("gm-control-active") ||
+                classList?.contains("gmnoprint") ||
+                element.tagName === "IFRAME"
+              )
+            }
+          })
+        } catch (html2canvasError) {
+          retries--
+          console.warn(`html2canvas attempt failed (${retries} retries left):`, html2canvasError.message)
+          if (retries > 0) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Trigger map re-render
+            if (mapRef.current) {
+              google.maps.event.trigger(mapRef.current, 'resize')
+              await new Promise(resolve => setTimeout(resolve, 500))
+            }
+          } else {
+            throw html2canvasError
+          }
         }
-      })
+      }
+
+      if (!canvas) {
+        throw new Error("Failed to capture map view after retries")
+      }
 
       // Restore Google Maps UI elements
       mapControls.forEach((control: HTMLElement) => {

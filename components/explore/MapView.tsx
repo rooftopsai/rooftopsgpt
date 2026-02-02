@@ -26,6 +26,7 @@ import {
   IconCurrentLocation,
   IconSparkles
 } from "@tabler/icons-react"
+import { FeatureTabs } from "@/components/ui/feature-tabs"
 import Script from "next/script"
 
 // Interface for MapView props
@@ -1665,8 +1666,12 @@ const MapView: React.FC<MapViewProps> = ({
         {/* Floating Control Panel at Bottom - Like chat input */}
         <div className="absolute inset-x-0 bottom-0 z-20 p-4">
           <div className="mx-auto max-w-4xl">
-            {/* Floating Container with rounded edges */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-800">
+            {/* Navigation Tabs */}
+            <FeatureTabs activeTab="report" className="pl-2 sm:pl-4" />
+
+            {/* Floating Container with gradient border */}
+            <div className="gradient-border relative z-0 rounded-2xl p-[1px] shadow-2xl">
+              <div className="rounded-[15px] bg-white p-4 dark:bg-gray-800">
               {/* Search Input Row */}
               <div className="mb-3 flex items-center gap-3">
                 {/* Address Search Input */}
@@ -1758,6 +1763,7 @@ const MapView: React.FC<MapViewProps> = ({
                     {measuredDistance}
                   </span>
                 )}
+              </div>
               </div>
             </div>
           </div>

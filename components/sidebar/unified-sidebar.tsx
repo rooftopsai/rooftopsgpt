@@ -27,7 +27,8 @@ import {
   IconChevronDown,
   IconDots,
   IconGrid3x3,
-  IconUsers
+  IconUsers,
+  IconUserBolt
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 import { ContentType } from "@/types"
@@ -58,6 +59,7 @@ interface UnifiedSidebarProps {
 const SHOW_AGENT_FEATURES = false // AI Agent - coming soon
 const SHOW_CRM_FEATURES = false // CRM - coming soon
 const SHOW_AGENT_LIBRARY = false // Agent Library - coming soon
+const SHOW_CONNECTORS = false // Connectors - coming soon
 
 const primaryNavigationItems: NavItem[] = [
   {
@@ -97,6 +99,14 @@ const primaryNavigationItems: NavItem[] = [
     route: (workspaceId: string) => `/${workspaceId}/explore`,
     badge: "premium"
   },
+  // AI Employees - Coming Soon waitlist page
+  {
+    id: "ai-employees",
+    label: "AI Employees",
+    icon: IconUserBolt,
+    route: (workspaceId: string) => `/${workspaceId}/ai-employees`,
+    badge: "pro"
+  },
   // Hidden for launch - Agent Library
   ...(SHOW_AGENT_LIBRARY
     ? [
@@ -130,12 +140,17 @@ const secondaryNavigationItems: NavItem[] = [
     icon: IconRobotFace,
     tab: "assistants"
   },
-  {
-    id: "connectors",
-    label: "Connectors",
-    icon: IconPlugConnected,
-    tab: "tools"
-  }
+  // Hidden for launch - Connectors
+  ...(SHOW_CONNECTORS
+    ? [
+        {
+          id: "connectors",
+          label: "Connectors",
+          icon: IconPlugConnected,
+          tab: "tools"
+        }
+      ]
+    : [])
 ]
 
 export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {

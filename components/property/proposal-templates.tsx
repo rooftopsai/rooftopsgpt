@@ -1,15 +1,12 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useCallback, useRef } from "react"
 import {
   IconFileText,
   IconDownload,
   IconMail,
-  IconBrandWhatsapp,
-  IconPrinter,
   IconPencil,
   IconPhoto,
-  IconCheck,
   IconX,
   IconChevronRight,
   IconSparkles,
@@ -17,7 +14,10 @@ import {
   IconHome,
   IconShieldCheck,
   IconClock,
-  IconCurrencyDollar
+  IconCurrencyDollar,
+  IconLoader2,
+  IconUpload,
+  IconTrash
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 
@@ -48,40 +48,50 @@ interface ProposalTemplate {
   id: string
   name: string
   description: string
-  category: "professional" | "simple" | "detailed"
+  category: "professional" | "simple" | "detailed" | "insurance"
   preview: string
   popular?: boolean
+  headerColor: string
+  accentColor: string
 }
 
 const PROPOSAL_TEMPLATES: ProposalTemplate[] = [
   {
     id: "professional-standard",
     name: "Professional Standard",
-    description: "Clean, modern design perfect for residential customers",
+    description: "Clean, modern teal design perfect for residential customers. Includes warranty section and professional formatting.",
     category: "professional",
     preview: "professional",
-    popular: true
+    popular: true,
+    headerColor: "bg-teal-500",
+    accentColor: "border-teal-200"
   },
   {
     id: "detailed-breakdown",
     name: "Detailed Breakdown",
-    description: "Comprehensive with itemized costs and specifications",
+    description: "Navy blue corporate style with 5-column itemized table, payment terms, and comprehensive specifications.",
     category: "detailed",
-    preview: "detailed"
+    preview: "detailed",
+    headerColor: "bg-blue-900",
+    accentColor: "border-blue-200"
   },
   {
     id: "quick-quote",
     name: "Quick Quote",
-    description: "Simple one-page summary for fast turnaround",
+    description: "Minimal one-page design for fast quotes. Simple line items with a bold total section.",
     category: "simple",
-    preview: "simple"
+    preview: "simple",
+    headerColor: "bg-teal-500",
+    accentColor: "border-gray-200"
   },
   {
     id: "insurance-ready",
     name: "Insurance Ready",
-    description: "Formatted for insurance claims with required documentation",
-    category: "detailed",
-    preview: "insurance"
+    description: "Official form-style document for insurance claims. Includes contractor certification and line-numbered items.",
+    category: "insurance",
+    preview: "insurance",
+    headerColor: "bg-gray-800",
+    accentColor: "border-amber-300"
   }
 ]
 
@@ -141,18 +151,68 @@ export function ProposalTemplates({
   const [step, setStep] = useState<"select" | "customize" | "preview">("select")
   const [selectedTemplate, setSelectedTemplate] =
     useState<ProposalTemplate | null>(null)
-  const [customerInfo, setCustomerInfo] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: ""
-  })
-  const [proposalOptions, setProposalOptions] = useState({
-    includePhotos: true,
-    includeWarranty: true,
-    includePaymentTerms: true,
-    validDays: 30
-  })
+  const [customerName, setCustomerName] = useState("")
+  const [customerEmail, setCustomerEmail] = useState("")
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [customerNotes, setCustomerNotes] = useState("")
+  const [includePhotos, setIncludePhotos] = useState(true)
+  const [includeWarranty, setIncludeWarranty] = useState(true)
+  const [includePaymentTerms, setIncludePaymentTerms] = useState(true)
+  const [validDays, setValidDays] = useState(30)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
+
+  // Business/Company branding
+  const [businessName, setBusinessName] = useState(companyInfo?.name || "")
+  const [businessLicense, setBusinessLicense] = useState(
+    companyInfo?.license || ""
+  )
+  const [businessLogo, setBusinessLogo] = useState<string | null>(
+    companyInfo?.logo || null
+  )
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const handleLogoUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        alert("Please upload an image file (PNG, JPG, etc.)")
+        return
+      }
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Logo file size must be under 2MB")
+        return
+      }
+
+      setIsUploadingLogo(true)
+
+      const reader = new FileReader()
+      reader.onload = e => {
+        const result = e.target?.result as string
+        setBusinessLogo(result)
+        setIsUploadingLogo(false)
+      }
+      reader.onerror = () => {
+        alert("Failed to read logo file. Please try again.")
+        setIsUploadingLogo(false)
+      }
+      reader.readAsDataURL(file)
+    },
+    []
+  )
+
+  const handleRemoveLogo = useCallback(() => {
+    setBusinessLogo(null)
+    if (logoInputRef.current) {
+      logoInputRef.current.value = ""
+    }
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -163,501 +223,799 @@ export function ProposalTemplates({
     }).format(amount)
   }
 
-  const handleSelectTemplate = (template: ProposalTemplate) => {
+  const handleSelectTemplate = useCallback((template: ProposalTemplate) => {
     setSelectedTemplate(template)
     setStep("customize")
-  }
+  }, [])
 
-  const handleGenerateProposal = () => {
+  const handleGenerateProposal = useCallback(() => {
     setStep("preview")
-  }
+  }, [])
 
-  const handleDownloadPDF = () => {
-    // In a real implementation, this would generate a PDF
-    alert("PDF generation would be implemented here")
-  }
-
-  const handleSendEmail = () => {
-    // In a real implementation, this would send an email
-    alert("Email sending would be implemented here")
-  }
-
-  // Template Selection Step
-  const TemplateSelectionStep = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-gray-900">
-          Choose a Proposal Template
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Select a template that best fits your customer&apos;s needs
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {PROPOSAL_TEMPLATES.map(template => (
-          <button
-            key={template.id}
-            onClick={() => handleSelectTemplate(template)}
-            className={cn(
-              "group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all hover:border-teal-500 hover:shadow-lg",
-              template.popular
-                ? "border-teal-200 bg-teal-50/50"
-                : "border-gray-200 bg-white"
-            )}
-          >
-            {template.popular && (
-              <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                <IconSparkles className="size-3" />
-                Popular
-              </div>
-            )}
-
-            {/* Template Preview Placeholder */}
-            <div className="mb-3 aspect-[4/3] rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 p-3">
-              <div className="flex h-full flex-col">
-                <div className="mb-2 h-3 w-1/2 rounded bg-gray-300"></div>
-                <div className="mb-1 h-2 w-3/4 rounded bg-gray-300"></div>
-                <div className="mb-3 h-2 w-1/2 rounded bg-gray-300"></div>
-                <div className="flex-1 rounded bg-white/50 p-2">
-                  <div className="mb-1 h-1.5 w-full rounded bg-gray-200"></div>
-                  <div className="mb-1 h-1.5 w-full rounded bg-gray-200"></div>
-                  <div className="h-1.5 w-3/4 rounded bg-gray-200"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="font-semibold text-gray-900 group-hover:text-teal-600">
-              {template.name}
-            </div>
-            <div className="mt-1 text-xs text-gray-500">
-              {template.description}
-            </div>
-
-            <div className="mt-3 flex items-center gap-1 text-xs font-medium text-teal-600 opacity-0 transition-opacity group-hover:opacity-100">
-              Select template <IconChevronRight className="size-3" />
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-
-  // Customization Step
-  const CustomizationStep = () => (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setStep("select")}
-          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-        >
-          ←
-        </button>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">
-            Customize Your Proposal
-          </h2>
-          <p className="text-sm text-gray-500">
-            Template: {selectedTemplate?.name}
-          </p>
-        </div>
-      </div>
-
-      {/* Customer Information */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <IconHome className="size-4 text-teal-500" />
-          Customer Information
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">
-              Customer Name
-            </label>
-            <input
-              type="text"
-              value={customerInfo.name}
-              onChange={e =>
-                setCustomerInfo({ ...customerInfo, name: e.target.value })
-              }
-              placeholder="John Smith"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">
-              Email
-            </label>
-            <input
-              type="email"
-              value={customerInfo.email}
-              onChange={e =>
-                setCustomerInfo({ ...customerInfo, email: e.target.value })
-              }
-              placeholder="john@example.com"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={customerInfo.phone}
-              onChange={e =>
-                setCustomerInfo({ ...customerInfo, phone: e.target.value })
-              }
-              placeholder="(555) 123-4567"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">
-              Property Address
-            </label>
-            <input
-              type="text"
-              value={propertyAddress}
-              disabled
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Proposal Options */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <IconPencil className="size-4 text-teal-500" />
-          Proposal Options
-        </h3>
-        <div className="space-y-3">
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              checked={proposalOptions.includePhotos}
-              onChange={e =>
-                setProposalOptions({
-                  ...proposalOptions,
-                  includePhotos: e.target.checked
-                })
-              }
-              className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
-            />
-            <div className="flex items-center gap-2">
-              <IconPhoto className="size-4 text-gray-400" />
-              <span className="text-sm text-gray-700">
-                Include property photos
-              </span>
-            </div>
-          </label>
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              checked={proposalOptions.includeWarranty}
-              onChange={e =>
-                setProposalOptions({
-                  ...proposalOptions,
-                  includeWarranty: e.target.checked
-                })
-              }
-              className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
-            />
-            <div className="flex items-center gap-2">
-              <IconShieldCheck className="size-4 text-gray-400" />
-              <span className="text-sm text-gray-700">
-                Include warranty information
-              </span>
-            </div>
-          </label>
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              checked={proposalOptions.includePaymentTerms}
-              onChange={e =>
-                setProposalOptions({
-                  ...proposalOptions,
-                  includePaymentTerms: e.target.checked
-                })
-              }
-              className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
-            />
-            <div className="flex items-center gap-2">
-              <IconCurrencyDollar className="size-4 text-gray-400" />
-              <span className="text-sm text-gray-700">
-                Include payment terms
-              </span>
-            </div>
-          </label>
-          <div className="flex items-center gap-3">
-            <IconClock className="size-4 text-gray-400" />
-            <span className="text-sm text-gray-700">Valid for</span>
-            <select
-              value={proposalOptions.validDays}
-              onChange={e =>
-                setProposalOptions({
-                  ...proposalOptions,
-                  validDays: parseInt(e.target.value)
-                })
-              }
-              className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
-            >
-              <option value={15}>15 days</option>
-              <option value={30}>30 days</option>
-              <option value={45}>45 days</option>
-              <option value={60}>60 days</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Notes */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <IconFileText className="size-4 text-teal-500" />
-          Additional Notes
-        </h3>
-        <textarea
-          value={customerInfo.notes}
-          onChange={e =>
-            setCustomerInfo({ ...customerInfo, notes: e.target.value })
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true)
+    try {
+      // Generate PDF using the API
+      const response = await fetch("/api/reports/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "proposal",
+          data: {
+            customerName,
+            customerEmail,
+            customerPhone,
+            propertyAddress,
+            roofSize,
+            estimateItems,
+            estimateTotal,
+            validDays,
+            includeWarranty,
+            customerNotes,
+            templateId: selectedTemplate?.id || "professional-standard",
+            companyInfo: {
+              ...companyInfo,
+              name: businessName || companyInfo?.name || "Your Roofing Company",
+              license: businessLicense || companyInfo?.license,
+              logo: businessLogo || companyInfo?.logo
+            }
           }
-          placeholder="Add any special terms, conditions, or notes for this proposal..."
-          rows={3}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        />
-      </div>
+        })
+      })
 
-      {/* Estimate Summary */}
-      <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
-        <h3 className="mb-2 text-sm font-semibold text-teal-800">
-          Estimate Summary
-        </h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-teal-600">
-              {estimateItems.length} items • {roofSize} squares
-            </div>
-          </div>
-          <div className="text-xl font-bold text-teal-700">
-            {formatCurrency(estimateTotal)}
-          </div>
-        </div>
-      </div>
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `Proposal_${customerName.replace(/\s+/g, "_")}_${Date.now()}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+      } else {
+        alert("Failed to generate PDF. Please try again.")
+      }
+    } catch (error) {
+      console.error("PDF generation error:", error)
+      alert("Failed to generate PDF. Please try again.")
+    } finally {
+      setIsGeneratingPDF(false)
+    }
+  }
 
-      {/* Generate Button */}
-      <button
-        onClick={handleGenerateProposal}
-        disabled={!customerInfo.name}
-        className={cn(
-          "w-full rounded-xl py-4 text-base font-semibold transition-all",
-          customerInfo.name
-            ? "bg-teal-500 text-white hover:bg-teal-600"
-            : "cursor-not-allowed bg-gray-200 text-gray-400"
-        )}
-      >
-        Generate Proposal →
-      </button>
-    </div>
-  )
+  const handleSendEmail = async () => {
+    if (!customerEmail) {
+      alert("Please enter a customer email address")
+      return
+    }
 
-  // Preview Step
-  const PreviewStep = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setStep("customize")}
-            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          >
-            ←
-          </button>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              Proposal Preview
-            </h2>
-            <p className="text-sm text-gray-500">
-              Ready to send to {customerInfo.name}
-            </p>
-          </div>
-        </div>
-      </div>
+    setIsSendingEmail(true)
+    try {
+      const response = await fetch("/api/reports/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "proposal",
+          recipientEmail: customerEmail,
+          recipientName: customerName,
+          data: {
+            customerName,
+            customerEmail,
+            customerPhone,
+            propertyAddress,
+            roofSize,
+            estimateItems,
+            estimateTotal,
+            validDays,
+            includeWarranty,
+            customerNotes,
+            companyInfo: {
+              ...companyInfo,
+              name: businessName || companyInfo?.name || "Your Roofing Company",
+              license: businessLicense || companyInfo?.license,
+              logo: businessLogo || companyInfo?.logo
+            }
+          }
+        })
+      })
 
-      {/* Proposal Preview */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-        {/* Header */}
-        <div className="bg-teal-500 p-6 text-white">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-2xl font-bold">
-                {companyInfo?.name || "Your Roofing Company"}
-              </div>
-              <div className="mt-1 text-sm opacity-90">
-                Licensed & Insured • {companyInfo?.license || "License #12345"}
-              </div>
-            </div>
-            <div className="text-right text-sm">
-              <div className="font-semibold">PROPOSAL</div>
-              <div className="opacity-90">
-                #{Date.now().toString().slice(-6)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Customer Info */}
-        <div className="border-b border-gray-100 p-6">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <div className="mb-1 text-xs font-semibold uppercase text-gray-400">
-                Prepared For
-              </div>
-              <div className="font-semibold text-gray-900">
-                {customerInfo.name}
-              </div>
-              <div className="text-sm text-gray-600">{propertyAddress}</div>
-              {customerInfo.email && (
-                <div className="text-sm text-gray-600">
-                  {customerInfo.email}
-                </div>
-              )}
-              {customerInfo.phone && (
-                <div className="text-sm text-gray-600">
-                  {customerInfo.phone}
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <div className="mb-1 text-xs font-semibold uppercase text-gray-400">
-                Project Details
-              </div>
-              <div className="text-sm text-gray-600">
-                Roof Size: {roofSize} squares
-              </div>
-              <div className="text-sm text-gray-600">
-                Valid Until:{" "}
-                {new Date(
-                  Date.now() + proposalOptions.validDays * 24 * 60 * 60 * 1000
-                ).toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Line Items */}
-        <div className="p-6">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase text-gray-500">
-                <th className="pb-2">Description</th>
-                <th className="pb-2 text-right">Qty</th>
-                <th className="pb-2 text-right">Rate</th>
-                <th className="pb-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {estimateItems.map((item, idx) => (
-                <tr key={idx} className="border-b border-gray-100">
-                  <td className="py-3 text-sm text-gray-800">{item.name}</td>
-                  <td className="py-3 text-right text-sm text-gray-600">
-                    {item.qty} {item.unit}
-                  </td>
-                  <td className="py-3 text-right text-sm text-gray-600">
-                    ${item.price.toFixed(2)}
-                  </td>
-                  <td className="py-3 text-right text-sm font-medium text-gray-800">
-                    {formatCurrency(item.qty * item.price)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td
-                  colSpan={3}
-                  className="pt-4 text-right text-lg font-bold text-gray-900"
-                >
-                  Total
-                </td>
-                <td className="pt-4 text-right text-lg font-bold text-teal-600">
-                  {formatCurrency(estimateTotal)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        {/* Warranty Section */}
-        {proposalOptions.includeWarranty && (
-          <div className="border-t border-gray-100 bg-gray-50 p-6">
-            <div className="flex items-start gap-3">
-              <IconShieldCheck className="mt-0.5 size-5 text-teal-500" />
-              <div>
-                <div className="font-semibold text-gray-900">
-                  Warranty Information
-                </div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Workmanship warranty: 10 years • Manufacturer warranty: 30
-                  years on shingles
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        {customerInfo.notes && (
-          <div className="border-t border-gray-100 p-6">
-            <div className="text-xs font-semibold uppercase text-gray-400">
-              Notes
-            </div>
-            <div className="mt-1 text-sm text-gray-600">
-              {customerInfo.notes}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <button
-          onClick={handleDownloadPDF}
-          className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-        >
-          <IconDownload className="size-4" />
-          Download PDF
-        </button>
-        <button
-          onClick={handleSendEmail}
-          className="flex items-center justify-center gap-2 rounded-xl bg-teal-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-600"
-        >
-          <IconMail className="size-4" />
-          Send via Email
-        </button>
-        <button className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">
-          <IconPrinter className="size-4" />
-          Print
-        </button>
-      </div>
-    </div>
-  )
+      if (response.ok) {
+        alert(`Proposal sent successfully to ${customerEmail}!`)
+      } else {
+        const error = await response.json()
+        // Check for specific error about email service not configured
+        if (
+          error.error?.includes("Email service not configured") ||
+          error.error?.includes("RESEND_API_KEY")
+        ) {
+          alert(
+            "Email service is not configured yet. Please download the PDF instead, or contact support to enable email sending."
+          )
+        } else {
+          alert(
+            error.error ||
+              error.message ||
+              "Failed to send email. Please try again."
+          )
+        }
+      }
+    } catch (error) {
+      console.error("Email sending error:", error)
+      alert("Failed to send email. Please try again.")
+    } finally {
+      setIsSendingEmail(false)
+    }
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-gray-50 p-6 shadow-2xl">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
-        >
-          <IconX className="size-5" />
-        </button>
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-gray-50 shadow-2xl">
+        {/* Fixed Close Button Header */}
+        <div className="flex shrink-0 items-center justify-end border-b border-gray-200 bg-gray-50 px-4 py-3">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+          >
+            <IconX className="size-5" />
+          </button>
+        </div>
 
-        {/* Step Content */}
-        {step === "select" && <TemplateSelectionStep />}
-        {step === "customize" && <CustomizationStep />}
-        {step === "preview" && <PreviewStep />}
+        {/* Scrollable Step Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Step 1: Template Selection */}
+          {step === "select" && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Choose a Proposal Template
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Select a template that best fits your customer&apos;s needs
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {PROPOSAL_TEMPLATES.map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => handleSelectTemplate(template)}
+                    className={cn(
+                      "group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all hover:shadow-lg",
+                      template.popular
+                        ? "border-teal-300 bg-teal-50/50 hover:border-teal-500"
+                        : `${template.accentColor} bg-white hover:border-teal-500`
+                    )}
+                  >
+                    {template.popular && (
+                      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        <IconSparkles className="size-3" />
+                        Popular
+                      </div>
+                    )}
+
+                    {/* Template Preview - Different for each type */}
+                    <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-white">
+                      {template.id === "professional-standard" && (
+                        <div className="flex h-full flex-col">
+                          <div className="h-8 bg-teal-500 px-2 py-1">
+                            <div className="h-2 w-16 rounded bg-white/80"></div>
+                            <div className="mt-0.5 h-1.5 w-12 rounded bg-white/50"></div>
+                          </div>
+                          <div className="flex-1 p-2">
+                            <div className="mb-2 flex gap-2">
+                              <div className="h-8 flex-1 rounded bg-gray-100 p-1">
+                                <div className="h-1 w-8 rounded bg-gray-300"></div>
+                              </div>
+                              <div className="h-8 flex-1 rounded bg-gray-100 p-1">
+                                <div className="h-1 w-8 rounded bg-gray-300"></div>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex justify-between">
+                                <div className="h-1.5 w-20 rounded bg-gray-200"></div>
+                                <div className="h-1.5 w-8 rounded bg-gray-200"></div>
+                              </div>
+                              <div className="flex justify-between">
+                                <div className="h-1.5 w-16 rounded bg-gray-200"></div>
+                                <div className="h-1.5 w-8 rounded bg-gray-200"></div>
+                              </div>
+                            </div>
+                            <div className="mt-2 h-4 rounded bg-teal-500"></div>
+                          </div>
+                        </div>
+                      )}
+                      {template.id === "detailed-breakdown" && (
+                        <div className="flex h-full flex-col">
+                          <div className="h-7 bg-blue-900 px-2 py-1">
+                            <div className="h-2 w-16 rounded bg-white/80"></div>
+                          </div>
+                          <div className="h-1 bg-amber-400"></div>
+                          <div className="flex-1 p-2">
+                            <div className="mb-2 flex gap-1">
+                              <div className="h-6 flex-1 rounded border border-gray-200 p-1">
+                                <div className="h-1 w-full rounded bg-blue-900"></div>
+                              </div>
+                              <div className="h-6 flex-1 rounded border border-gray-200 p-1">
+                                <div className="h-1 w-full rounded bg-blue-900"></div>
+                              </div>
+                            </div>
+                            <div className="h-3 rounded bg-blue-900"></div>
+                            <div className="mt-1 space-y-0.5">
+                              <div className="h-1.5 rounded bg-gray-100"></div>
+                              <div className="h-1.5 rounded bg-white"></div>
+                              <div className="h-1.5 rounded bg-gray-100"></div>
+                            </div>
+                            <div className="mt-1 ml-auto h-4 w-16 rounded bg-blue-900"></div>
+                          </div>
+                        </div>
+                      )}
+                      {template.id === "quick-quote" && (
+                        <div className="flex h-full flex-col">
+                          <div className="h-2 bg-teal-500"></div>
+                          <div className="flex-1 p-2">
+                            <div className="flex items-center justify-between">
+                              <div className="h-3 w-20 rounded bg-gray-800"></div>
+                              <div className="h-4 w-12 rounded bg-teal-500"></div>
+                            </div>
+                            <div className="my-2 h-px bg-gray-200"></div>
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between">
+                                <div className="h-1.5 w-24 rounded bg-gray-300"></div>
+                                <div className="h-1.5 w-8 rounded bg-gray-300"></div>
+                              </div>
+                              <div className="flex justify-between">
+                                <div className="h-1.5 w-20 rounded bg-gray-300"></div>
+                                <div className="h-1.5 w-8 rounded bg-gray-300"></div>
+                              </div>
+                            </div>
+                            <div className="mt-2 h-6 rounded-lg bg-teal-500 p-1">
+                              <div className="h-full w-12 rounded bg-white/30"></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {template.id === "insurance-ready" && (
+                        <div className="flex h-full flex-col">
+                          <div className="flex h-6 items-center justify-between bg-gray-800 px-2">
+                            <div className="h-2 w-16 rounded bg-white/80"></div>
+                            <div className="h-3 w-10 rounded bg-amber-400"></div>
+                          </div>
+                          <div className="flex-1 p-2">
+                            <div className="mb-1 h-2 w-24 rounded bg-gray-200"></div>
+                            <div className="mb-2 space-y-0.5">
+                              <div className="flex gap-1">
+                                <div className="h-1 w-8 rounded bg-gray-400"></div>
+                                <div className="h-1 flex-1 border-b border-gray-300"></div>
+                              </div>
+                              <div className="flex gap-1">
+                                <div className="h-1 w-8 rounded bg-gray-400"></div>
+                                <div className="h-1 flex-1 border-b border-gray-300"></div>
+                              </div>
+                            </div>
+                            <div className="h-2 rounded bg-gray-200"></div>
+                            <div className="mt-1 space-y-0.5">
+                              <div className="h-1.5 rounded border border-gray-300"></div>
+                              <div className="h-1.5 rounded border border-gray-300"></div>
+                            </div>
+                            <div className="mt-1 ml-auto h-3 w-12 rounded bg-gray-800"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="font-semibold text-gray-900 group-hover:text-teal-600">
+                      {template.name}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {template.description}
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-1 text-xs font-medium text-teal-600 opacity-0 transition-opacity group-hover:opacity-100">
+                      Select template <IconChevronRight className="size-3" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Customization */}
+          {step === "customize" && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setStep("select")}
+                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                >
+                  ←
+                </button>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Customize Your Proposal
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Template: {selectedTemplate?.name}
+                  </p>
+                </div>
+              </div>
+
+              {/* Your Business Information */}
+              <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconBuildingStore className="size-4 text-teal-500" />
+                  Your Business Information
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      value={businessName}
+                      onChange={e => setBusinessName(e.target.value)}
+                      placeholder="ABC Roofing Company"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      License Number
+                    </label>
+                    <input
+                      type="text"
+                      value={businessLicense}
+                      onChange={e => setBusinessLicense(e.target.value)}
+                      placeholder="License #12345"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Company Logo
+                    </label>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    {businessLogo ? (
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-16 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
+                          <img
+                            src={businessLogo}
+                            alt="Company logo"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-gray-500">
+                            Logo uploaded
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveLogo}
+                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
+                          >
+                            <IconTrash className="size-3" />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white px-4 py-3 text-sm text-gray-500 transition-colors hover:border-teal-400 hover:text-teal-600"
+                      >
+                        {isUploadingLogo ? (
+                          <>
+                            <IconLoader2 className="size-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <IconUpload className="size-4" />
+                            Upload Logo (PNG, JPG - max 2MB)
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <p className="mt-1 text-[10px] text-gray-400">
+                      Your logo will appear in the proposal header
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Information */}
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconHome className="size-4 text-teal-500" />
+                  Customer Information
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Customer Name
+                    </label>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                      placeholder="John Smith"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={e => setCustomerEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={e => setCustomerPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Property Address
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyAddress}
+                      disabled
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Proposal Options */}
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconPencil className="size-4 text-teal-500" />
+                  Proposal Options
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={includePhotos}
+                      onChange={e => setIncludePhotos(e.target.checked)}
+                      className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
+                    />
+                    <div className="flex items-center gap-2">
+                      <IconPhoto className="size-4 text-gray-400" />
+                      <span className="text-sm text-gray-700">
+                        Include property photos
+                      </span>
+                    </div>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={includeWarranty}
+                      onChange={e => setIncludeWarranty(e.target.checked)}
+                      className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
+                    />
+                    <div className="flex items-center gap-2">
+                      <IconShieldCheck className="size-4 text-gray-400" />
+                      <span className="text-sm text-gray-700">
+                        Include warranty information
+                      </span>
+                    </div>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={includePaymentTerms}
+                      onChange={e => setIncludePaymentTerms(e.target.checked)}
+                      className="size-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500"
+                    />
+                    <div className="flex items-center gap-2">
+                      <IconCurrencyDollar className="size-4 text-gray-400" />
+                      <span className="text-sm text-gray-700">
+                        Include payment terms
+                      </span>
+                    </div>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <IconClock className="size-4 text-gray-400" />
+                    <span className="text-sm text-gray-700">Valid for</span>
+                    <select
+                      value={validDays}
+                      onChange={e => setValidDays(parseInt(e.target.value))}
+                      className="rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                    >
+                      <option value={15}>15 days</option>
+                      <option value={30}>30 days</option>
+                      <option value={45}>45 days</option>
+                      <option value={60}>60 days</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconFileText className="size-4 text-teal-500" />
+                  Additional Notes
+                </h3>
+                <textarea
+                  value={customerNotes}
+                  onChange={e => setCustomerNotes(e.target.value)}
+                  placeholder="Add any special terms, conditions, or notes for this proposal..."
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Estimate Summary */}
+              <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
+                <h3 className="mb-2 text-sm font-semibold text-teal-800">
+                  Estimate Summary
+                </h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-teal-600">
+                      {estimateItems.length} items • {roofSize} squares
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-teal-700">
+                    {formatCurrency(estimateTotal)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={handleGenerateProposal}
+                disabled={!customerName}
+                className={cn(
+                  "w-full rounded-xl py-4 text-base font-semibold transition-all",
+                  customerName
+                    ? "bg-teal-500 text-white hover:bg-teal-600"
+                    : "cursor-not-allowed bg-gray-200 text-gray-400"
+                )}
+              >
+                Generate Proposal →
+              </button>
+            </div>
+          )}
+
+          {/* Step 3: Preview */}
+          {step === "preview" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setStep("customize")}
+                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  >
+                    ←
+                  </button>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      Proposal Preview
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Ready to send to {customerName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Proposal Preview */}
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                {/* Header */}
+                <div className="bg-teal-500 p-6 text-white">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      {businessLogo && (
+                        <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1.5">
+                          <img
+                            src={businessLogo}
+                            alt="Company logo"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-2xl font-bold">
+                          {businessName || companyInfo?.name || "Your Roofing Company"}
+                        </div>
+                        <div className="mt-1 text-sm opacity-90">
+                          Licensed & Insured •{" "}
+                          {businessLicense || companyInfo?.license || "License #12345"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <div className="font-semibold">PROPOSAL</div>
+                      <div className="opacity-90">
+                        #{Date.now().toString().slice(-6)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div className="border-b border-gray-100 p-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <div className="mb-1 text-xs font-semibold uppercase text-gray-400">
+                        Prepared For
+                      </div>
+                      <div className="font-semibold text-gray-900">
+                        {customerName}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {propertyAddress}
+                      </div>
+                      {customerEmail && (
+                        <div className="text-sm text-gray-600">
+                          {customerEmail}
+                        </div>
+                      )}
+                      {customerPhone && (
+                        <div className="text-sm text-gray-600">
+                          {customerPhone}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="mb-1 text-xs font-semibold uppercase text-gray-400">
+                        Project Details
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Roof Size: {roofSize} squares
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Valid Until:{" "}
+                        {new Date(
+                          Date.now() + validDays * 24 * 60 * 60 * 1000
+                        ).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Line Items */}
+                <div className="p-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase text-gray-500">
+                        <th className="pb-2">Description</th>
+                        <th className="pb-2 text-right">Qty</th>
+                        <th className="pb-2 text-right">Rate</th>
+                        <th className="pb-2 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {estimateItems.map((item, idx) => (
+                        <tr key={idx} className="border-b border-gray-100">
+                          <td className="py-3 text-sm text-gray-800">
+                            {item.name}
+                          </td>
+                          <td className="py-3 text-right text-sm text-gray-600">
+                            {item.qty} {item.unit}
+                          </td>
+                          <td className="py-3 text-right text-sm text-gray-600">
+                            ${item.price.toFixed(2)}
+                          </td>
+                          <td className="py-3 text-right text-sm font-medium text-gray-800">
+                            {formatCurrency(item.qty * item.price)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="pt-4 text-right text-lg font-bold text-gray-900"
+                        >
+                          Total
+                        </td>
+                        <td className="pt-4 text-right text-lg font-bold text-teal-600">
+                          {formatCurrency(estimateTotal)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Warranty Section */}
+                {includeWarranty && (
+                  <div className="border-t border-gray-100 bg-gray-50 p-6">
+                    <div className="flex items-start gap-3">
+                      <IconShieldCheck className="mt-0.5 size-5 text-teal-500" />
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          Warranty Information
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600">
+                          Workmanship warranty: 10 years • Manufacturer
+                          warranty: 30 years on shingles
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {customerNotes && (
+                  <div className="border-t border-gray-100 p-6">
+                    <div className="text-xs font-semibold uppercase text-gray-400">
+                      Notes
+                    </div>
+                    <div className="mt-1 text-sm text-gray-600">
+                      {customerNotes}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <IconLoader2 className="size-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <IconDownload className="size-4" />
+                      Download PDF
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={isSendingEmail || !customerEmail}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-teal-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-600 disabled:opacity-50"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <IconLoader2 className="size-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <IconMail className="size-4" />
+                      Send via Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

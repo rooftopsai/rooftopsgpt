@@ -976,28 +976,28 @@ Answer questions about this property clearly and concisely. Use specific numbers
           color: theme.white
         }}
       >
-        <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-xl font-bold leading-tight opacity-95 sm:text-2xl">
+              Rooftops Agent Report
+            </div>
+            <div className="mt-1 truncate text-sm font-medium opacity-90">
+              {roofData.property.address}
+            </div>
+            <div className="mt-0.5 text-xs opacity-75">
+              {new Date().toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+              })}
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="ml-auto flex size-8 items-center justify-center rounded-full text-2xl text-white transition-colors hover:bg-white/20"
-            style={{ background: "rgba(255,255,255,0.1)" }}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xl text-white transition-colors hover:bg-white/20"
           >
             ×
           </button>
-        </div>
-        <div className="text-2xl font-bold opacity-95">
-          Rooftops Agent Report
-        </div>
-        <div className="mt-1 text-sm font-medium opacity-90">
-          for {roofData.property.address}
-        </div>
-        <div className="mt-0.5 text-xs opacity-75">
-          Report Generated{" "}
-          {new Date().toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric"
-          })}
         </div>
       </header>
 

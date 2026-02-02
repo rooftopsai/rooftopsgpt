@@ -44,64 +44,60 @@ const Toaster = ({ ...props }: ToasterProps) => {
         .sonner-toast-custom {
           background: rgb(255, 255, 255) !important;
           color: #000000 !important;
-          border-radius: 9999px !important;
-          padding: 12px 24px !important;
+          border-radius: 16px !important;
+          padding: 14px 20px !important;
           display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          gap: 10px !important;
-          width: fit-content !important;
+          align-items: flex-start !important;
+          justify-content: flex-start !important;
+          gap: 12px !important;
+          width: auto !important;
           min-width: 280px !important;
-          max-width: 600px !important;
+          max-width: 420px !important;
           margin: 0 auto 8px auto !important;
           box-shadow:
-            0 10px 40px -10px rgba(0, 0, 0, 0.1),
-            0 0 20px -5px rgba(59, 130, 246, 0.15),
-            0 0 30px -10px rgba(16, 185, 129, 0.15) !important;
+            0 10px 40px -10px rgba(0, 0, 0, 0.15),
+            0 4px 20px -5px rgba(0, 0, 0, 0.1) !important;
           position: relative !important;
         }
 
         @media (max-width: 640px) {
           .sonner-toast-custom {
-            max-width: calc(100vw - 48px) !important;
-            min-width: 240px !important;
-            padding: 10px 18px !important;
+            max-width: calc(100vw - 32px) !important;
+            min-width: 200px !important;
+            padding: 12px 16px !important;
+            border-radius: 14px !important;
           }
         }
 
-        /* Shimmer border effect */
+        /* Subtle left border accent instead of shimmer */
         .sonner-toast-custom::before {
           content: "";
           position: absolute;
-          inset: -2px;
-          border-radius: 9999px;
-          padding: 2px;
+          left: 0;
+          top: 8px;
+          bottom: 8px;
+          width: 3px;
+          border-radius: 3px;
           background: linear-gradient(
-            90deg,
-            rgba(59, 130, 246, 0.3),
-            rgba(16, 185, 129, 0.3),
-            rgba(59, 130, 246, 0.3)
+            180deg,
+            rgba(13, 148, 136, 0.8),
+            rgba(59, 130, 246, 0.8)
           );
-          background-size: 200% 100%;
-          -webkit-mask:
-            linear-gradient(#fff 0 0) content-box,
-            linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          animation: shimmer 3s linear infinite;
           pointer-events: none;
-          opacity: 0.5;
         }
 
         /* Title styling */
         .sonner-title-custom {
           font-size: 14px !important;
-          font-weight: 500 !important;
-          color: #000000 !important;
-          text-align: center !important;
+          font-weight: 600 !important;
+          color: #111827 !important;
+          text-align: left !important;
           user-select: none !important;
           line-height: 1.4 !important;
           margin: 0 !important;
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          hyphens: auto !important;
         }
 
         @media (max-width: 640px) {
@@ -113,11 +109,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
         /* Description styling */
         .sonner-description-custom {
           font-size: 13px !important;
-          color: #000000 !important;
-          text-align: center !important;
+          color: #4b5563 !important;
+          text-align: left !important;
           user-select: none !important;
-          line-height: 1.4 !important;
-          margin: 0 !important;
+          line-height: 1.5 !important;
+          margin: 4px 0 0 0 !important;
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          hyphens: auto !important;
         }
 
         @media (max-width: 640px) {
