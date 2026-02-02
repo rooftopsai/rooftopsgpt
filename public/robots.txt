@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Block any admin or private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /internal/
+
+# Sitemap location
+Sitemap: https://rooftops.ai/sitemap.xml
+
+# Crawl rate suggestion (optional)
+# Crawl-delay: 10

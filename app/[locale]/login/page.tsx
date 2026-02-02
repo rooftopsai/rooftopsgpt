@@ -11,7 +11,8 @@ import { IconCheck } from "@tabler/icons-react"
 import { LoginForm } from "@/components/ui/login-form"
 
 export const metadata: Metadata = {
-  title: "Login"
+  title: "Sign Up - Rooftops AI | AI Tools for Roofing Contractors",
+  description: "Create your free Rooftops AI account. Get instant roof reports, AI chatbots, and automation tools for your roofing business. 3-day free trial."
 }
 
 export default async function Login({
