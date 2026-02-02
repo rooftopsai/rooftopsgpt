@@ -260,25 +260,26 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           const material = condition.material || "Asphalt Shingles"
 
           // Cost per square by material type (2025 pricing - includes materials + labor + tearoff)
+          // Updated to reflect actual market rates for full replacement jobs
           const costPerSquareByMaterial: { [key: string]: number } = {
-            "Asphalt Shingles": 450,
-            "Architectural Shingles": 450,
-            "3-Tab Shingles": 350,
-            "Metal Roofing": 950,
-            "Standing Seam Metal": 1050,
-            "Metal Shingles": 750,
-            Tile: 950,
-            "Concrete Tile": 950,
-            "Clay Tile": 1400,
-            Slate: 1900,
-            "Wood Shakes": 750,
-            TPO: 550,
-            EPDM: 500,
-            "Modified Bitumen": 500
+            "Asphalt Shingles": 650,
+            "Architectural Shingles": 750,
+            "3-Tab Shingles": 550,
+            "Metal Roofing": 1400,
+            "Standing Seam Metal": 1650,
+            "Metal Shingles": 1200,
+            Tile: 1400,
+            "Concrete Tile": 1350,
+            "Clay Tile": 2000,
+            Slate: 2800,
+            "Wood Shakes": 1100,
+            TPO: 850,
+            EPDM: 750,
+            "Modified Bitumen": 800
           }
 
           // Find matching material or default to architectural shingles
-          let costPerSquare = 450
+          let costPerSquare = 750
           for (const [key, cost] of Object.entries(costPerSquareByMaterial)) {
             if (material.toLowerCase().includes(key.toLowerCase())) {
               costPerSquare = cost
@@ -407,7 +408,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Tear-Off Labor",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 75,
+          defaultPrice: 125,
           description: "Remove existing shingles"
         },
         {
@@ -415,7 +416,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Disposal/Dumpster",
           unit: "job",
           qty: 1,
-          defaultPrice: 650,
+          defaultPrice: 850,
           description: "Haul away old materials"
         },
         {
@@ -423,7 +424,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Final Cleanup",
           unit: "job",
           qty: 1,
-          defaultPrice: 300,
+          defaultPrice: 450,
           description: "Magnetic sweep & debris removal"
         }
       ]
@@ -437,7 +438,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Architectural Shingles",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 150,
+          defaultPrice: 225,
           description: "30-year warranty grade"
         },
         {
@@ -445,7 +446,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Synthetic Underlayment",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 30,
+          defaultPrice: 55,
           description: "Premium moisture barrier"
         },
         {
@@ -453,7 +454,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Starter Strip",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 10,
+          defaultPrice: 18,
           description: "Eave & rake starter"
         },
         {
@@ -461,7 +462,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Ridge Cap Shingles",
           unit: "lf",
           qty: roofData.measurements.ridgeLength,
-          defaultPrice: 3,
+          defaultPrice: 6,
           description: "Color-matched hip & ridge"
         },
         {
@@ -471,7 +472,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           qty:
             roofData.measurements.ridgeLength +
             roofData.measurements.valleyLength,
-          defaultPrice: 4,
+          defaultPrice: 8,
           description: "Valleys, eaves, penetrations"
         },
         {
@@ -479,7 +480,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Drip Edge",
           unit: "lf",
           qty: roofData.measurements.ridgeLength * 2,
-          defaultPrice: 2,
+          defaultPrice: 4,
           description: "Aluminum edge protection"
         },
         {
@@ -487,7 +488,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Roof Vents",
           unit: "ea",
           qty: 4,
-          defaultPrice: 85,
+          defaultPrice: 125,
           description: "Box or ridge vents"
         },
         {
@@ -495,7 +496,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Pipe Boots",
           unit: "ea",
           qty: 3,
-          defaultPrice: 35,
+          defaultPrice: 55,
           description: "Plumbing penetration seals"
         },
         {
@@ -503,7 +504,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Step Flashing",
           unit: "set",
           qty: 1,
-          defaultPrice: 350,
+          defaultPrice: 550,
           description: "Chimney & wall flashing"
         },
         {
@@ -511,7 +512,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Roofing Nails",
           unit: "box",
           qty: 6,
-          defaultPrice: 35,
+          defaultPrice: 55,
           description: "Coil nails for gun"
         }
       ]
@@ -525,7 +526,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Installation Labor",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 185,
+          defaultPrice: 285,
           description: "Crew install (steep pitch rate)"
         },
         {
@@ -533,7 +534,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Complexity Upcharge",
           unit: "job",
           qty: 1,
-          defaultPrice: 1200,
+          defaultPrice: 1800,
           description: "Dormers, valleys, penetrations"
         },
         {
@@ -541,7 +542,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Steep Pitch Premium",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 35,
+          defaultPrice: 55,
           description: "Safety equipment & slower pace"
         }
       ]
@@ -555,7 +556,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Upgrade to Premium",
           unit: "sq",
           qty: roofData.measurements.roofingSquares,
-          defaultPrice: 45,
+          defaultPrice: 75,
           description: "50-year designer shingles"
         },
         {
@@ -563,7 +564,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Gutter Replacement",
           unit: "lf",
           qty: Math.round(roofData.measurements.ridgeLength * 1.5),
-          defaultPrice: 12,
+          defaultPrice: 18,
           description: '6" seamless aluminum'
         },
         {
@@ -571,7 +572,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Skylight Flashing",
           unit: "ea",
           qty: 0,
-          defaultPrice: 450,
+          defaultPrice: 650,
           description: "Per skylight re-flash"
         },
         {
@@ -579,7 +580,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Chimney Cap",
           unit: "ea",
           qty: 1,
-          defaultPrice: 350,
+          defaultPrice: 550,
           description: "Stainless steel cap"
         },
         {
@@ -587,7 +588,7 @@ const PropertyReportViewer: React.FC<PropertyReportViewerProps> = ({
           name: "Solar Attic Fan",
           unit: "ea",
           qty: 0,
-          defaultPrice: 550,
+          defaultPrice: 750,
           description: "Powered ventilation"
         }
       ]

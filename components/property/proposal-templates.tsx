@@ -17,7 +17,10 @@ import {
   IconCurrencyDollar,
   IconLoader2,
   IconUpload,
-  IconTrash
+  IconTrash,
+  IconList,
+  IconLayoutList,
+  IconCheck
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 
@@ -125,10 +128,20 @@ interface ProposalData {
   warranty?: string
 }
 
+interface EditableEstimateItem {
+  id: string
+  name: string
+  description?: string
+  qty: number
+  unit: string
+  price: number
+}
+
 interface ProposalTemplatesProps {
   estimateItems: Array<{
     id: string
     name: string
+    description?: string
     qty: number
     unit: string
     price: number
@@ -161,6 +174,20 @@ export function ProposalTemplates({
   const [validDays, setValidDays] = useState(30)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [isSendingEmail, setIsSendingEmail] = useState(false)
+
+  // Editable estimate items
+  const [editableItems, setEditableItems] = useState<EditableEstimateItem[]>(
+    estimateItems.map(item => ({
+      ...item,
+      description: item.description || ""
+    }))
+  )
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+
+  // Estimate display mode: itemized shows all line items, summary shows only total
+  const [estimateDisplayMode, setEstimateDisplayMode] = useState<
+    "itemized" | "summary"
+  >("itemized")
 
   // Business/Company branding
   const [businessName, setBusinessName] = useState(companyInfo?.name || "")
@@ -223,6 +250,22 @@ export function ProposalTemplates({
     }).format(amount)
   }
 
+  // Calculate total from editable items
+  const editableTotal = editableItems.reduce(
+    (sum, item) => sum + item.qty * item.price,
+    0
+  )
+
+  // Update an editable item
+  const updateEditableItem = (
+    id: string,
+    updates: Partial<EditableEstimateItem>
+  ) => {
+    setEditableItems(items =>
+      items.map(item => (item.id === id ? { ...item, ...updates } : item))
+    )
+  }
+
   const handleSelectTemplate = useCallback((template: ProposalTemplate) => {
     setSelectedTemplate(template)
     setStep("customize")
@@ -247,12 +290,13 @@ export function ProposalTemplates({
             customerPhone,
             propertyAddress,
             roofSize,
-            estimateItems,
-            estimateTotal,
+            estimateItems: editableItems,
+            estimateTotal: editableTotal,
             validDays,
             includeWarranty,
             customerNotes,
             templateId: selectedTemplate?.id || "professional-standard",
+            displayMode: estimateDisplayMode,
             companyInfo: {
               ...companyInfo,
               name: businessName || companyInfo?.name || "Your Roofing Company",
@@ -305,11 +349,12 @@ export function ProposalTemplates({
             customerPhone,
             propertyAddress,
             roofSize,
-            estimateItems,
-            estimateTotal,
+            estimateItems: editableItems,
+            estimateTotal: editableTotal,
             validDays,
             includeWarranty,
             customerNotes,
+            displayMode: estimateDisplayMode,
             companyInfo: {
               ...companyInfo,
               name: businessName || companyInfo?.name || "Your Roofing Company",
@@ -755,6 +800,198 @@ export function ProposalTemplates({
                 </div>
               </div>
 
+              {/* Estimate Display Mode */}
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconLayoutList className="size-4 text-teal-500" />
+                  Estimate Display
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEstimateDisplayMode("itemized")}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all",
+                      estimateDisplayMode === "itemized"
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    )}
+                  >
+                    <IconList className="size-4" />
+                    Itemized
+                    {estimateDisplayMode === "itemized" && (
+                      <IconCheck className="size-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setEstimateDisplayMode("summary")}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-lg border-2 p-3 text-sm font-medium transition-all",
+                      estimateDisplayMode === "summary"
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    )}
+                  >
+                    <IconCurrencyDollar className="size-4" />
+                    Summary Only
+                    {estimateDisplayMode === "summary" && (
+                      <IconCheck className="size-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  {estimateDisplayMode === "itemized"
+                    ? "Shows all individual line items with quantities and prices"
+                    : "Shows only the total amount without line item details"}
+                </p>
+              </div>
+
+              {/* Editable Line Items */}
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <IconList className="size-4 text-teal-500" />
+                  Line Items
+                  <span className="ml-auto text-xs font-normal text-gray-400">
+                    Click to edit
+                  </span>
+                </h3>
+                <div className="max-h-64 space-y-2 overflow-y-auto">
+                  {editableItems.map(item => (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "rounded-lg border p-3 transition-all",
+                        editingItemId === item.id
+                          ? "border-teal-400 bg-teal-50"
+                          : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                      )}
+                    >
+                      {editingItemId === item.id ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                                Item Name
+                              </label>
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={e =>
+                                  updateEditableItem(item.id, {
+                                    name: e.target.value
+                                  })
+                                }
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                                Description
+                              </label>
+                              <input
+                                type="text"
+                                value={item.description || ""}
+                                onChange={e =>
+                                  updateEditableItem(item.id, {
+                                    description: e.target.value
+                                  })
+                                }
+                                placeholder="Optional description"
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                                Quantity
+                              </label>
+                              <input
+                                type="number"
+                                value={item.qty}
+                                onChange={e =>
+                                  updateEditableItem(item.id, {
+                                    qty: parseFloat(e.target.value) || 0
+                                  })
+                                }
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                                Unit
+                              </label>
+                              <input
+                                type="text"
+                                value={item.unit}
+                                onChange={e =>
+                                  updateEditableItem(item.id, {
+                                    unit: e.target.value
+                                  })
+                                }
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                                Unit Price ($)
+                              </label>
+                              <input
+                                type="number"
+                                value={item.price}
+                                onChange={e =>
+                                  updateEditableItem(item.id, {
+                                    price: parseFloat(e.target.value) || 0
+                                  })
+                                }
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-teal-500 focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-sm font-medium text-teal-700">
+                              Line Total: {formatCurrency(item.qty * item.price)}
+                            </span>
+                            <button
+                              onClick={() => setEditingItemId(null)}
+                              className="rounded bg-teal-500 px-3 py-1 text-xs font-medium text-white hover:bg-teal-600"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => setEditingItemId(item.id)}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-800">
+                                {item.name}
+                              </div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500">
+                                  {item.description}
+                                </div>
+                              )}
+                              <div className="mt-1 text-xs text-gray-400">
+                                {item.qty} {item.unit} × ${item.price.toFixed(2)}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold text-gray-900">
+                                {formatCurrency(item.qty * item.price)}
+                              </div>
+                              <IconPencil className="ml-auto mt-1 size-3 text-gray-400" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Additional Notes */}
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
@@ -778,11 +1015,11 @@ export function ProposalTemplates({
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs text-teal-600">
-                      {estimateItems.length} items • {roofSize} squares
+                      {editableItems.length} items • {roofSize} squares
                     </div>
                   </div>
                   <div className="text-xl font-bold text-teal-700">
-                    {formatCurrency(estimateTotal)}
+                    {formatCurrency(editableTotal)}
                   </div>
                 </div>
               </div>
@@ -900,49 +1137,74 @@ export function ProposalTemplates({
                   </div>
                 </div>
 
-                {/* Line Items */}
+                {/* Line Items or Summary */}
                 <div className="p-6">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase text-gray-500">
-                        <th className="pb-2">Description</th>
-                        <th className="pb-2 text-right">Qty</th>
-                        <th className="pb-2 text-right">Rate</th>
-                        <th className="pb-2 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {estimateItems.map((item, idx) => (
-                        <tr key={idx} className="border-b border-gray-100">
-                          <td className="py-3 text-sm text-gray-800">
-                            {item.name}
+                  {estimateDisplayMode === "itemized" ? (
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase text-gray-500">
+                          <th className="pb-2">Description</th>
+                          <th className="pb-2 text-right">Qty</th>
+                          <th className="pb-2 text-right">Rate</th>
+                          <th className="pb-2 text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editableItems.map((item, idx) => (
+                          <tr key={idx} className="border-b border-gray-100">
+                            <td className="py-3">
+                              <div className="text-sm text-gray-800">
+                                {item.name}
+                              </div>
+                              {item.description && (
+                                <div className="text-xs text-gray-500">
+                                  {item.description}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 text-right text-sm text-gray-600">
+                              {item.qty} {item.unit}
+                            </td>
+                            <td className="py-3 text-right text-sm text-gray-600">
+                              ${item.price.toFixed(2)}
+                            </td>
+                            <td className="py-3 text-right text-sm font-medium text-gray-800">
+                              {formatCurrency(item.qty * item.price)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td
+                            colSpan={3}
+                            className="pt-4 text-right text-lg font-bold text-gray-900"
+                          >
+                            Total
                           </td>
-                          <td className="py-3 text-right text-sm text-gray-600">
-                            {item.qty} {item.unit}
-                          </td>
-                          <td className="py-3 text-right text-sm text-gray-600">
-                            ${item.price.toFixed(2)}
-                          </td>
-                          <td className="py-3 text-right text-sm font-medium text-gray-800">
-                            {formatCurrency(item.qty * item.price)}
+                          <td className="pt-4 text-right text-lg font-bold text-teal-600">
+                            {formatCurrency(editableTotal)}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td
-                          colSpan={3}
-                          className="pt-4 text-right text-lg font-bold text-gray-900"
-                        >
-                          Total
-                        </td>
-                        <td className="pt-4 text-right text-lg font-bold text-teal-600">
-                          {formatCurrency(estimateTotal)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      </tfoot>
+                    </table>
+                  ) : (
+                    <div className="rounded-xl border-2 border-teal-200 bg-teal-50 p-6 text-center">
+                      <div className="text-sm font-medium text-gray-600">
+                        Complete Roof Replacement
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {roofSize} squares • Labor, Materials & Disposal
+                        Included
+                      </div>
+                      <div className="mt-4 text-4xl font-bold text-teal-600">
+                        {formatCurrency(editableTotal)}
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        All materials, labor, tear-off, and cleanup included
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Warranty Section */}
