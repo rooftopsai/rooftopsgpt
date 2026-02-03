@@ -63,8 +63,8 @@ function CheckoutSuccessContent() {
   useEffect(() => {
     const fetchSessionDetails = async () => {
       if (!sessionId) {
-        // If no session ID, redirect to homepage
-        router.push("/")
+        // If no session ID, redirect to login
+        router.push("/login")
         return
       }
 
@@ -112,13 +112,21 @@ function CheckoutSuccessContent() {
     const { getHomeWorkspaceByUserId } = await import("@/db/workspaces")
     const { supabase } = await import("@/lib/supabase/browser-client")
 
-    const session = (await supabase.auth.getSession()).data.session
-    if (session) {
-      const homeWorkspaceId = await getHomeWorkspaceByUserId(session.user.id)
-      router.push(`/${homeWorkspaceId}/chat`)
-    } else {
-      router.push("/")
+    try {
+      const session = (await supabase.auth.getSession()).data.session
+      if (session) {
+        const homeWorkspaceId = await getHomeWorkspaceByUserId(session.user.id)
+        if (homeWorkspaceId) {
+          router.push(`/${homeWorkspaceId}/chat`)
+          return
+        }
+      }
+    } catch (error) {
+      console.error("Error getting workspace:", error)
     }
+
+    // If no session or workspace found, redirect to login which will handle auth state
+    router.push("/login")
   }
 
   if (loading) {
