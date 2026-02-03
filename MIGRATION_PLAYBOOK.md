@@ -66,14 +66,9 @@ In Stripe Dashboard → Coupons:
 
 ### 1.3 Deploy DNS Configuration
 ```bash
-# Current:
-rooftops.ai → legacy-app
-beta.rooftops.ai → new-app
-
-# After Step 1:
+# Current (COMPLETED):
 rooftops.ai → new-app (main)
-app.rooftops.ai → legacy-app (preserved)
-legacy.rooftops.ai → legacy-app (backup)
+legacy.rooftops.ai → legacy-app (preserved)
 ```
 
 ---

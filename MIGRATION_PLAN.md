@@ -74,7 +74,7 @@ async function migrateUsers() {
 
 ### 3.1 Test Existing User Login
 1. Pick 2-3 friendly customers
-2. Give them beta.rooftops.ai access
+2. Give them rooftops.ai access
 3. Have them test login, access reports, billing
 
 ### 3.2 Verify Stripe Integration
@@ -92,16 +92,11 @@ async function migrateUsers() {
 
 ### Option A: Blue-Green (Recommended)
 
-**Day 1:**
-- DNS: `legacy.rooftops.ai` → old app
-- DNS: `beta.rooftops.ai` → new app
-- DNS: `rooftops.ai` → old app (unchanged)
+**COMPLETED:**
+- DNS: `rooftops.ai` → new app (main)
+- DNS: `legacy.rooftops.ai` → old app (preserved)
 
-**Day 2-7:** Beta Testing
-- Invite power users to beta
-- Fix any issues
-
-**Day 8:** Cutover
+**Current Phase:** Production testing and validation
 - DNS: `rooftops.ai` → new app
 - Keep `legacy.rooftops.ai` for 30 days
 
