@@ -236,7 +236,7 @@ export default function LandingPage() {
                 Try It Free — No Credit Card Required
               </button>
               <p className="text-sm text-gray-500">
-                Get 3 free roof reports instantly. See the AI in action on your own properties.
+                Get 1 free report instantly. See the AI in action on your own properties.
               </p>
             </div>
             
