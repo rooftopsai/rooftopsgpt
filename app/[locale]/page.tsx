@@ -127,6 +127,32 @@ export default function LandingPage() {
 
   return (
     <div className="relative flex min-h-full w-full flex-col bg-[#FAFAFA]">
+      {/* Legacy User Banner */}
+      <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2 text-center">
+        <p className="text-sm text-amber-800">
+          <span className="font-semibold">Legacy user?</span> Access the classic version at{" "}
+          <a 
+            href="https://app.rooftops.ai" 
+            className="font-semibold underline text-amber-700 hover:text-amber-900"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            app.rooftops.ai
+          </a>
+          {" "}·{" "}
+          <a 
+            href="#" 
+            className="text-amber-600 hover:text-amber-800"
+            onClick={(e) => {
+              e.preventDefault()
+              // Could add dismiss logic here
+            }}
+          >
+            Dismiss
+          </a>
+        </p>
+      </div>
+
       {/* Header - Full width edge-to-edge */}
       <header className="sticky top-0 z-50 flex w-full items-center justify-between bg-[#FAFAFA] px-4 py-3 md:px-6">
         <div
