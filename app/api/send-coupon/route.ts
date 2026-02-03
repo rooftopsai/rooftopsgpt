@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
-import { execSync } from "child_process"
 
-const GMAIL_USER = "steeleagentic@gmail.com"
-const GMAIL_APP_PASS = "hykthkubqorybvnb" // App password
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_7KyYPYfC_9r5j1aNb3SGJd9Wcz8YPyw4p"
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +13,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send coupon email via Gmail SMTP
+    // Send coupon email via Resend
     const emailSent = await sendCouponEmail(email)
 
     if (emailSent) {
@@ -244,40 +242,29 @@ Questions? Contact us at team@rooftops.ai
 © 2024 Rooftops AI`
 
   try {
-    const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
-    
-    const emailContent = [
-      `From: Rooftops AI <${GMAIL_USER}>`,
-      `To: ${toEmail}`,
-      `Subject: 🎁 Your Free Month of Rooftops AI - Coupon Inside`,
-      `MIME-Version: 1.0`,
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
-      ``,
-      `--${boundary}`,
-      `Content-Type: text/plain; charset=UTF-8`,
-      `Content-Transfer-Encoding: 7bit`,
-      ``,
-      plainContent,
-      ``,
-      `--${boundary}`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: 7bit`,
-      ``,
-      htmlContent,
-      ``,
-      `--${boundary}--`
-    ].join('\n')
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: "Rooftops AI <notifications@agent.rooftops.ai>",
+        to: toEmail,
+        subject: "🎁 Your Free Month of Rooftops AI - Coupon Inside",
+        html: htmlContent,
+        text: plainContent
+      })
+    })
 
-    const curlCommand = `echo '${emailContent.replace(/'/g, "'\"'\"'")}' | curl -s --url "smtps://smtp.gmail.com:465" \
-      --ssl-reqd \
-      --mail-from "${GMAIL_USER}" \
-      --mail-rcpt "${toEmail}" \
-      --user "${GMAIL_USER}:${GMAIL_APP_PASS}" \
-      --upload-file -`
-    
-    execSync(curlCommand, { stdio: 'pipe' })
-    
-    console.log(`✅ Coupon email sent to ${toEmail}`)
+    const data = await response.json()
+
+    if (!response.ok) {
+      console.error("Resend API error:", data)
+      return false
+    }
+
+    console.log(`✅ Coupon email sent to ${toEmail}`, data)
     return true
   } catch (error) {
     console.error("Failed to send coupon email:", error)
