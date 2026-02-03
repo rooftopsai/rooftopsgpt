@@ -251,11 +251,13 @@ function PricingContent() {
               className="w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-4 text-base font-semibold text-gray-900 transition-all hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={currentTier === "free" || loadingPlan === "free"}
             >
-              {currentTier === "free"
-                ? "Current Plan"
-                : loadingPlan === "free"
-                  ? "Opening Portal..."
-                  : "Manage Subscription"}
+              {!userSubscription
+                ? "Get Started Free"
+                : currentTier === "free"
+                  ? "Current Plan"
+                  : loadingPlan === "free"
+                    ? "Opening Portal..."
+                    : "Manage Subscription"}
             </button>
           </div>
 
@@ -472,7 +474,7 @@ function PricingContent() {
           >
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs font-bold text-white">
-                24/7 AI EMPLOYEE
+                COMING SOON
               </span>
             </div>
 
@@ -568,20 +570,10 @@ function PricingContent() {
             </div>
 
             <button
-              onClick={() =>
-                handleSubscribe(
-                  getPlanType("ai_employee"),
-                  getPriceId("ai_employee")
-                )
-              }
-              disabled={loadingPlan !== null || currentTier === "ai_employee"}
-              className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 text-base font-semibold text-white transition-all hover:from-purple-600 hover:to-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={true}
+              className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 text-base font-semibold text-white transition-all opacity-60 cursor-not-allowed"
             >
-              {currentTier === "ai_employee"
-                ? "Current Plan"
-                : loadingPlan?.includes("ai_employee")
-                  ? "Redirecting..."
-                  : "Start Free Trial"}
+              Coming Soon
             </button>
             {billingPeriod === "annual" && (
               <p className="mt-2 text-center text-xs font-medium text-purple-600">

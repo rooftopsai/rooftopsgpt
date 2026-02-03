@@ -29,9 +29,13 @@ import {
   IconBrandInstagram,
   IconMail,
   IconCheck,
-  IconRocket
+  IconRocket,
+  IconShield,
+  IconLock,
+  IconUsers
 } from "@tabler/icons-react"
 import { createClient } from "@/lib/supabase/client"
+import { ExitIntentPopup } from "@/components/ui/exit-intent-popup"
 
 // Testimonials data for social proof
 const testimonials = [
@@ -64,34 +68,29 @@ const testimonials = [
 export default function LandingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"chat" | "report">("chat")
   const [inputValue, setInputValue] = useState("")
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
 
+  // Check auth in background without blocking render
   useEffect(() => {
-    // If there's a code parameter (from email verification), redirect to auth callback
-    const code = searchParams.get("code")
-    if (code) {
-      router.push(`/auth/callback?code=${code}`)
-      return
-    }
-
     const checkAuth = async () => {
+      const code = searchParams.get("code")
+      if (code) {
+        router.push(`/auth/callback?code=${code}`)
+        return
+      }
+
       const supabase = createClient()
-      const {
-        data: { session }
-      } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
 
       if (session) {
-        // Check if user has completed onboarding
         const { data: profile } = await supabase
           .from("profiles")
           .select("has_onboarded")
           .eq("user_id", session.user.id)
           .single()
 
-        // If user hasn't onboarded, send them to setup
         if (!profile || !profile.has_onboarded) {
           router.push("/setup")
           return
@@ -107,8 +106,6 @@ export default function LandingPage() {
         if (homeWorkspace) {
           router.push(`/${homeWorkspace.id}/chat`)
         }
-      } else {
-        setIsLoading(false)
       }
     }
 
@@ -119,24 +116,43 @@ export default function LandingPage() {
     router.push("/login")
   }
 
+  const handleLeadCapture = () => {
+    router.push("/login")
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     router.push("/login")
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-full w-full items-center justify-center bg-[#FAFAFA]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="size-8 animate-spin rounded-full border-4 border-gray-300 border-t-[#24BDEB]"></div>
-          <p className="text-gray-500">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="relative flex min-h-full w-full flex-col bg-[#FAFAFA]">
+      {/* Legacy User Banner */}
+      <div className="w-full bg-amber-50 border-b border-amber-200 px-4 py-2 text-center">
+        <p className="text-sm text-amber-800">
+          <span className="font-semibold">Legacy user?</span> Access the classic version at{" "}
+          <a 
+            href="https://legacy.rooftops.ai" 
+            className="font-semibold underline text-amber-700 hover:text-amber-900"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            legacy.rooftops.ai
+          </a>
+          {" "}·{" "}
+          <a 
+            href="#" 
+            className="text-amber-600 hover:text-amber-800"
+            onClick={(e) => {
+              e.preventDefault()
+              // Could add dismiss logic here
+            }}
+          >
+            Dismiss
+          </a>
+        </p>
+      </div>
+
       {/* Header - Full width edge-to-edge */}
       <header className="sticky top-0 z-50 flex w-full items-center justify-between bg-[#FAFAFA] px-4 py-3 md:px-6">
         <div
@@ -172,6 +188,24 @@ export default function LandingPage() {
       {/* Main Content */}
       <main className="flex flex-1 flex-col items-center px-4 pb-12 pt-6 sm:pt-10 md:px-6 md:pt-16 lg:pt-20">
         <div className="relative z-10 w-full max-w-5xl">
+          {/* Trust Badge - Above the fold */}
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500 sm:text-sm">
+            <div className="flex items-center gap-1.5">
+              <IconUsers className="size-4 text-[#24BDEB]" />
+              <span>Join <strong className="text-gray-700">2,000+</strong> roofing pros</span>
+            </div>
+            <div className="hidden h-4 w-px bg-gray-300 sm:block" />
+            <div className="flex items-center gap-1.5">
+              <IconStar className="size-4 fill-yellow-400 text-yellow-400" />
+              <span><strong className="text-gray-700">4.9/5</strong> rating</span>
+            </div>
+            <div className="hidden h-4 w-px bg-gray-300 sm:block" />
+            <div className="flex items-center gap-1.5">
+              <IconShield className="size-4 text-green-500" />
+              <span>No credit card required</span>
+            </div>
+          </div>
+
           {/* Hero Heading with Shimmer Effect */}
           <div className="mb-6 text-center sm:mb-10 md:mb-14">
             <h1 className="animate-shimmer-text text-4xl leading-tight tracking-tight sm:text-5xl md:text-5xl lg:text-6xl">
@@ -182,20 +216,33 @@ export default function LandingPage() {
               proposals. Close deals faster while your competition is still
               measuring.
             </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button
-                onClick={handleRedirectToLogin}
-                className="rounded-lg bg-[#1A1A1A] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-black"
-              >
-                Start Free Trial
-              </button>
-              <button
-                onClick={handleRedirectToLogin}
-                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
-              >
-                Watch Demo
-              </button>
+            
+            {/* Urgency Banner */}
+            <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 ring-1 ring-amber-200">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex size-2 rounded-full bg-amber-500"></span>
+              </span>
+              <span className="text-sm font-medium text-amber-800">
+                🔥 <strong>47 spots</strong> left at current pricing
+              </span>
             </div>
+
+            <div className="mt-6 flex flex-col items-center justify-center gap-3">
+              <button
+                onClick={handleRedirectToLogin}
+                className="w-full rounded-lg bg-[#1A1A1A] px-8 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-black hover:shadow-xl sm:w-auto"
+              >
+                Try It Free — No Credit Card Required
+              </button>
+              <p className="text-sm text-gray-500">
+                Get 1 free report instantly. See the AI in action on your own properties.
+              </p>
+            </div>
+            
+            <p className="mt-3 text-xs text-gray-400">
+              Trusted by roofing contractors nationwide · Cancel anytime
+            </p>
           </div>
 
           {/* Quantified Value Stats - Like Handoff */}
@@ -784,6 +831,19 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
+
+      {/* Floating CTA - Sticky on scroll */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur-sm sm:hidden">
+        <button
+          onClick={handleRedirectToLogin}
+          className="w-full rounded-lg bg-gradient-to-r from-[#24BDEB] to-[#4FEBBC] py-3 text-sm font-semibold text-white shadow-md"
+        >
+          Start Free Trial — 3 Days Free
+        </button>
+      </div>
+
+      {/* Exit Intent Popup */}
+      <ExitIntentPopup onSignup={handleLeadCapture} />
 
       {/* Footer */}
       <footer className="border-t border-gray-100 bg-white px-4 py-8">

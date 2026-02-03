@@ -17,9 +17,9 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700"]
 })
 const APP_NAME = "Rooftops AI"
-const APP_DEFAULT_TITLE = "Rooftops AI"
-const APP_TITLE_TEMPLATE = "%s - Rooftops AI"
-const APP_DESCRIPTION = "AI meets Roofing"
+const APP_DEFAULT_TITLE = "Rooftops AI | Instant Roofing Reports & AI Tools for Contractors"
+const APP_TITLE_TEMPLATE = "%s | Rooftops AI"
+const APP_DESCRIPTION = "AI-powered roofing reports and tools for contractors. Get instant roof measurements, AI chatbots, and marketing automation. Start with 3 free reports."
 
 interface RootLayoutProps {
   children: ReactNode
@@ -51,15 +51,22 @@ export const metadata: Metadata = {
       default: APP_DEFAULT_TITLE,
       template: APP_TITLE_TEMPLATE
     },
-    description: APP_DESCRIPTION
+    description: APP_DESCRIPTION,
+    images: [{
+      url: "/rooftops-logo-gr-master.png",
+      width: 1200,
+      height: 630,
+      alt: "Rooftops AI - AI-powered tools for roofing contractors"
+    }]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: {
       default: APP_DEFAULT_TITLE,
       template: APP_TITLE_TEMPLATE
     },
-    description: APP_DESCRIPTION
+    description: APP_DESCRIPTION,
+    images: ["/rooftops-logo-gr-master.png"]
   }
 }
 

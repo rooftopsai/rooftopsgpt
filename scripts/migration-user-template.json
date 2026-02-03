@@ -1,0 +1,19 @@
+{
+  "campaign": "rooftops-ai-legacy-migration",
+  "users": [
+    {
+      "email": "example1@roofingcompany.com",
+      "first_name": "Mike",
+      "legacy_signup_date": "2024-03-15",
+      "legacy_plan": "Pro",
+      "monthly_amount": 25,
+      "email_week_1_sent": false,
+      "email_week_2_sent": false,
+      "email_week_3_sent": false,
+      "email_week_4_sent": false,
+      "logged_into_new": false,
+      "converted_to_paid": false,
+      "notes": ""
+    }
+  ]
+}

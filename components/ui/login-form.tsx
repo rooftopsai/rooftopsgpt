@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SubmitButton } from "@/components/ui/submit-button"
+import { IconShield, IconLock, IconUsers, IconStar } from "@tabler/icons-react"
 
 interface LoginFormProps {
   signIn: (formData: FormData) => Promise<void>
@@ -173,6 +174,42 @@ export function LoginForm({
             Privacy Policy
           </a>
           .
+        </div>
+
+        {/* Trust Signals */}
+        <div className="mt-6 space-y-4 border-t border-gray-200 pt-6 dark:border-gray-700">
+          {/* Security badges */}
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <IconLock className="size-4 text-green-500" />
+              <span>SSL Encrypted</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <IconShield className="size-4 text-cyan-500" />
+              <span>Secure Signup</span>
+            </div>
+          </div>
+
+          {/* Social proof */}
+          <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+            <IconUsers className="size-4 text-gray-400" />
+            <span>Join <strong className="text-gray-700 dark:text-gray-300">2,000+</strong> roofing pros</span>
+          </div>
+
+          {/* Rating */}
+          <div className="flex items-center justify-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <IconStar key={i} className="size-4 fill-yellow-400 text-yellow-400" />
+            ))}
+            <span className="ml-1 text-xs text-gray-500">4.9/5 rating</span>
+          </div>
+
+          {/* Free trial reassurance */}
+          {activeTab === "signup" && (
+            <p className="text-center text-xs text-gray-500">
+              <strong>No credit card required</strong> for free trial
+            </p>
+          )}
         </div>
       </form>
     </div>
