@@ -107,10 +107,51 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const { showSidebar, setShowSidebar, setHasActiveExploreReport } =
     useChatbotUI()
 
+  // Track if page became hidden during analysis
+  const pageHiddenDuringAnalysis = useRef(false)
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
+
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Handle page visibility changes during analysis to warn users
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isAnalyzing) {
+        pageHiddenDuringAnalysis.current = true
+        console.warn("[ExploreMap] Page became hidden during analysis - this may cause issues")
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [isAnalyzing])
+
+  // Request wake lock to prevent screen from turning off during analysis
+  const requestWakeLock = async () => {
+    if ("wakeLock" in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request("screen")
+        console.log("[ExploreMap] Wake lock acquired - screen will stay on")
+        wakeLockRef.current.addEventListener("release", () => {
+          console.log("[ExploreMap] Wake lock released")
+        })
+      } catch (err) {
+        console.warn("[ExploreMap] Wake lock request failed:", err)
+      }
+    }
+  }
+
+  const releaseWakeLock = () => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release()
+      wakeLockRef.current = null
+    }
+  }
 
   // Update hasActiveExploreReport when reports are displayed or hidden
   useEffect(() => {
@@ -2251,6 +2292,16 @@ ${referenceSection}
 
     // Agent mode - existing flow
     setIsLoading(true)
+    pageHiddenDuringAnalysis.current = false
+
+    // Request wake lock to keep screen on during analysis
+    await requestWakeLock()
+
+    // Show toast warning about keeping the screen on
+    toast.info("Keep this tab active while generating the report", {
+      duration: 5000,
+      description: "Switching tabs or letting your screen turn off may interrupt the process."
+    })
 
     try {
       logDebug("Starting combined analysis and report generation")
@@ -2259,6 +2310,12 @@ ${referenceSection}
       const analysis = await captureSatelliteViews()
 
       if (!analysis) {
+        // Check if page was hidden during analysis
+        if (pageHiddenDuringAnalysis.current) {
+          toast.error("Report generation was interrupted", {
+            description: "Your screen turned off or you switched tabs. Please try again and keep this tab active."
+          })
+        }
         // Error was already shown in captureSatelliteViews, just return
         return
       }
@@ -2470,6 +2527,7 @@ ${referenceSection}
       }
     } finally {
       setIsLoading(false)
+      releaseWakeLock()
     }
   }
 
