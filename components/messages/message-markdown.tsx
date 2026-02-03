@@ -1,10 +1,9 @@
-import React, { FC, useState, useEffect } from "react"
+import React, { FC, useMemo } from "react"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { MessageCodeBlock } from "./message-codeblock"
 import { MessageMarkdownMemoized } from "./message-markdown-memoized"
 import { useDocumentStore } from "@/lib/stores/document-store"
-import { Button } from "../ui/button"
 import { IconFileText } from "@tabler/icons-react"
 import { SourceCitation } from "../chat/source-citation"
 
@@ -19,28 +18,23 @@ export const MessageMarkdown: FC<MessageMarkdownProps> = ({
 }) => {
   const { loadDocument, setDocumentMode } = useDocumentStore()
 
-  // Parse metadata to get sources
-  let sourcesMap: { [key: number]: any } = {}
-  console.log("[MessageMarkdown] Received metadata:", metadata)
-  if (metadata) {
-    try {
-      const parsed = JSON.parse(metadata)
-      console.log("[MessageMarkdown] Parsed metadata:", parsed)
-      if (parsed.sources && Array.isArray(parsed.sources)) {
-        // Create a map of sourceNumber -> source data
-        parsed.sources.forEach((source: any) => {
-          sourcesMap[source.sourceNumber] = source
-        })
-        console.log("[MessageMarkdown] Created sourcesMap:", sourcesMap)
-      } else {
-        console.log("[MessageMarkdown] No sources array in parsed metadata")
+  // Parse metadata to get sources - memoized to avoid reparsing on each render
+  const sourcesMap = useMemo(() => {
+    const map: { [key: number]: any } = {}
+    if (metadata) {
+      try {
+        const parsed = JSON.parse(metadata)
+        if (parsed.sources && Array.isArray(parsed.sources)) {
+          parsed.sources.forEach((source: any) => {
+            map[source.sourceNumber] = source
+          })
+        }
+      } catch (error) {
+        console.error("[MessageMarkdown] Error parsing message metadata:", error)
       }
-    } catch (error) {
-      console.error("[MessageMarkdown] Error parsing message metadata:", error)
     }
-  } else {
-    console.log("[MessageMarkdown] No metadata provided")
-  }
+    return map
+  }, [metadata])
 
   // Check if this contains our special document marker
   const documentMarkerRegex = /DOCUMENT_ID:(doc_\d+)/
@@ -77,6 +71,59 @@ export const MessageMarkdown: FC<MessageMarkdownProps> = ({
     )
   }
 
+  // Helper function to process source citations in any text content
+  const processSourceCitations = (child: any, keyPrefix: string = ""): any => {
+    if (typeof child === "string") {
+      const sourcePattern = /\[Source (\d+)\]/g
+      const matches = Array.from(child.matchAll(sourcePattern))
+
+      if (matches.length > 0) {
+        const parts: any[] = []
+        let lastIndex = 0
+
+        matches.forEach((match, idx) => {
+          const fullMatch = match[0]
+          const sourceNum = parseInt(match[1])
+          const matchIndex = match.index!
+
+          // Add text before the match
+          if (matchIndex > lastIndex) {
+            parts.push(child.substring(lastIndex, matchIndex))
+          }
+
+          // Add the citation component
+          const sourceData = sourcesMap[sourceNum]
+          parts.push(
+            <SourceCitation
+              key={`${keyPrefix}source-${sourceNum}-${matchIndex}-${idx}`}
+              sourceNumber={sourceNum}
+              messageContent={content}
+              sourceData={sourceData}
+            />
+          )
+
+          lastIndex = matchIndex + fullMatch.length
+        })
+
+        // Add remaining text after last match
+        if (lastIndex < child.length) {
+          parts.push(child.substring(lastIndex))
+        }
+
+        return parts
+      }
+    }
+    // Recursively process React elements with children
+    if (React.isValidElement(child) && child.props.children) {
+      const processedChildren = React.Children.map(
+        child.props.children,
+        (c, i) => processSourceCitations(c, `${keyPrefix}${i}-`)
+      )
+      return React.cloneElement(child, {}, processedChildren)
+    }
+    return child
+  }
+
   // Regular markdown rendering for non-document messages
   return (
     <MessageMarkdownMemoized
@@ -84,57 +131,34 @@ export const MessageMarkdown: FC<MessageMarkdownProps> = ({
       remarkPlugins={[remarkGfm, remarkMath]}
       components={{
         p({ children }) {
-          // Process children to replace [Source X] with clickable citations
-          const processChildren = (child: any): any => {
-            if (typeof child === "string") {
-              // Check if this string contains [Source X] patterns
-              const sourcePattern = /\[Source (\d+)\]/g
-              const matches = Array.from(child.matchAll(sourcePattern))
-
-              if (matches.length > 0) {
-                const parts: any[] = []
-                let lastIndex = 0
-
-                matches.forEach(match => {
-                  const fullMatch = match[0]
-                  const sourceNum = parseInt(match[1])
-                  const matchIndex = match.index!
-
-                  // Add text before the match
-                  if (matchIndex > lastIndex) {
-                    parts.push(child.substring(lastIndex, matchIndex))
-                  }
-
-                  // Add the citation component
-                  const sourceData = sourcesMap[sourceNum]
-                  parts.push(
-                    <SourceCitation
-                      key={`source-${sourceNum}-${matchIndex}`}
-                      sourceNumber={sourceNum}
-                      messageContent={content}
-                      sourceData={sourceData}
-                    />
-                  )
-
-                  lastIndex = matchIndex + fullMatch.length
-                })
-
-                // Add remaining text after last match
-                if (lastIndex < child.length) {
-                  parts.push(child.substring(lastIndex))
-                }
-
-                return parts
-              }
-            }
-            return child
-          }
-
-          const processedChildren = React.Children.map(
-            children,
-            processChildren
+          const processedChildren = React.Children.map(children, (child, i) =>
+            processSourceCitations(child, `p-${i}-`)
           )
           return <p className="mb-2 last:mb-0">{processedChildren}</p>
+        },
+        li({ children }) {
+          const processedChildren = React.Children.map(children, (child, i) =>
+            processSourceCitations(child, `li-${i}-`)
+          )
+          return <li>{processedChildren}</li>
+        },
+        span({ children, ...props }) {
+          const processedChildren = React.Children.map(children, (child, i) =>
+            processSourceCitations(child, `span-${i}-`)
+          )
+          return <span {...props}>{processedChildren}</span>
+        },
+        strong({ children }) {
+          const processedChildren = React.Children.map(children, (child, i) =>
+            processSourceCitations(child, `strong-${i}-`)
+          )
+          return <strong>{processedChildren}</strong>
+        },
+        em({ children }) {
+          const processedChildren = React.Children.map(children, (child, i) =>
+            processSourceCitations(child, `em-${i}-`)
+          )
+          return <em>{processedChildren}</em>
         },
         img({ node, ...props }) {
           return <img className="max-w-[67%]" {...props} />

@@ -1,7 +1,12 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { FileText } from "lucide-react"
+import { ExternalLink, Globe, FileText } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip"
 
 interface SourceCitationProps {
   sourceNumber: number
@@ -14,92 +19,114 @@ export function SourceCitation({
   messageContent,
   sourceData
 }: SourceCitationProps) {
-  // Extract document info from the message content
-  // Look for pattern like "[Source 1] (Type: filename)" or "[Source 1] (Web Search: title)"
-  const extractDocumentInfo = () => {
-    // Try multiple patterns to match different formats
-    const patterns = [
-      // Pattern 1: [Source X] (Type: filename/title)
-      new RegExp(
-        `\\[Source ${sourceNumber}\\]\\s*\\([^:]+:\\s*([^)]+)\\)`,
-        "i"
-      ),
-      // Pattern 2: Just filename after [Source X]
-      new RegExp(
-        `\\[Source ${sourceNumber}\\].*?([A-Za-z0-9_-]+\\.(?:pdf|txt|docx?))`,
-        "i"
-      )
-    ]
+  // Check if this is a web source
+  const isWebSource =
+    sourceData?.documentType === "Web Search" ||
+    sourceData?.fileName?.startsWith("http")
 
-    for (const pattern of patterns) {
-      const match = messageContent.match(pattern)
-      if (match && match[1]) {
-        return match[1].trim()
-      }
+  // Get the URL if available
+  const getUrl = (): string | null => {
+    if (sourceData?.fileName?.startsWith("http")) {
+      return sourceData.fileName
     }
-
     return null
   }
 
-  // Truncate source name to 10 characters with ellipsis
-  const getTruncatedName = () => {
-    // Prefer sourceData if available
-    if (sourceData) {
-      const fullName =
-        sourceData.title || sourceData.fileName || `Source ${sourceNumber}`
-      if (fullName.length <= 10) {
-        return fullName
+  // Get display title
+  const getTitle = (): string => {
+    if (sourceData?.title) {
+      return sourceData.title
+    }
+    if (sourceData?.fileName && !sourceData.fileName.startsWith("http")) {
+      return sourceData.fileName
+    }
+    return `Source ${sourceNumber}`
+  }
+
+  // Get domain for web sources
+  const getDomain = (): string | null => {
+    const url = getUrl()
+    if (url) {
+      try {
+        return new URL(url).hostname.replace("www.", "")
+      } catch {
+        return null
       }
-      return fullName.substring(0, 10) + "..."
     }
-
-    // Fall back to extracting from message content
-    const fullName = extractDocumentInfo()
-    if (!fullName) return `Source ${sourceNumber}`
-
-    if (fullName.length <= 10) {
-      return fullName
-    }
-
-    return fullName.substring(0, 10) + "..."
+    return null
   }
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    console.log("[SourceCitation] Click handler called", {
-      sourceNumber,
-      sourceData,
-      fileName: sourceData?.fileName
-    })
-
-    // If sourceData has a URL (web search result), open it directly with UTM tracking
-    if (sourceData && sourceData.fileName) {
-      // Check if fileName is a URL (web search results store URL in fileName)
-      if (sourceData.fileName.startsWith("http")) {
-        const url = new URL(sourceData.fileName)
-        url.searchParams.set("utm_source", "rooftopsai")
-        url.searchParams.set("utm_medium", "chat")
-        url.searchParams.set("utm_campaign", "source_citation")
-        console.log("[SourceCitation] Opening URL:", url.toString())
-        window.open(url.toString(), "_blank", "noopener,noreferrer")
-        return
+    const url = getUrl()
+    if (url) {
+      try {
+        const urlObj = new URL(url)
+        urlObj.searchParams.set("utm_source", "rooftopsai")
+        urlObj.searchParams.set("utm_medium", "chat")
+        urlObj.searchParams.set("utm_campaign", "source_citation")
+        window.open(urlObj.toString(), "_blank", "noopener,noreferrer")
+      } catch {
+        window.open(url, "_blank", "noopener,noreferrer")
       }
     }
-
-    // For document sources (not implemented yet), you could handle them here
-    console.log("[SourceCitation] No URL found for source:", sourceNumber)
   }
 
+  const url = getUrl()
+  const domain = getDomain()
+  const title = getTitle()
+  const isClickable = !!url
+
   return (
-    <Badge
-      variant="outline"
-      className="bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground border-muted-foreground/20 inline-flex cursor-pointer items-center gap-1 px-2 py-0.5 text-xs transition-colors"
-      onClick={handleClick}
-    >
-      <FileText className="size-3" />
-      {getTruncatedName()}
-    </Badge>
+    <TooltipProvider>
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          <span
+            onClick={isClickable ? handleClick : undefined}
+            className={`
+              not-prose
+              mx-0.5 inline-flex items-center gap-1
+              rounded-full px-2 py-0.5 text-xs font-medium
+              transition-all duration-150
+              ${
+                isClickable
+                  ? "cursor-pointer bg-cyan-100 text-cyan-700 hover:bg-cyan-200 hover:text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300 dark:hover:bg-cyan-800/50"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              }
+            `}
+          >
+            {isWebSource ? (
+              <Globe className="size-3" />
+            ) : (
+              <FileText className="size-3" />
+            )}
+            <span>{sourceNumber}</span>
+            {isClickable && <ExternalLink className="size-2.5 opacity-60" />}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          className="max-w-xs"
+          sideOffset={5}
+        >
+          <div className="space-y-1">
+            <p className="line-clamp-2 font-medium">{title}</p>
+            {domain && (
+              <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                <Globe className="size-3" />
+                {domain}
+              </p>
+            )}
+            {isClickable && (
+              <p className="text-xs text-cyan-600 dark:text-cyan-400">
+                Click to open source
+              </p>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
