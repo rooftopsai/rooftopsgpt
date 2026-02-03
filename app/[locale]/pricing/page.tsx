@@ -464,16 +464,10 @@ function PricingContent() {
             )}
           </div>
 
-          {/* AI Employee Pro Plan */}
-          <div
-            className={`relative flex flex-col rounded-xl border-2 bg-gradient-to-b from-purple-50 to-white p-8 shadow-sm ${
-              suggestedPlan === "ai_employee"
-                ? "border-purple-500 ring-2 ring-purple-500/20"
-                : "border-purple-400"
-            }`}
-          >
+          {/* AI Employee Pro Plan - Coming Soon */}
+          <div className="relative flex flex-col rounded-xl border-2 border-purple-300 bg-gradient-to-b from-purple-50/50 to-white/50 p-8 opacity-75 shadow-sm">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs font-bold text-white">
+              <span className="rounded-full bg-gradient-to-r from-purple-400 to-pink-400 px-3 py-1 text-xs font-bold text-white">
                 COMING SOON
               </span>
             </div>
@@ -485,101 +479,93 @@ function PricingContent() {
               <p className="mb-2 text-sm text-gray-500">
                 Your AI office admin that never sleeps
               </p>
-              <p className="text-4xl font-bold text-gray-900">
+              <p className="text-4xl font-bold text-gray-400">
                 {billingPeriod === "annual" ? "$169" : "$199"}
-                <span className="text-base font-normal text-gray-500">
+                <span className="text-base font-normal text-gray-400">
                   /month
                 </span>
               </p>
-              <p className="mt-1 text-sm font-medium text-purple-600">
-                3 days free, then {billingPeriod === "annual" ? "$169" : "$199"}
-                /mo
+              <p className="mt-1 text-sm font-medium text-purple-400">
+                Launching Q2 2026
               </p>
-              {billingPeriod === "annual" && (
-                <p className="mt-1 text-sm text-gray-500">
-                  Billed annually ($2,028/year)
-                </p>
-              )}
             </div>
 
             <div className="mb-8 grow space-y-3">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   <strong>Everything in Business</strong>, plus:
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   <strong>500 voice minutes</strong> - AI answers calls 24/7
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   <strong>1,000 SMS messages</strong> - Auto follow-ups
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   Speed-to-lead response in 60 seconds
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   Unlimited follow-up sequences
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   Crew scheduling & production management
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   Invoice generation & payment reminders
                 </span>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-100">
-                  <Check className="size-3 text-purple-600" strokeWidth={3} />
+                  <Check className="size-3 text-purple-400" strokeWidth={3} />
                 </div>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-500">
                   Review requests & reputation management
                 </span>
               </div>
             </div>
 
             <button
-              disabled={true}
-              className="w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 text-base font-semibold text-white transition-all opacity-60 cursor-not-allowed"
+              disabled
+              className="w-full cursor-not-allowed rounded-lg bg-gray-300 px-6 py-4 text-base font-semibold text-gray-500"
             >
               Coming Soon
             </button>
-            {billingPeriod === "annual" && (
-              <p className="mt-2 text-center text-xs font-medium text-purple-600">
-                Save $360/year
-              </p>
-            )}
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Join the waitlist at rooftops.ai/ai-employees
+            </p>
           </div>
         </div>
 
