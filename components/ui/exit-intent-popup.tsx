@@ -104,7 +104,7 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
               Wait! Get 1 Month FREE
             </h3>
             <p className="mt-1 text-sm text-white/90">
-              $29 off coupon + 5 free roof reports
+              $29 off coupon + 1 free roof report
             </p>
           </div>
 
@@ -127,7 +127,7 @@ export function ExitIntentPopup({ onSignup }: ExitIntentPopupProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span>5 free AI roof reports (no credit card)</span>
+                    <span>1 free AI roof report (no credit card required)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex size-5 items-center justify-center rounded-full bg-green-100">
