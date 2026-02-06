@@ -122,6 +122,13 @@ const SAVED_FILTERS: { id: FilterType; label: string; description: string; icon:
 
 const ITEMS_PER_PAGE = 25
 
+// Admin emails that can access the dashboard (fallback if is_admin not set)
+const ADMIN_EMAILS = [
+  "sb@rooftops.ai",
+  "steele@rooftops.ai",
+  "admin@rooftops.ai"
+]
+
 export default function AdminDashboard() {
   const router = useRouter()
   const supabase = createClient()
@@ -170,18 +177,27 @@ export default function AdminDashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
+        console.log("No user found, redirecting")
         router.push("/")
         return
       }
 
-      // Check is_admin flag
+      console.log("User email:", user.email)
+
+      // Check is_admin flag OR email in admin list
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_admin")
         .eq("user_id", user.id)
         .single()
 
-      if (!profile?.is_admin) {
+      const isAdminByFlag = profile?.is_admin === true
+      const isAdminByEmail = ADMIN_EMAILS.includes(user.email || "")
+
+      console.log("is_admin flag:", profile?.is_admin, "isAdminByEmail:", isAdminByEmail)
+
+      if (!isAdminByFlag && !isAdminByEmail) {
+        console.log("Not authorized, redirecting")
         router.push("/")
         return
       }
