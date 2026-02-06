@@ -120,7 +120,7 @@ export function LoginForm({
             Email
           </Label>
           <Input
-            className="rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-slate-900 dark:text-white dark:focus:border-white dark:focus:ring-white"
+            className="rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-900 caret-gray-900 focus:border-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-slate-900 dark:text-white dark:caret-white dark:focus:border-white dark:focus:ring-white"
             name="email"
             placeholder="name@company.com"
             required
@@ -136,7 +136,7 @@ export function LoginForm({
             Password
           </Label>
           <Input
-            className="rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-slate-900 dark:text-white dark:focus:border-white dark:focus:ring-white"
+            className="rounded-lg border-gray-300 bg-white px-4 py-3 text-gray-900 caret-gray-900 focus:border-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-slate-900 dark:text-white dark:caret-white dark:focus:border-white dark:focus:ring-white"
             type="password"
             name="password"
             placeholder="••••••••"
