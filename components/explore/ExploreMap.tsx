@@ -1197,6 +1197,41 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     }
   }
 
+  // Compress a base64 image to reduce payload size for API calls
+  const compressImageForApi = (
+    base64Data: string,
+    maxWidth = 1200,
+    quality = 0.65
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        let width = img.width
+        let height = img.height
+
+        // Scale down if wider than maxWidth
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          resolve(base64Data) // fallback to original
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressed = canvas.toDataURL("image/jpeg", quality)
+        resolve(compressed)
+      }
+      img.onerror = () => resolve(base64Data) // fallback to original on error
+      img.src = base64Data
+    })
+  }
+
   // Function to send images to Multi-Agent system for comprehensive analysis
   const sendToMultiAgentSystem = async (
     satelliteViews,
@@ -1215,6 +1250,30 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
 
       logDebug(`Sending ${validViews.length} images to Multi-Agent system`)
       logDebug("Using GPT-5.1-2025-11-13 for all 4 agents")
+
+      // Compress images to avoid 413 Payload Too Large errors
+      // Vercel serverless functions have a ~4.5MB body limit
+      logDebug("Compressing images for API transfer...")
+      const compressedViews = await Promise.all(
+        validViews.map(async (view) => {
+          if (!view.imageData) return view
+          const originalSize = Math.round(view.imageData.length / 1024)
+          const compressedData = await compressImageForApi(view.imageData)
+          const newSize = Math.round(compressedData.length / 1024)
+          logDebug(
+            `${view.viewName}: ${originalSize}KB → ${newSize}KB (${Math.round((1 - newSize / originalSize) * 100)}% reduction)`
+          )
+          return { ...view, imageData: compressedData }
+        })
+      )
+
+      const totalPayloadKB = Math.round(
+        compressedViews.reduce(
+          (sum, v) => sum + (v.imageData?.length || 0),
+          0
+        ) / 1024
+      )
+      logDebug(`Total image payload after compression: ${totalPayloadKB}KB`)
 
       // Update status: Starting multi-agent analysis
       setCurrentCaptureStage("Initializing Multi-Agent Analysis System...")
@@ -1255,7 +1314,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          capturedImages: validViews,
+          capturedImages: compressedViews,
           solarData: fullSolarData, // Full solar API response for solar panel data
           solarMetrics: solarMetrics, // Extracted metrics for roof measurements
           address:

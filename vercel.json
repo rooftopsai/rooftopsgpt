@@ -11,8 +11,8 @@
       "memory": 3008
     },
     "app/api/property-reports/**": {
-      "maxDuration": 60,
-      "memory": 1024
+      "maxDuration": 300,
+      "memory": 3008
     },
     "app/api/crm/sequences/process": {
       "maxDuration": 60
