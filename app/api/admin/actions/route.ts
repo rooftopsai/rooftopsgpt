@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export const dynamic = "force-dynamic"
 
@@ -141,7 +142,8 @@ const EMAIL_TEMPLATES: Record<string, { subject: string; html: (vars: Record<str
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const serverClient = await createServerClient()
+    const cookieStore = cookies()
+    const serverClient = createServerClient(cookieStore)
     const { authorized, email: adminEmail } = await verifyAdmin(serverClient)
 
     if (!authorized) {

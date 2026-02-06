@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 export const dynamic = "force-dynamic"
 
@@ -99,7 +100,8 @@ const ANNUAL_PLANS = ["premium_annual", "business_annual", "ai_employee_annual"]
 export async function GET(request: NextRequest) {
   try {
     // Verify admin access
-    const serverClient = await createServerClient()
+    const cookieStore = cookies()
+    const serverClient = createServerClient(cookieStore)
     const { authorized } = await verifyAdmin(serverClient)
 
     if (!authorized) {
