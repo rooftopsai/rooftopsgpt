@@ -15,7 +15,6 @@ export const runtime: ServerRuntime = "edge"
 
 // Add GET handler to verify routing works
 export async function GET(request: Request) {
-  console.log("[OpenAI Route] GET handler called - method not allowed")
   return new Response(
     JSON.stringify({ error: "Method GET not allowed. Use POST." }),
     { status: 405, headers: { "Content-Type": "application/json" } }
@@ -23,12 +22,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  console.log("[OpenAI Route] POST handler called", {
-    url: request.url,
-    method: request.method,
-    headers: Object.fromEntries(request.headers.entries())
-  })
-
   let json: any
   let chatSettings: ChatSettings
   let messages: any[]
@@ -39,12 +32,6 @@ export async function POST(request: Request) {
     chatSettings = json.chatSettings
     messages = json.messages
     workspaceId = json.workspaceId
-
-    console.log("[OpenAI Route] Request parsed successfully", {
-      model: chatSettings?.model,
-      messageCount: messages?.length,
-      workspaceId
-    })
   } catch (parseError: any) {
     console.error("[OpenAI Route] Failed to parse request", parseError)
     return new Response(
@@ -58,10 +45,6 @@ export async function POST(request: Request) {
 
   try {
     const profile = await getServerProfile()
-    console.log("[OpenAI Route] Profile loaded successfully:", {
-      userId: profile.user_id,
-      hasApiKeys: !!profile.openai_api_key
-    })
 
     // Check chat limits and determine which model to use
     const limitCheck = await checkChatLimit(profile.user_id)
@@ -82,10 +65,6 @@ export async function POST(request: Request) {
     // Use the model recommended by the entitlement check
     // This handles automatic switching from GPT-4.5-mini to GPT-4o when premium messages are exhausted
     const recommendedModel = limitCheck.model
-    console.log(
-      `[OpenAI Route] Using model: ${recommendedModel} (requested: ${chatSettings.model}, switched: ${limitCheck.switchedToFreeModel || false})`
-    )
-
     // Override the model if it was switched to free tier model
     if (limitCheck.switchedToFreeModel) {
       chatSettings.model = recommendedModel
@@ -117,13 +96,6 @@ export async function POST(request: Request) {
           ? latestUserMessage.content
           : latestUserMessage?.content?.[0]?.text || ""
 
-      console.log("OpenAI RAG - Query:", userQuery?.substring(0, 100))
-      console.log("OpenAI RAG - WorkspaceId:", workspaceId)
-      console.log(
-        "OpenAI RAG - Web search enabled:",
-        profile.web_search_enabled
-      )
-
       // Check if user has web search access based on their tier
       const webSearchCheck = await checkWebSearchLimit(profile.user_id)
       const hasWebSearchAccess = webSearchCheck.allowed
@@ -131,12 +103,6 @@ export async function POST(request: Request) {
       // Check if user has web search enabled (default: true) AND has tier access
       const shouldUseWebSearch =
         profile.web_search_enabled !== false && hasWebSearchAccess
-
-      console.log(
-        "OpenAI RAG - Web search access:",
-        hasWebSearchAccess,
-        `(remaining: ${webSearchCheck.remaining}/${webSearchCheck.limit})`
-      )
 
       if (userQuery && workspaceId && shouldUseWebSearch) {
         // Skip document RAG search and go straight to web search
@@ -155,9 +121,6 @@ export async function POST(request: Request) {
             const recentMessages = messages.slice(-4)
 
             if (recentMessages.length > 1) {
-              console.log(
-                "OpenAI RAG - Reformulating search query with context"
-              )
               try {
                 const reformulationResponse = await fetch(
                   "https://api.openai.com/v1/chat/completions",
@@ -198,22 +161,12 @@ export async function POST(request: Request) {
 
                   if (reformulatedQuery && reformulatedQuery.length > 0) {
                     searchQuery = reformulatedQuery
-                    console.log("OpenAI RAG - Reformulated query:", searchQuery)
                   }
                 }
-              } catch (error) {
-                console.error(
-                  "OpenAI RAG - Query reformulation failed, using original:",
-                  error
-                )
+              } catch (error: any) {
+                console.error(`OpenAI RAG - Query reformulation failed: ${error.message}`)
               }
             }
-
-            console.log(
-              "OpenAI RAG - Starting Brave search with query:",
-              searchQuery
-            )
-            const braveStartTime = Date.now()
 
             const braveResponse = await fetch(
               `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}&count=10`,
@@ -225,22 +178,11 @@ export async function POST(request: Request) {
               }
             )
 
-            const braveElapsed = Date.now() - braveStartTime
-            console.log(
-              `OpenAI RAG - Brave response received after ${braveElapsed}ms, status: ${braveResponse.status}`
-            )
-
             if (braveResponse.ok) {
               const braveData = await braveResponse.json()
               const webResults = braveData.web?.results || []
 
               if (webResults.length > 0) {
-                console.log(
-                  "OpenAI RAG - Found",
-                  webResults.length,
-                  "web results"
-                )
-
                 // Track web search usage
                 incrementWebSearchUsage(profile.user_id).catch(err =>
                   console.error("Failed to track web search usage:", err)
@@ -270,18 +212,11 @@ export async function POST(request: Request) {
                 })
               }
             } else {
-              const errorText = await braveResponse.text()
-              console.error("OpenAI RAG - Brave API error:", errorText)
+              console.error(`OpenAI RAG - Brave API error: ${braveResponse.status}`)
             }
-          } else {
-            console.log("OpenAI RAG - Brave API key not configured")
           }
         } catch (braveError: any) {
-          console.error("OpenAI RAG - Brave search error:", {
-            name: braveError.name,
-            message: braveError.message,
-            cause: braveError.cause
-          })
+          console.error(`OpenAI RAG - Brave search error: ${braveError.message}`)
           // Continue without Brave results - don't let this block the response
         }
 
@@ -399,12 +334,7 @@ export async function POST(request: Request) {
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
-    console.error("[OpenAI Route] Error occurred:", {
-      name: error.name,
-      message: error.message,
-      status: error.status,
-      stack: error.stack?.split("\n").slice(0, 3)
-    })
+    console.error(`[OpenAI Route] Error: ${error.message || "Unknown error"}, status: ${error.status || 500}`)
 
     let errorMessage = error.message || "An unexpected error occurred"
     let errorCode = error.status || 500
@@ -450,11 +380,7 @@ export async function POST(request: Request) {
       errorCodeName = "CONNECTION_ERROR"
     }
 
-    console.error("[OpenAI Route] Returning error response:", {
-      status: errorCode,
-      message: errorMessage,
-      code: errorCodeName
-    })
+    console.error(`[OpenAI Route] Error response: ${errorCodeName} ${errorCode}`)
 
     return new Response(
       JSON.stringify({

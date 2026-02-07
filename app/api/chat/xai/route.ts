@@ -17,11 +17,6 @@ import {
 export const runtime: ServerRuntime = "edge"
 
 export async function POST(request: Request) {
-  console.log("[xAI Route] POST handler called", {
-    url: request.url,
-    method: request.method
-  })
-
   let json: any
   let chatSettings: ChatSettings
   let messages: any[]
@@ -32,12 +27,6 @@ export async function POST(request: Request) {
     chatSettings = json.chatSettings
     messages = json.messages
     workspaceId = json.workspaceId
-
-    console.log("[xAI Route] Request parsed successfully", {
-      model: chatSettings?.model,
-      messageCount: messages?.length,
-      workspaceId
-    })
   } catch (parseError: any) {
     console.error("[xAI Route] Failed to parse request", parseError)
     return new Response(
@@ -75,12 +64,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Use global xAI API key
-    console.log("[xAI Route] API key check:", {
-      hasKey: !!GLOBAL_API_KEYS.xai,
-      keyPrefix: GLOBAL_API_KEYS.xai?.substring(0, 10) + "..."
-    })
-
     if (!GLOBAL_API_KEYS.xai) {
       console.error("[xAI Route] API key not found")
       return new Response(
@@ -107,14 +90,6 @@ export async function POST(request: Request) {
         ...messages.slice(1)
       ]
 
-      console.log("[xAI Route] Creating xAI API request", {
-        model: chatSettings.model,
-        messageCount: xaiMessages.length,
-        temperature: chatSettings.temperature,
-        maxTokens:
-          CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TOKEN_OUTPUT_LENGTH
-      })
-
       const response = await xai.chat.completions.create({
         model: chatSettings.model,
         messages: xaiMessages as any,
@@ -123,8 +98,6 @@ export async function POST(request: Request) {
           CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH,
         stream: true
       })
-
-      console.log("[xAI Route] API request successful")
 
       const stream = OpenAIStream(response)
 
@@ -135,12 +108,7 @@ export async function POST(request: Request) {
 
       return new StreamingTextResponse(stream)
     } catch (error: any) {
-      console.error("[xAI Route] Error calling xAI API:", {
-        message: error.message,
-        status: error.status,
-        type: error.type,
-        error: error
-      })
+      console.error("[xAI Route] Error calling xAI API:", error.message)
       return new Response(
         JSON.stringify({
           message: `xAI API error: ${error.message || "Unknown error"}`,
@@ -150,11 +118,7 @@ export async function POST(request: Request) {
       )
     }
   } catch (error: any) {
-    console.error("[xAI Route] Outer error catch:", {
-      message: error.message,
-      status: error.status,
-      stack: error.stack
-    })
+    console.error("[xAI Route] Outer error:", error.message)
 
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500

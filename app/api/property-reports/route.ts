@@ -75,7 +75,6 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    console.log("📝 Property report POST body:", JSON.stringify(body, null, 2))
 
     const {
       workspaceId,
@@ -90,19 +89,10 @@ export async function POST(request: Request) {
     } = body
 
     if (!workspaceId || !address || !analysisData) {
-      console.error("❌ Missing required fields:", {
-        workspaceId: !!workspaceId,
-        address: !!address,
-        analysisData: !!analysisData
-      })
       return new NextResponse("Missing required fields", { status: 400 })
     }
 
     if (!latitude || !longitude) {
-      console.error("❌ Missing latitude or longitude:", {
-        latitude,
-        longitude
-      })
       return new NextResponse("Missing latitude or longitude", { status: 400 })
     }
 
@@ -166,12 +156,6 @@ export async function POST(request: Request) {
 
     // Track the usage after successful report creation
     const updatedUsage = await incrementReportUsage(user.id)
-    console.log(
-      "✅ Property report created successfully:",
-      report.id,
-      "Usage:",
-      updatedUsage.reports_generated
-    )
 
     return NextResponse.json({
       ...report,

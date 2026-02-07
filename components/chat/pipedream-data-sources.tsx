@@ -262,7 +262,6 @@ export const PipedreamDataSources: FC<PipedreamDataSourcesProps> = ({
         pd.connectAccount({
           app: app.name_slug,
           onSuccess: async (result: ConnectResult) => {
-            console.log("Pipedream connection successful:", result)
             toast.success(`${app.name} connected successfully!`)
 
             // Sync accounts and refresh data sources

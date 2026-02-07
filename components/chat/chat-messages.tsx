@@ -21,7 +21,6 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
 
   // Function to handle opening a document
   const handleOpenDocument = (documentId: string) => {
-    console.log("Opening document:", documentId)
     loadDocument(documentId)
     setDocumentMode(true)
   }

@@ -20,8 +20,6 @@ interface SourceCardsProps {
 }
 
 export function SourceCards({ messageMetadata }: SourceCardsProps) {
-  console.log("SourceCards - Received metadata:", messageMetadata)
-
   // Helper to strip HTML tags
   const stripHtml = (html: string): string => {
     return html
@@ -35,21 +33,16 @@ export function SourceCards({ messageMetadata }: SourceCardsProps) {
   // Parse sources from message metadata
   const extractSources = (): SourceInfo[] => {
     if (!messageMetadata) {
-      console.log("SourceCards - No metadata provided")
       return []
     }
 
     try {
       const metadata = JSON.parse(messageMetadata)
-      console.log("SourceCards - Parsed metadata:", metadata)
       if (metadata.sources && Array.isArray(metadata.sources)) {
-        console.log("SourceCards - Found sources array:", metadata.sources)
         return metadata.sources
-      } else {
-        console.log("SourceCards - No sources array in metadata")
       }
     } catch (error) {
-      console.error("SourceCards - Error parsing metadata:", error)
+      // Failed to parse metadata
     }
 
     return []
@@ -58,19 +51,10 @@ export function SourceCards({ messageMetadata }: SourceCardsProps) {
   const sources = extractSources()
 
   if (sources.length === 0) {
-    console.log("SourceCards - No sources found, not rendering")
     return null
   }
 
-  console.log("SourceCards - Rendering", sources.length, "source cards")
-
   const handleCardClick = (source: SourceInfo) => {
-    console.log("[SourceCards] Card clicked", {
-      sourceNumber: source.sourceNumber,
-      fileName: source.fileName,
-      documentType: source.documentType
-    })
-
     // If this is a web source (URL), open it directly with UTM tracking
     if (source.fileName && source.fileName.startsWith("http")) {
       try {
@@ -78,16 +62,12 @@ export function SourceCards({ messageMetadata }: SourceCardsProps) {
         url.searchParams.set("utm_source", "rooftopsai")
         url.searchParams.set("utm_medium", "chat")
         url.searchParams.set("utm_campaign", "source_card")
-        console.log("[SourceCards] Opening URL:", url.toString())
         window.open(url.toString(), "_blank", "noopener,noreferrer")
       } catch (error) {
-        console.error("[SourceCards] Error opening URL:", error)
+        // Failed to open URL
       }
       return
     }
-
-    // For non-web sources (documents), you could handle them differently
-    console.log("[SourceCards] Non-web source clicked (no action taken)")
   }
 
   // Truncate preview text

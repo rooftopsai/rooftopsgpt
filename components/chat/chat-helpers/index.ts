@@ -329,30 +329,21 @@ export const processResponse = async (
       chunk => {
         // Check if this is the first chunk and contains document metadata
         if (isFirstChunk) {
-          console.log("First chunk received:", chunk.substring(0, 100))
           if (chunk.startsWith("__DOCUMENTS__:")) {
             isFirstChunk = false
             const metadataLineEnd = chunk.indexOf("\n")
-            console.log("Found metadata line, end index:", metadataLineEnd)
             if (metadataLineEnd !== -1) {
               const metadataLine = chunk.substring(0, metadataLineEnd)
               const jsonStr = metadataLine.substring("__DOCUMENTS__:".length)
-              console.log("Metadata JSON string:", jsonStr.substring(0, 200))
               try {
                 documentMetadata = JSON.parse(jsonStr)
-                console.log("Extracted document metadata:", documentMetadata)
               } catch (error) {
-                console.error(
-                  "Error parsing document metadata:",
-                  error,
-                  jsonStr
-                )
+                // Failed to parse document metadata
               }
               // Continue processing the rest of the chunk
               chunk = chunk.substring(metadataLineEnd + 1)
             }
           } else {
-            console.log("First chunk does not start with __DOCUMENTS__:")
             isFirstChunk = false
           }
         }
@@ -376,7 +367,7 @@ export const processResponse = async (
                 )
           fullText += contentToAdd
         } catch (error) {
-          console.error("Error parsing JSON:", error)
+          // Error parsing streaming JSON chunk
         }
 
         setChatMessages(prev =>

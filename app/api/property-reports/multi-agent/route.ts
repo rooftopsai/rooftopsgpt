@@ -37,14 +37,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No images provided" }, { status: 400 })
     }
 
-    console.log(`[Multi-Agent Orchestrator] Starting analysis for ${address}`)
-    console.log(
-      `[Multi-Agent Orchestrator] ${capturedImages.length} images received`
-    )
-    console.log(
-      `[Multi-Agent Orchestrator] Solar data received:`,
-      solarData?.solarPotential?.maxArrayPanelsCount || "No solar data"
-    )
 
     // Separate overhead images from angled views
     // Images have 'viewName' property, not 'name' (e.g., "Overhead (Context)", "Overhead (Detail)")
@@ -58,9 +50,6 @@ export async function POST(req: NextRequest) {
 
     const allImages = capturedImages
 
-    console.log(
-      `[Multi-Agent Orchestrator] ${overheadImages.length} overhead images, ${allImages.length} total images`
-    )
 
     // Track agent execution
     const agentResults: any = {
@@ -76,7 +65,6 @@ export async function POST(req: NextRequest) {
     // AGENT 1: MEASUREMENT SPECIALIST
     // ═══════════════════════════════════════════════════════════════════
     try {
-      console.log("[Agent 1] Starting Measurement Specialist...")
       const agent1Start = Date.now()
 
       // Call pure function directly (no Next.js Request/Response, no Vercel auth)
@@ -87,13 +75,6 @@ export async function POST(req: NextRequest) {
       })
 
       agentTimings.measurement = Date.now() - agent1Start
-      console.log(`[Agent 1] Completed in ${agentTimings.measurement}ms`)
-      console.log(
-        `[Agent 1] Facets: ${agentResults.measurement?.data?.measurements?.facetCount}`
-      )
-      console.log(
-        `[Agent 1] Area: ${agentResults.measurement?.data?.measurements?.totalRoofArea} sq ft`
-      )
     } catch (error: any) {
       console.error("[Agent 1] Error:", error)
       return NextResponse.json(
@@ -111,7 +92,6 @@ export async function POST(req: NextRequest) {
     // AGENT 2: CONDITION INSPECTOR
     // ═══════════════════════════════════════════════════════════════════
     try {
-      console.log("[Agent 2] Starting Condition Inspector...")
       const agent2Start = Date.now()
 
       agentResults.condition = await runConditionInspector({
@@ -121,13 +101,6 @@ export async function POST(req: NextRequest) {
       })
 
       agentTimings.condition = Date.now() - agent2Start
-      console.log(`[Agent 2] Completed in ${agentTimings.condition}ms`)
-      console.log(
-        `[Agent 2] Material: ${agentResults.condition?.data?.condition?.material?.type}`
-      )
-      console.log(
-        `[Agent 2] Condition: ${agentResults.condition?.data?.condition?.overallCondition}`
-      )
     } catch (error: any) {
       console.error("[Agent 2] Error:", error)
       return NextResponse.json(
@@ -145,7 +118,6 @@ export async function POST(req: NextRequest) {
     // AGENT 3: COST ESTIMATOR
     // ═══════════════════════════════════════════════════════════════════
     try {
-      console.log("[Agent 3] Starting Cost Estimator with condition data...")
       const agent3Start = Date.now()
 
       agentResults.cost = await runCostEstimator({
@@ -156,10 +128,6 @@ export async function POST(req: NextRequest) {
       })
 
       agentTimings.cost = Date.now() - agent3Start
-      console.log(`[Agent 3] Completed in ${agentTimings.cost}ms`)
-      console.log(
-        `[Agent 3] Estimated cost: $${agentResults.cost?.data?.costEstimates?.[0]?.breakdown?.total}`
-      )
     } catch (error: any) {
       console.error("[Agent 3] Error:", error)
       return NextResponse.json(
@@ -177,7 +145,6 @@ export async function POST(req: NextRequest) {
     // AGENT 4: QUALITY CONTROLLER
     // ═══════════════════════════════════════════════════════════════════
     try {
-      console.log("[Agent 4] Starting Quality Controller...")
       const agent4Start = Date.now()
 
       // Extract only essential data for Quality Controller to reduce token usage
@@ -244,10 +211,6 @@ export async function POST(req: NextRequest) {
         confidence: agentResults.cost?.data?.confidence
       }
 
-      console.log(
-        "[Agent 4] Using optimized data extraction to reduce token usage"
-      )
-
       agentResults.quality = await runQualityController({
         measurementData: essentialMeasurementData,
         conditionData: essentialConditionData,
@@ -256,13 +219,6 @@ export async function POST(req: NextRequest) {
         solarData
       })
       agentTimings.quality = Date.now() - agent4Start
-      console.log(`[Agent 4] Completed in ${agentTimings.quality}ms`)
-      console.log(
-        `[Agent 4] Overall confidence: ${agentResults.quality?.data?.overallConfidence?.combined}`
-      )
-      console.log(
-        `[Agent 4] Quality score: ${agentResults.quality?.data?.metadata?.qualityScore}/100`
-      )
     } catch (error: any) {
       console.error("[Agent 4] Error:", error)
       return NextResponse.json(
@@ -280,12 +236,6 @@ export async function POST(req: NextRequest) {
     // COMPILE FINAL REPORT
     // ═══════════════════════════════════════════════════════════════════
     const totalTime = Date.now() - startTime
-    console.log(
-      `[Multi-Agent Orchestrator] Analysis complete in ${totalTime}ms`
-    )
-    console.log(
-      `[Multi-Agent Orchestrator] Breakdown: Agent1=${agentTimings.measurement}ms, Agent2=${agentTimings.condition}ms, Agent3=${agentTimings.cost}ms, Agent4=${agentTimings.quality}ms`
-    )
 
     const finalReport = {
       success: true,
@@ -348,9 +298,6 @@ export async function POST(req: NextRequest) {
         readyForCustomer: agentResults.quality?.data?.metadata?.readyForCustomer
       }
     }
-
-    console.log("[Multi-Agent Orchestrator] Final report compiled successfully")
-    console.log("[Multi-Agent Orchestrator] Address in final report:", address)
 
     return NextResponse.json(finalReport)
   } catch (error) {

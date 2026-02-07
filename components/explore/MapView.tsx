@@ -182,7 +182,6 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Handle script loading success
   const handleScriptLoad = useCallback(() => {
-    console.log("Google Maps script loaded")
     if (scriptLoadTimeoutRef.current) {
       clearTimeout(scriptLoadTimeoutRef.current)
       scriptLoadTimeoutRef.current = null
@@ -198,7 +197,6 @@ const MapView: React.FC<MapViewProps> = ({
 
     // Try up to 3 times before giving up
     if (loadAttempts < 3) {
-      console.log(`Retrying map load... Attempt ${loadAttempts + 1}/3`)
       setLoadAttempts(prev => prev + 1)
 
       // Remove existing script tag
@@ -226,7 +224,6 @@ const MapView: React.FC<MapViewProps> = ({
     if (isClient && !scriptLoaded && !scriptError) {
       // Check if Google Maps is already loaded
       if (checkGoogleMapsLoaded()) {
-        console.log("Google Maps already loaded, using existing instance")
         handleScriptLoad()
         return
       }
@@ -420,10 +417,6 @@ const MapView: React.FC<MapViewProps> = ({
 
     try {
       logDebug("Initializing Google Maps")
-      console.log(
-        "Initializing Google Maps with reference:",
-        mapContainerRef.current ? "exists" : "null"
-      )
 
       // Initialize map
       const newMap = new window.google.maps.Map(mapContainerRef.current, {
@@ -460,7 +453,6 @@ const MapView: React.FC<MapViewProps> = ({
 
       // Share the map reference with the parent component
       if (setMapRef) {
-        console.log("Sharing map reference with parent component")
         setMapRef(newMap)
       }
 

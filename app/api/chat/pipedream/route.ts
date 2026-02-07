@@ -121,8 +121,6 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log(`[Pipedream Chat] Using apps:`, appsToUse)
-
     // Create MCP session
     const sessionId = chatId || generateSessionId()
     mcpSession = new MCPSessionManager(user.id, sessionId)
@@ -132,17 +130,9 @@ export async function POST(request: Request) {
 
     // Get available tools
     const mcpTools = await mcpSession.listTools()
-    console.log(
-      `[Pipedream Chat] Available tools:`,
-      mcpTools.map((t: any) => t.name)
-    )
 
     // Filter out configuration tools and convert to OpenAI format
     const openaiTools = convertMCPToolsToOpenAI(mcpTools)
-    console.log(
-      `[Pipedream Chat] Usable tools:`,
-      openaiTools.map(t => t.function.name)
-    )
 
     if (openaiTools.length === 0) {
       // No executable tools - might need configuration
@@ -192,9 +182,6 @@ IMPORTANT: Always try to use the tools when the user asks about their connected 
     })
 
     // First completion to determine tool calls
-    console.log(
-      `[Pipedream Chat] Making initial completion with ${openaiTools.length} tools`
-    )
     const firstResponse = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
       messages: messagesWithContext,
@@ -204,11 +191,6 @@ IMPORTANT: Always try to use the tools when the user asks about their connected 
 
     const message = firstResponse.choices[0].message
     const toolCalls = message.tool_calls || []
-
-    console.log(
-      `[Pipedream Chat] Tool calls:`,
-      toolCalls.map(tc => tc.function.name)
-    )
 
     // If no tool calls, return the message directly as stream
     if (toolCalls.length === 0) {
@@ -247,8 +229,6 @@ IMPORTANT: Always try to use the tools when the user asks about their connected 
         )
       }
 
-      console.log(`[Pipedream Chat] Processing tool: ${functionName}`, args)
-
       // Check if this action requires confirmation
       if (requiresConfirmation(functionName)) {
         const appName = appsToUse.find(app =>
@@ -279,12 +259,7 @@ IMPORTANT: Always try to use the tools when the user asks about their connected 
       } else {
         // Execute the tool directly
         try {
-          console.log(`[Pipedream Chat] Executing tool: ${functionName}`)
           const result = await mcpSession.callTool(functionName, args)
-          console.log(
-            `[Pipedream Chat] Tool result:`,
-            JSON.stringify(result).substring(0, 500)
-          )
 
           const parsedResult = parseToolResult(result)
 
@@ -339,7 +314,6 @@ IMPORTANT: Always try to use the tools when the user asks about their connected 
     }
 
     // Final response after tool execution
-    console.log(`[Pipedream Chat] Making final completion`)
     const secondResponse = await openai.chat.completions.create({
       model: chatSettings.model as ChatCompletionCreateParamsBase["model"],
       messages: finalMessages,

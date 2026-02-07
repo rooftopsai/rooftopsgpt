@@ -121,7 +121,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     const handleVisibilityChange = () => {
       if (document.hidden && isAnalyzing) {
         pageHiddenDuringAnalysis.current = true
-        console.warn("[ExploreMap] Page became hidden during analysis - this may cause issues")
       }
     }
 
@@ -136,12 +135,9 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
     if ("wakeLock" in navigator) {
       try {
         wakeLockRef.current = await navigator.wakeLock.request("screen")
-        console.log("[ExploreMap] Wake lock acquired - screen will stay on")
-        wakeLockRef.current.addEventListener("release", () => {
-          console.log("[ExploreMap] Wake lock released")
-        })
+        wakeLockRef.current.addEventListener("release", () => {})
       } catch (err) {
-        console.warn("[ExploreMap] Wake lock request failed:", err)
+        // Wake lock not available
       }
     }
   }
@@ -288,11 +284,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
         if (solarResponse.ok) {
           const solarData = await solarResponse.json()
           fullSolarData = solarData // Keep the full response for solar panel data
-          console.log(
-            "[Solar API] Full response received:",
-            fullSolarData?.solarPotential?.maxArrayPanelsCount,
-            "panels"
-          )
           solarMetrics = extractSolarRoofMetrics(solarData)
 
           if (solarMetrics) {
@@ -983,7 +974,6 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
           })
         } catch (html2canvasError) {
           retries--
-          console.warn(`html2canvas attempt failed (${retries} retries left):`, html2canvasError.message)
           if (retries > 0) {
             // Wait before retry
             await new Promise(resolve => setTimeout(resolve, 1000))
@@ -1924,16 +1914,6 @@ ${referenceSection}
         workspaceId: workspaceId
       }
 
-      // Always log image details for debugging facet counting
-      console.log(
-        `[RoofAnalysis] Sending ${validViews.length} images to ${selectedModel}:`
-      )
-      validViews.forEach((view, idx) => {
-        console.log(
-          `  Image ${idx + 1}: ${view.viewName || "Unknown"} - ${Math.round((view.imageData?.length || 0) / 1024)} KB`
-        )
-      })
-
       if (isDebugMode) {
         // Log payload size
         const payloadSize = JSON.stringify(payload).length
@@ -1998,16 +1978,6 @@ ${referenceSection}
                   hasDetailedAnalysis: !!detailedAnalysisText
                 }
               }
-              // Log facet analysis details for debugging
-              console.log("[RoofAnalysis] LLM Response Analysis:", {
-                facetCount: parsed.structuredData?.facetCount,
-                facetBreakdown: parsed.structuredData?.facetBreakdown,
-                imagesAnalyzed: parsed.structuredData?.imagesAnalyzed,
-                imagesSent: validViews.length,
-                allImagesReviewed:
-                  parsed.structuredData?.imagesAnalyzed === validViews.length
-              })
-
               logDebug("Successfully parsed structured JSON response", {
                 hasDetailedAnalysis: !!detailedAnalysisText,
                 analysisLength: detailedAnalysisText?.length || 0
@@ -2019,10 +1989,7 @@ ${referenceSection}
             throw new Error("No JSON found in response")
           }
         } catch (parseError) {
-          console.warn(
-            "Could not parse JSON, falling back to text parsing:",
-            parseError
-          )
+          // Could not parse JSON, falling back to text parsing
 
           // Fallback: Try to extract metrics from text
           const metrics = {
@@ -2441,7 +2408,6 @@ ${referenceSection}
 
         if (solarResponse.ok) {
           const solarData = await solarResponse.json()
-          console.log("SOLAR API SUCCESS:", solarData)
 
           // Extract values directly from the correct paths
           const solarPotential = solarData.solarPotential || {}
@@ -2477,16 +2443,6 @@ ${referenceSection}
             else suitabilityScore = "Moderate Fit"
           }
 
-          // Log all extracted values for debugging
-          console.log("SOLAR EXTRACTION:", {
-            panelCount,
-            yearlyEnergy,
-            sunshineHours,
-            installationCost,
-            netSavings,
-            suitabilityScore
-          })
-
           // Create the solar data structure explicitly
           reportData.solar = {
             potential: {
@@ -2509,9 +2465,8 @@ ${referenceSection}
             }
           }
 
-          console.log("PROCESSED SOLAR DATA:", reportData.solar)
         } else {
-          console.log("SOLAR API ERROR:", await solarResponse.text())
+          // Solar API returned error
         }
       } catch (solarError) {
         console.error("Error fetching solar data:", solarError)
@@ -2554,13 +2509,6 @@ ${referenceSection}
         }
       })
 
-      console.log("FINAL REPORT DATA STRUCTURE:", {
-        jsonData: {
-          ...reportData,
-          solar: reportData.solar
-        }
-      })
-
       logDebug("Property report generated and displayed in map view")
     } catch (error: any) {
       console.error("Error in combined analysis and report:", error)
@@ -2576,13 +2524,6 @@ ${referenceSection}
           }
         )
 
-        // Log full error details to console
-        console.error("Report generation error:", {
-          error: error.message,
-          stack: error.stack,
-          timestamp: new Date().toISOString(),
-          location: selectedAddress || "unknown"
-        })
       }
     } finally {
       setIsLoading(false)
@@ -2607,13 +2548,6 @@ ${referenceSection}
         const data = await response.json()
         currentSubscriptionInfo = data
         setSubscriptionInfo(data)
-        console.log(
-          "[Subscription Check] Fresh data:",
-          data.propertyReports.currentUsage,
-          "/",
-          data.propertyReports.limit,
-          "used"
-        )
       }
     } catch (error) {
       console.error("Error fetching subscription info:", error)
@@ -2761,11 +2695,6 @@ ${referenceSection}
       {/* Report Display - Shows in main content area */}
       {(roofAnalysis || reportData) && (
         <div className="absolute inset-0 z-20">
-          {console.log(
-            "[ExploreMap] Passing solar data to PropertyReportViewer:",
-            (roofAnalysis || reportData)?.solarData?.solarPotential
-              ?.maxArrayPanelsCount || "NOT FOUND"
-          )}
           <PropertyReportViewer
             reportData={roofAnalysis || reportData}
             solarData={

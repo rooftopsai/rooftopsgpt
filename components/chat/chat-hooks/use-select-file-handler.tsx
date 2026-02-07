@@ -194,10 +194,7 @@ export const useSelectFileHandler = () => {
               // This ensures compatibility with all AI models
               base64Image = await convertImageToJPEG(file)
             } catch (conversionError) {
-              console.warn(
-                "Image conversion failed, using original:",
-                conversionError
-              )
+              // Image conversion failed, using original
               // Fall back to original if conversion fails
               base64Image = reader.result
             }

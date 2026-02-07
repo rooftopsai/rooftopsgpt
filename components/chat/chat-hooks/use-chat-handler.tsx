@@ -123,10 +123,6 @@ const extractLocationAPI = async (query: string): Promise<string | null> => {
       return data.location
     }
 
-    console.warn(
-      "Location extraction API returned non-OK response:",
-      response.status
-    )
     return null
   } catch (error) {
     console.error("Error calling location extraction API:", error)
@@ -301,9 +297,6 @@ export const useChatHandler = () => {
       sessionStorage.removeItem("pendingFileContext")
       sessionStorage.removeItem("pendingFileName")
 
-      console.log(
-        `Added Google Drive file "${pendingFileName}" to message context`
-      )
     }
 
     // Check if this is a weather-related query
@@ -320,12 +313,10 @@ export const useChatHandler = () => {
 
     // Set document mode accordingly - ONLY AT THE BEGINNING
     if (isDocumentRequest) {
-      console.log("Setting document mode to TRUE")
       setDocumentMode(true)
       setDocumentContent("") // Clear content at the beginning
       setIsStreaming(true)
     } else if (!isRegeneration) {
-      console.log("This is not a document request")
       // Don't turn off document mode here
     }
 
@@ -365,9 +356,6 @@ export const useChatHandler = () => {
           llm => llm.modelId === "gpt-4o"
         )
         if (fallbackModel) {
-          console.warn(
-            `Model ${chatSettings.model} not found, falling back to gpt-4o`
-          )
           setChatSettings({ ...chatSettings, model: "gpt-4o" as LLMID })
           modelData = fallbackModel
         }
@@ -448,26 +436,18 @@ export const useChatHandler = () => {
       let documentMetadata: any[] = []
 
       if (isWeatherRequest && !isRegeneration) {
-        console.log(
-          "Weather query detected, processing with location extraction"
-        )
-
         // First try extracting location via API if available
         let location = await extractLocationAPI(messageContent)
 
         // Fall back to pattern matching if API fails
         if (!location) {
-          console.log("API location extraction failed, using pattern matching")
           location = extractLocationFromWeatherQuery(messageContent)
         }
 
         // Use a default as last resort
         if (!location) {
-          console.log("Location extraction failed, using default")
           location = "unknown location"
         }
-
-        console.log("Extracted location:", location)
 
         // Create a response with both visible and hidden markers for the weather widget
         generatedText = `Here's the current weather information for ${location}:\n\n[TRIGGER_WEATHER_LOOKUP:${location}]\n\nThe weather widget above shows current conditions and forecast for ${location}. This includes precipitation forecast, wind conditions, temperature, and safety indicators important for roofing work.`
@@ -640,11 +620,6 @@ export const useChatHandler = () => {
 
       // After text generation is complete and before message creation:
       if (isDocumentRequest && generatedText) {
-        console.log(
-          "Document request completed, updating document content:",
-          generatedText.substring(0, 50) + "..."
-        )
-
         // Create a unique ID for this document
         const documentId = `doc_${Date.now()}`
 
@@ -685,10 +660,6 @@ export const useChatHandler = () => {
           documentMetadata.length > 0
             ? JSON.stringify({ sources: documentMetadata })
             : undefined
-        console.log(
-          "Passing metadata to handleCreateMessages:",
-          metadataJson ? metadataJson.substring(0, 200) : "none"
-        )
         await handleCreateMessages(
           chatMessages,
           currentChat!,

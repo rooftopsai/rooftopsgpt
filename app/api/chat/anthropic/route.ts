@@ -27,12 +27,6 @@ export async function POST(request: NextRequest) {
     workspaceId?: string
   }
 
-  console.log("[Anthropic Route] POST handler called", {
-    model: chatSettings?.model,
-    messageCount: messages?.length,
-    workspaceId
-  })
-
   try {
     const profile = await getServerProfile()
 
@@ -54,13 +48,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Use global API key
-    console.log("[Anthropic Route] API key check:", {
-      hasKey: !!GLOBAL_API_KEYS.anthropic,
-      keyPrefix: GLOBAL_API_KEYS.anthropic?.substring(0, 10) + "..."
-    })
-
     if (!GLOBAL_API_KEYS.anthropic) {
-      console.error("[Anthropic Route] API key not found")
+      console.error("Anthropic API key not configured")
       return NextResponse.json(
         { error: "Anthropic API key not configured" },
         { status: 500 }
@@ -203,9 +192,6 @@ export async function POST(request: NextRequest) {
           const recentMessages = messages.slice(-4)
 
           if (recentMessages.length > 1) {
-            console.log(
-              "Anthropic RAG - Reformulating search query with context"
-            )
             try {
               const reformulationResponse = await fetch(
                 "https://api.openai.com/v1/chat/completions",
@@ -246,25 +232,12 @@ export async function POST(request: NextRequest) {
 
                 if (reformulatedQuery && reformulatedQuery.length > 0) {
                   searchQuery = reformulatedQuery
-                  console.log(
-                    "Anthropic RAG - Reformulated query:",
-                    searchQuery
-                  )
                 }
               }
-            } catch (error) {
-              console.error(
-                "Anthropic RAG - Query reformulation failed, using original:",
-                error
-              )
+            } catch (error: any) {
+              console.error("Query reformulation failed:", error?.message)
             }
           }
-
-          console.log(
-            "Anthropic RAG - Starting Brave search with query:",
-            searchQuery
-          )
-          const braveStartTime = Date.now()
 
           const braveResponse = await fetch(
             `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/api/search/brave`,
@@ -273,11 +246,6 @@ export async function POST(request: NextRequest) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ query: searchQuery, count: 3 })
             }
-          )
-
-          const braveElapsed = Date.now() - braveStartTime
-          console.log(
-            `Anthropic RAG - Brave response received after ${braveElapsed}ms, status: ${braveResponse.status}`
           )
 
           if (braveResponse.ok) {
@@ -308,8 +276,8 @@ export async function POST(request: NextRequest) {
               })
             }
           }
-        } catch (braveError) {
-          console.error("Brave search error (timeout or failure):", braveError)
+        } catch (braveError: any) {
+          console.error("Brave search error:", braveError?.message)
           // Continue without Brave results - don't let this block the response
         }
 
@@ -371,15 +339,6 @@ export async function POST(request: NextRequest) {
         (documentContext || "") +
         messages[0].content
 
-      console.log("[Anthropic Route] Creating Anthropic API request", {
-        model: chatSettings.model,
-        messageCount: ANTHROPIC_FORMATTED_MESSAGES.length,
-        temperature: chatSettings.temperature,
-        hasSystemMessage: !!systemMessage,
-        maxTokens:
-          CHAT_SETTING_LIMITS[chatSettings.model]?.MAX_TOKEN_OUTPUT_LENGTH
-      })
-
       const response = await anthropic.messages.create({
         model: chatSettings.model,
         messages: ANTHROPIC_FORMATTED_MESSAGES,
@@ -389,8 +348,6 @@ export async function POST(request: NextRequest) {
           CHAT_SETTING_LIMITS[chatSettings.model].MAX_TOKEN_OUTPUT_LENGTH,
         stream: true
       })
-
-      console.log("[Anthropic Route] API request successful")
 
       try {
         const stream = AnthropicStream(response)
@@ -440,12 +397,7 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (error: any) {
-      console.error("[Anthropic Route] Error calling Anthropic API:", {
-        message: error.message,
-        status: error.status,
-        type: error.type,
-        error: error
-      })
+      console.error("Error calling Anthropic API:", error.message)
       return new NextResponse(
         JSON.stringify({
           message: `Anthropic API error: ${error.message || "Unknown error"}`,
@@ -455,11 +407,7 @@ export async function POST(request: NextRequest) {
       )
     }
   } catch (error: any) {
-    console.error("[Anthropic Route] Outer error catch:", {
-      message: error.message,
-      status: error.status,
-      stack: error.stack
-    })
+    console.error("Anthropic route error:", error.message)
 
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500

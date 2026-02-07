@@ -29,8 +29,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[Instant Mode] Generating instant report for ${address}`)
-
     // Extract metrics from Solar API
     const solarMetrics = extractSolarRoofMetrics(solarData)
 
@@ -184,10 +182,6 @@ Note: This instant analysis is based on Google Solar API satellite data. Measure
           "Upgrade to Premium or Business for Agent Mode with full analysis"
       }
     }
-
-    console.log(
-      `[Instant Mode] Report generated successfully in ${Date.now() - startTime}ms`
-    )
 
     return NextResponse.json(instantReport)
   } catch (error) {
