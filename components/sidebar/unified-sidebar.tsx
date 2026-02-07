@@ -42,6 +42,7 @@ const NAV_ITEM_HEIGHT = 40
 interface NavItem {
   id: string
   label: string
+  shortLabel?: string // Short label for collapsed sidebar
   icon: React.ComponentType<{
     size?: number
     className?: string
@@ -97,6 +98,7 @@ const primaryNavigationItems: NavItem[] = [
   {
     id: "explore",
     label: "AI Property Reports",
+    shortLabel: "Reports",
     icon: IconHome,
     route: (workspaceId: string) => `/${workspaceId}/explore`,
     badge: "premium"
@@ -105,6 +107,7 @@ const primaryNavigationItems: NavItem[] = [
   {
     id: "ai-employees",
     label: "AI Employees",
+    shortLabel: "AI Crew",
     icon: IconUserBolt,
     route: (workspaceId: string) => `/${workspaceId}/ai-employees`,
     badge: "pro"
@@ -303,67 +306,75 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
     const isActive = isNavItemActive(item)
     const isLoading = isNavigating === item.id
     const Icon = item.icon
+    const collapsedLabel = item.shortLabel || item.label
 
-    const content = (
-      <button
-        onClick={() => handleNavClick(item)}
-        onMouseEnter={() => handleNavHover(item)}
-        disabled={isLoading}
-        className={cn(
-          "relative flex items-center rounded-lg transition-all duration-150",
-          isCollapsed
-            ? "size-10 justify-center"
-            : "h-10 w-full justify-start gap-3 px-3",
-          isActive
-            ? "bg-gray-100 font-medium text-gray-900"
-            : "text-gray-700 hover:bg-gray-50",
-          isLoading && "opacity-70"
-        )}
-      >
-        {isLoading ? (
-          <IconLoader2
-            size={SIDEBAR_ICON_SIZE}
-            className="shrink-0 animate-spin"
-          />
-        ) : (
-          <Icon size={SIDEBAR_ICON_SIZE} stroke={2} className="shrink-0" />
-        )}
-
-        {!isCollapsed && (
-          <>
-            <span className="flex-1 text-left text-sm font-medium transition-opacity duration-200">
-              {item.label}
-            </span>
-            {item.badge && (
-              <IconCrown
-                size={BADGE_ICON_SIZE}
-                className="ml-auto shrink-0 opacity-60"
-                fill="currentColor"
-                stroke={0}
-              />
-            )}
-          </>
-        )}
-      </button>
-    )
-
-    // Wrap with tooltip when collapsed
+    // Collapsed view: icon on top, label below
     if (isCollapsed) {
       return (
         <div key={item.id} className="flex w-full justify-center">
-          <WithTooltip
-            delayDuration={0}
-            side="right"
-            display={<div className="text-sm">{item.label}</div>}
-            trigger={content}
-          />
+          <button
+            onClick={() => handleNavClick(item)}
+            onMouseEnter={() => handleNavHover(item)}
+            disabled={isLoading}
+            className={cn(
+              "relative flex w-full flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 transition-all duration-150",
+              isActive
+                ? "bg-gray-100 font-medium text-gray-900"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-700",
+              isLoading && "opacity-70"
+            )}
+          >
+            {isLoading ? (
+              <IconLoader2
+                size={SIDEBAR_ICON_SIZE}
+                className="shrink-0 animate-spin"
+              />
+            ) : (
+              <Icon size={SIDEBAR_ICON_SIZE} stroke={2} className="shrink-0" />
+            )}
+            <span className="w-full truncate text-center text-[10px] leading-tight">
+              {collapsedLabel}
+            </span>
+          </button>
         </div>
       )
     }
 
+    // Expanded view: icon + label side by side
     return (
       <div key={item.id} className="w-full">
-        {content}
+        <button
+          onClick={() => handleNavClick(item)}
+          onMouseEnter={() => handleNavHover(item)}
+          disabled={isLoading}
+          className={cn(
+            "relative flex h-10 w-full items-center justify-start gap-3 rounded-lg px-3 transition-all duration-150",
+            isActive
+              ? "bg-gray-100 font-medium text-gray-900"
+              : "text-gray-700 hover:bg-gray-50",
+            isLoading && "opacity-70"
+          )}
+        >
+          {isLoading ? (
+            <IconLoader2
+              size={SIDEBAR_ICON_SIZE}
+              className="shrink-0 animate-spin"
+            />
+          ) : (
+            <Icon size={SIDEBAR_ICON_SIZE} stroke={2} className="shrink-0" />
+          )}
+          <span className="flex-1 text-left text-sm font-medium transition-opacity duration-200">
+            {item.label}
+          </span>
+          {item.badge && (
+            <IconCrown
+              size={BADGE_ICON_SIZE}
+              className="ml-auto shrink-0 opacity-60"
+              fill="currentColor"
+              stroke={0}
+            />
+          )}
+        </button>
       </div>
     )
   }
@@ -389,7 +400,7 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
       <div
         className={cn(
           "flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out",
-          isCollapsed ? "w-[60px]" : "w-[280px]",
+          isCollapsed ? "w-[72px]" : "w-[280px]",
           isMobile && !isCollapsed && "fixed left-0 top-0 z-50",
           isMobile && isCollapsed && "hidden"
         )}
@@ -484,8 +495,13 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
             </>
           )}
 
-          {/* When collapsed, show all items with tooltips */}
-          {isCollapsed && secondaryNavigationItems.map(renderNavItem)}
+          {/* When collapsed, show secondary items with labels */}
+          {isCollapsed && (
+            <>
+              <div className="mx-auto my-1 w-8 border-t border-gray-200" />
+              {secondaryNavigationItems.map(renderNavItem)}
+            </>
+          )}
         </nav>
 
         {/* Content Section - Dynamic based on route */}
@@ -590,7 +606,7 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
         <div
           className={cn(
             "mt-auto shrink-0",
-            isCollapsed ? "flex justify-center p-2" : "p-3"
+            isCollapsed ? "flex flex-col items-center p-2" : "p-3"
           )}
         >
           {/* Admin button - only for admins */}
@@ -606,22 +622,12 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
             </Link>
           )}
           {profile?.is_admin && isCollapsed && (
-            <WithTooltip
-              delayDuration={0}
-              side="right"
-              display={<div className="text-sm">RT Admin</div>}
-              trigger={
-                <Link href="/admin/dashboard">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  >
-                    <IconShieldCog size={SIDEBAR_ICON_SIZE} stroke={1.5} />
-                  </Button>
-                </Link>
-              }
-            />
+            <Link href="/admin/dashboard" className="flex w-full justify-center">
+              <button className="flex w-full flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-gray-500 transition-all hover:bg-gray-50 hover:text-gray-700">
+                <IconShieldCog size={SIDEBAR_ICON_SIZE} stroke={1.5} />
+                <span className="text-[10px] leading-tight">Admin</span>
+              </button>
+            </Link>
           )}
 
           {/* Usage stats + Upgrade for free users */}

@@ -14,7 +14,7 @@ import { DocumentPanel } from "@/components/ui/documentPanel"
 import { useDocumentStore } from "@/lib/stores/document-store"
 
 export const SIDEBAR_WIDTH = 280
-export const SIDEBAR_ICON_WIDTH = 60
+export const SIDEBAR_ICON_WIDTH = 72
 export const DOCUMENT_PANEL_WIDTH = 500 // Width of document panel in pixels
 
 interface DashboardProps {
