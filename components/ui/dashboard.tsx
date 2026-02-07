@@ -33,9 +33,14 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
   const { isDocMode } = useDocumentStore()
   const { hasActiveExploreReport } = useChatbotUI()
 
-  const [showSidebar, setShowSidebar] = useState(
-    localStorage.getItem("showSidebar") === "true"
-  )
+  const [showSidebar, setShowSidebar] = useState(() => {
+    const saved = localStorage.getItem("showSidebar")
+    // Default to open on desktop if user hasn't explicitly toggled it
+    if (saved === null) {
+      return window.innerWidth >= 768
+    }
+    return saved === "true"
+  })
   const [isDragging, setIsDragging] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
