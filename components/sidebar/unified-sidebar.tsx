@@ -28,10 +28,12 @@ import {
   IconDots,
   IconGrid3x3,
   IconUsers,
-  IconUserBolt
+  IconUserBolt,
+  IconShieldCog
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 import { ContentType } from "@/types"
+import { UsageStats } from "@/components/sidebar/usage-stats"
 
 const SIDEBAR_ICON_SIZE = 20
 const BADGE_ICON_SIZE = 18
@@ -160,6 +162,7 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
   const {
     selectedWorkspace,
     userSubscription,
+    profile,
     folders,
     chats,
     presets,
@@ -590,19 +593,58 @@ export function UnifiedSidebar({ isCollapsed, onToggle }: UnifiedSidebarProps) {
             isCollapsed ? "flex justify-center p-2" : "p-3"
           )}
         >
-          {/* Upgrade button for free users */}
-          {!isCollapsed && !isPremiumOrBusiness && (
-            <Link href="/pricing">
-              <Button className="mb-3 h-[36px] w-full bg-gradient-to-r from-[#ffd700] via-[#ffb700] to-[#ff8c00] font-semibold text-gray-900 transition-opacity hover:opacity-90">
-                <IconCrown
-                  size={20}
-                  className="mr-2"
-                  fill="currentColor"
-                  stroke={0}
-                />
-                Upgrade to Pro
+          {/* Admin button - only for admins */}
+          {profile?.is_admin && !isCollapsed && (
+            <Link href="/admin/dashboard">
+              <Button
+                variant="ghost"
+                className="mb-2 h-[36px] w-full justify-start gap-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <IconShieldCog size={18} stroke={1.5} />
+                RT Admin
               </Button>
             </Link>
+          )}
+          {profile?.is_admin && isCollapsed && (
+            <WithTooltip
+              delayDuration={0}
+              side="right"
+              display={<div className="text-sm">RT Admin</div>}
+              trigger={
+                <Link href="/admin/dashboard">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-10 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <IconShieldCog size={SIDEBAR_ICON_SIZE} stroke={1.5} />
+                  </Button>
+                </Link>
+              }
+            />
+          )}
+
+          {/* Usage stats + Upgrade for free users */}
+          {!isCollapsed && !isPremiumOrBusiness && (
+            <>
+              <UsageStats className="mb-2" />
+              <Link href="/pricing">
+                <div className="mb-3 flex w-full flex-col items-center rounded-lg bg-gradient-to-r from-[#ffd700] via-[#ffb700] to-[#ff8c00] px-4 py-2.5 font-semibold text-gray-900 transition-opacity hover:opacity-90">
+                  <div className="flex items-center">
+                    <IconCrown
+                      size={18}
+                      className="mr-2"
+                      fill="currentColor"
+                      stroke={0}
+                    />
+                    <span className="text-sm font-bold">Start Free Trial</span>
+                  </div>
+                  <span className="text-[11px] font-medium text-gray-700/80">
+                    3 days free, then $25/mo
+                  </span>
+                </div>
+              </Link>
+            </>
           )}
 
           {/* Profile button */}

@@ -11,11 +11,13 @@ import {
   IconLoader2,
   IconPlayerStopFilled,
   IconSend,
+  IconSparkles,
   IconWaveSine,
   IconWorld,
   IconX
 } from "@tabler/icons-react"
 import Image from "next/image"
+import Link from "next/link"
 import { FC, useContext, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -135,7 +137,8 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
     profile,
     setProfile,
     selectedChat,
-    selectedWorkspace
+    selectedWorkspace,
+    userSubscription
   } = useChatbotUI()
 
   const {
@@ -509,6 +512,19 @@ export const ChatInput: FC<ChatInputProps> = ({ onVoiceModeClick }) => {
 
               {/* Model Selector */}
               <ModelSelector />
+
+              {/* Trial CTA for free users */}
+              {(!userSubscription ||
+                userSubscription.plan_type === "free" ||
+                (!userSubscription.plan_type && !userSubscription.tier)) && (
+                <Link
+                  href="/pricing"
+                  className="ml-auto hidden shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-cyan-500/10 to-green-500/10 px-3 py-1 text-xs font-semibold text-cyan-700 transition-colors hover:from-cyan-500/20 hover:to-green-500/20 sm:flex"
+                >
+                  <IconSparkles size={14} />
+                  Try Pro Free
+                </Link>
+              )}
             </div>
           </div>
           </div>

@@ -12,6 +12,7 @@ import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { LLMID, MessageImage } from "@/types"
 import { useParams } from "next/navigation"
+import Link from "next/link"
 import { FC, useContext, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { ChatHelp } from "./chat-help"
@@ -48,7 +49,8 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     setUseRetrieval,
     setSelectedTools,
     profile,
-    selectedWorkspace
+    selectedWorkspace,
+    userSubscription
   } = useChatbotUI()
 
   const { handleNewChat, handleFocusChatInput, handleSendMessage } =
@@ -70,6 +72,22 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   const [isMobile, setIsMobile] = useState(false)
   const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false)
   const [voiceChatId, setVoiceChatId] = useState<string | null>(null)
+  const [upgradeCardDismissed, setUpgradeCardDismissed] = useState(true)
+
+  const isFreeUser =
+    !userSubscription ||
+    userSubscription.plan_type === "free" ||
+    (!userSubscription.plan_type && !userSubscription.tier)
+
+  // Show inline upgrade card after first AI response (once per session)
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem("chat_upgrade_card_dismissed")
+    setUpgradeCardDismissed(dismissed === "true")
+  }, [])
+
+  const hasFirstResponse =
+    chatMessages.length >= 2 &&
+    chatMessages.some(m => m.message.role === "assistant")
 
   // Check if we're on mobile
   useEffect(() => {
@@ -307,7 +325,57 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
             onPromptClick={prompt => handleSendMessage(prompt, [], false)}
           />
         ) : (
-          <ChatMessages />
+          <>
+            <ChatMessages />
+
+            {/* Inline upgrade card after first AI response for free users */}
+            {isFreeUser && hasFirstResponse && !upgradeCardDismissed && (
+              <div className="mx-auto my-4 w-full max-w-[600px] rounded-xl border border-cyan-200/60 bg-gradient-to-r from-cyan-50/80 via-white to-green-50/80 p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-800">
+                      You&apos;re using GPT-4o (free tier)
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Upgrade to unlock GPT-5 for smarter analysis, web search,
+                      and 20 roof reports per month.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setUpgradeCardDismissed(true)
+                      sessionStorage.setItem(
+                        "chat_upgrade_card_dismissed",
+                        "true"
+                      )
+                    }}
+                    className="ml-2 shrink-0 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    aria-label="Dismiss"
+                  >
+                    <svg
+                      className="size-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <Link
+                  href="/pricing"
+                  className="mt-3 inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-cyan-500 to-green-500 px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  Start 3-Day Free Trial
+                </Link>
+              </div>
+            )}
+          </>
         )}
 
         <div ref={messagesEndRef} />

@@ -53,7 +53,7 @@ export function UpgradeModal({
   const handleUpgrade = (tier: "premium" | "business") => {
     onOpenChange(false)
     // Navigate to pricing page with pre-selected tier
-    router.push(`/pricing?tier=${tier}`)
+    router.push(`/pricing?plan=${tier}`)
   }
 
   return (
@@ -65,6 +65,13 @@ export function UpgradeModal({
           </DialogTitle>
           <DialogDescription>{message.description}</DialogDescription>
         </DialogHeader>
+
+        {/* Trial banner */}
+        <div className="rounded-lg bg-gradient-to-r from-cyan-50 to-green-50 p-3 text-center dark:from-cyan-950/30 dark:to-green-950/30">
+          <p className="text-sm font-semibold text-cyan-700 dark:text-cyan-300">
+            Start with a 3-day free trial — no charge until day 4
+          </p>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-3">
           {/* Free Tier */}
@@ -126,23 +133,26 @@ export function UpgradeModal({
           </div>
 
           {/* Premium Tier */}
-          <div className="relative flex flex-col rounded-lg border-2 border-blue-600 p-6 shadow-xl dark:border-blue-400">
+          <div className="relative flex flex-col rounded-lg border-2 border-cyan-500 p-6 shadow-xl dark:border-cyan-400">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white dark:bg-blue-400 dark:text-blue-900">
+              <span className="rounded-full bg-gradient-to-r from-cyan-500 to-green-500 px-3 py-1 text-xs font-semibold text-white">
                 MOST POPULAR
               </span>
             </div>
 
             <div className="mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                Premium
+                Pro
               </h3>
               <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold">$29</span>
+                <span className="text-3xl font-bold">$25</span>
                 <span className="ml-1 text-gray-600 dark:text-gray-400">
                   /mo
                 </span>
               </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Billed annually ($300/yr) — save $48
+              </p>
             </div>
 
             <div className="mb-6 flex-1 space-y-3">
@@ -152,7 +162,7 @@ export function UpgradeModal({
                   className="mt-0.5 text-green-600 dark:text-green-400"
                   aria-hidden="true"
                 />
-                <span className="text-sm">20 reports/month</span>
+                <span className="text-sm font-medium">20 reports/month</span>
               </div>
               <div className="flex items-start gap-2">
                 <IconCheck
@@ -161,7 +171,7 @@ export function UpgradeModal({
                   aria-hidden="true"
                 />
                 <span className="text-sm">
-                  1000 GPT-4.5-mini messages + unlimited GPT-4o
+                  1,000 GPT-5 messages/month
                 </span>
               </div>
               <div className="flex items-start gap-2">
@@ -178,12 +188,15 @@ export function UpgradeModal({
                   className="mt-0.5 text-green-600 dark:text-green-400"
                   aria-hidden="true"
                 />
-                <span className="text-sm">Full agent library access</span>
+                <span className="text-sm">AI cost estimates included</span>
               </div>
             </div>
 
-            <Button onClick={() => handleUpgrade("premium")} className="w-full">
-              Upgrade to Premium
+            <Button
+              onClick={() => handleUpgrade("premium")}
+              className="w-full bg-gradient-to-r from-cyan-500 to-green-500 text-white hover:from-cyan-600 hover:to-green-600"
+            >
+              Start Free Trial
             </Button>
           </div>
 
@@ -194,11 +207,14 @@ export function UpgradeModal({
                 Business
               </h3>
               <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold">$99</span>
+                <span className="text-3xl font-bold">$84</span>
                 <span className="ml-1 text-gray-600 dark:text-gray-400">
                   /mo
                 </span>
               </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Billed annually ($1,008/yr) — save $180
+              </p>
             </div>
 
             <div className="mb-6 flex-1 space-y-3">
@@ -208,7 +224,7 @@ export function UpgradeModal({
                   className="mt-0.5 text-green-600 dark:text-green-400"
                   aria-hidden="true"
                 />
-                <span className="text-sm">100 reports/month</span>
+                <span className="text-sm font-medium">100 reports/month</span>
               </div>
               <div className="flex items-start gap-2">
                 <IconCheck
@@ -217,7 +233,7 @@ export function UpgradeModal({
                   aria-hidden="true"
                 />
                 <span className="text-sm">
-                  5000 GPT-4.5-mini messages + unlimited GPT-4o
+                  5,000 GPT-5 messages/month
                 </span>
               </div>
               <div className="flex items-start gap-2">
@@ -226,7 +242,7 @@ export function UpgradeModal({
                   className="mt-0.5 text-green-600 dark:text-green-400"
                   aria-hidden="true"
                 />
-                <span className="text-sm">250 web searches/month</span>
+                <span className="text-sm">AI proposals & follow-ups</span>
               </div>
               <div className="flex items-start gap-2">
                 <IconCheck
@@ -234,7 +250,7 @@ export function UpgradeModal({
                   className="mt-0.5 text-green-600 dark:text-green-400"
                   aria-hidden="true"
                 />
-                <span className="text-sm">Full agent library access</span>
+                <span className="text-sm">Solar analysis included</span>
               </div>
             </div>
 
@@ -243,13 +259,13 @@ export function UpgradeModal({
               variant="outline"
               className="w-full"
             >
-              Upgrade to Business
+              Start Free Trial
             </Button>
           </div>
         </div>
 
-        <div className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-          Cancel anytime. No hidden fees.
+        <div className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+          Cancel anytime. No hidden fees. No charge for 3 days.
         </div>
       </DialogContent>
     </Dialog>
