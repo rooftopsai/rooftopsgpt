@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog"
 import { PLANS } from "@/lib/stripe-config"
 import { getGreeting } from "@/lib/greetings"
+import { FeatureDiscoveryModal } from "@/components/modals/feature-discovery-modal"
 
 export default function ChatPage() {
   // pull out the initialPrompt param if present
@@ -270,6 +271,36 @@ export default function ChatPage() {
           }}
         />
       )}
+
+      {/* Feature Discovery Modal - Chat */}
+      <FeatureDiscoveryModal
+        featureKey="chat"
+        title="Your AI Roofing Assistant"
+        subtitle="Ask anything about roofing — from inspections to cost estimates to material selection."
+        steps={[
+          {
+            icon: "💬",
+            title: "Ask Any Roofing Question",
+            description:
+              "Get instant expert answers about roof inspections, repair costs, material comparisons, building codes, and more. Just type your question below."
+          },
+          {
+            icon: "🔍",
+            title: "Web Search for Live Data",
+            description:
+              "Pro users can enable web search to pull in real-time material prices, local contractor rates, and the latest building codes for your area.",
+            isPremium: true
+          },
+          {
+            icon: "🧠",
+            title: "GPT-5 Powered Analysis",
+            description:
+              "Free users get GPT-4o. Upgrade to Pro for GPT-5 — smarter, more detailed responses that help you win more jobs and write better proposals.",
+            isPremium: true
+          }
+        ]}
+        ctaText="Start chatting"
+      />
 
       {/* Subscription Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
