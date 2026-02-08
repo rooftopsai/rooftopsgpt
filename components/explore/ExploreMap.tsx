@@ -29,6 +29,7 @@ import { useChatbotUI } from "@/context/context"
 // Import our components
 import MapView from "./MapView"
 import PropertyReportViewer from "@/components/property/property-report-viewer"
+import PropertyPreviewDrawer from "./PropertyPreviewDrawer"
 import {
   Select,
   SelectContent,
@@ -87,6 +88,7 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
   const [filteredModels, setFilteredModels] = useState(availableModels)
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null)
   const [reportMode, setReportMode] = useState<"instant" | "agent">("agent") // Always use agent mode
+  const [showPreviewDrawer, setShowPreviewDrawer] = useState(false)
 
   // This is a direct reference to the map container div from the MapView component
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
@@ -202,6 +204,20 @@ const ExploreMap: React.FC<ExploreMapProps> = ({
       localStorage.setItem("showSidebar", "false")
     }
   }, [roofAnalysis, reportData, showSidebar, setShowSidebar])
+
+  // Open preview drawer when a property is selected (address + location)
+  useEffect(() => {
+    if (selectedLocation && selectedAddress) {
+      setShowPreviewDrawer(true)
+    }
+  }, [selectedLocation, selectedAddress])
+
+  // Close preview drawer when full report opens
+  useEffect(() => {
+    if (roofAnalysis || reportData) {
+      setShowPreviewDrawer(false)
+    }
+  }, [roofAnalysis, reportData])
 
   // Debug logging function
   const logDebug = useCallback(
@@ -2620,6 +2636,7 @@ ${referenceSection}
           livePreviewImages={livePreviewImages}
           currentCaptureStage={currentCaptureStage}
           hasActiveReport={!!(roofAnalysis || reportData)}
+          isPreviewDrawerOpen={showPreviewDrawer && !roofAnalysis && !reportData}
         />
       </div>
 
@@ -2691,6 +2708,16 @@ ${referenceSection}
               </div>
             </div>
           </div> */}
+
+      {/* Instant Property Preview Drawer */}
+      <PropertyPreviewDrawer
+        isOpen={showPreviewDrawer && !roofAnalysis && !reportData}
+        onClose={() => setShowPreviewDrawer(false)}
+        address={selectedAddress}
+        location={selectedLocation}
+        onGenerateFullReport={handleAnalyzePropertyClick}
+        isAnalyzing={isAnalyzing}
+      />
 
       {/* Report Display - Shows in main content area */}
       {(roofAnalysis || reportData) && (

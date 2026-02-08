@@ -84,6 +84,8 @@ interface MapViewProps {
   setInfoWindowRef?: (infoWindow: google.maps.InfoWindow | null) => void
   // Hide toggle when report is displayed
   hasActiveReport?: boolean
+  // Preview drawer state for layout adjustments
+  isPreviewDrawerOpen?: boolean
 }
 
 const MapView: React.FC<MapViewProps> = ({
@@ -115,7 +117,8 @@ const MapView: React.FC<MapViewProps> = ({
   availableModels,
   onToggleDebugMode,
   showSidebar = false,
-  hasActiveReport = false
+  hasActiveReport = false,
+  isPreviewDrawerOpen = false
 }) => {
   const [isClient, setIsClient] = useState(false)
   const [mapInitialized, setMapInitialized] = useState(false)
@@ -1539,12 +1542,12 @@ const MapView: React.FC<MapViewProps> = ({
                 {isAnalyzing ? (
                   <span className="flex items-center justify-center">
                     <IconLoader2 size={18} className="mr-2 animate-spin" />
-                    Analyzing Property...
+                    Generating Report...
                   </span>
                 ) : (
                   <span className="flex items-center">
                     <IconBuildingSkyscraper size={18} className="mr-2" />
-                    Analyze Property
+                    Generate Full Report
                   </span>
                 )}
               </Button>
@@ -1656,7 +1659,7 @@ const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* Floating Control Panel at Bottom - Like chat input */}
-        <div className="absolute inset-x-0 bottom-0 z-20 p-4">
+        <div className={`absolute inset-x-0 bottom-0 z-20 p-4 transition-all duration-300 ${isPreviewDrawerOpen ? "sm:right-[420px]" : ""}`}>
           <div className="mx-auto max-w-4xl">
             {/* Navigation Tabs */}
             <FeatureTabs activeTab="report" className="pl-2 sm:pl-4" />
@@ -1705,7 +1708,7 @@ const MapView: React.FC<MapViewProps> = ({
                 </Button>
               </div>
 
-              {/* Analyze Button - Full Width */}
+              {/* Generate Report Button - Full Width */}
               <Button
                 onClick={onAnalyzePropertyClick}
                 disabled={!selectedLocation || isAnalyzing}
@@ -1714,12 +1717,12 @@ const MapView: React.FC<MapViewProps> = ({
                 {isAnalyzing ? (
                   <span className="flex items-center justify-center">
                     <IconLoader2 size={20} className="mr-2 animate-spin" />
-                    Analyzing Property...
+                    Generating Report...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
                     <IconBuildingSkyscraper size={20} className="mr-2" />
-                    Analyze Property
+                    Generate Full Report
                   </span>
                 )}
               </Button>
