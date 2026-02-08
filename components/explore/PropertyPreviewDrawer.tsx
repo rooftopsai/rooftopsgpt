@@ -135,8 +135,8 @@ const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({
     <>
       {/* Drawer panel — no overlay, map remains interactive */}
       <div
-        className={`fixed inset-y-0 right-0 z-30 flex w-full flex-col border-l border-gray-200/80 bg-white shadow-2xl transition-transform duration-300 ease-out sm:z-10 sm:w-[420px] ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed inset-y-0 right-0 z-30 flex w-full flex-col border-l border-gray-200/80 bg-white shadow-2xl transition-transform duration-300 ease-out sm:z-30 sm:w-[420px] ${
+          isOpen ? "translate-x-0" : "pointer-events-none translate-x-full"
         }`}
         style={{
           boxShadow: isOpen

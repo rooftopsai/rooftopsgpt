@@ -2709,15 +2709,17 @@ ${referenceSection}
             </div>
           </div> */}
 
-      {/* Instant Property Preview Drawer */}
-      <PropertyPreviewDrawer
-        isOpen={showPreviewDrawer && !roofAnalysis && !reportData}
-        onClose={() => setShowPreviewDrawer(false)}
-        address={selectedAddress}
-        location={selectedLocation}
-        onGenerateFullReport={handleAnalyzePropertyClick}
-        isAnalyzing={isAnalyzing}
-      />
+      {/* Instant Property Preview Drawer — only mount when a property has been selected */}
+      {selectedLocation && selectedAddress && (
+        <PropertyPreviewDrawer
+          isOpen={showPreviewDrawer && !roofAnalysis && !reportData}
+          onClose={() => setShowPreviewDrawer(false)}
+          address={selectedAddress}
+          location={selectedLocation}
+          onGenerateFullReport={handleAnalyzePropertyClick}
+          isAnalyzing={isAnalyzing}
+        />
+      )}
 
       {/* Report Display - Shows in main content area */}
       {(roofAnalysis || reportData) && (
